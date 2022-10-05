@@ -48,7 +48,42 @@ EventContainer::EventContainer(TTree *tree, const Utility &utility): _utility{ u
 
     tree->SetBranchAddress("topological_score", &topological_score);
     tree->SetBranchAddress("CosmicIPAll3D", &CosmicIPAll3D);
- 
+
+    tree->SetBranchAddress("shr_distance", &shr_distance);
+    tree->SetBranchAddress("shr_score", &shr_score);
+    tree->SetBranchAddress("shr_energy", &shr_energy);    
+    tree->SetBranchAddress("hits_ratio", &hits_ratio);
+    tree->SetBranchAddress("shrmoliereavg", &shrmoliereavg);
+
+    tree->SetBranchAddress("shr_tkfit_dedx_Y", &shr_tkfit_dedx_Y);
+    tree->SetBranchAddress("shr_tkfit_dedx_V", &shr_tkfit_dedx_V);
+    tree->SetBranchAddress("shr_tkfit_dedx_U", &shr_tkfit_dedx_U);
+
+    tree->SetBranchAddress("shr_tkfit_nhits_Y", &shr_tkfit_nhits_Y);
+    tree->SetBranchAddress("shr_tkfit_nhits_V", &shr_tkfit_nhits_V);
+    tree->SetBranchAddress("shr_tkfit_nhits_U", &shr_tkfit_nhits_U);
+
+    tree->SetBranchAddress("trk_len", &trk_len);
+    tree->SetBranchAddress("trk_distance", &trk_distance);
+
+    tree->SetBranchAddress("trk_bragg_p", &trk_bragg_p);
+    tree->SetBranchAddress("trk_bragg_mu", &trk_bragg_mu);
+    tree->SetBranchAddress("trk_bragg_pion", &trk_bragg_pion);
+
+    tree->SetBranchAddress("trk_score_v",             &trk_score_v);
+    tree->SetBranchAddress("trk_sce_start_x_v",        &trk_sce_start_x_v);
+    tree->SetBranchAddress("trk_sce_start_y_v",        &trk_sce_start_y_v);
+    tree->SetBranchAddress("trk_sce_start_z_v",        &trk_sce_start_z_v);
+    tree->SetBranchAddress("trk_sce_end_x_v",          &trk_sce_end_x_v);
+    tree->SetBranchAddress("trk_sce_end_y_v",          &trk_sce_end_y_v);
+    tree->SetBranchAddress("trk_sce_end_z_v",          &trk_sce_end_z_v);
+    tree->SetBranchAddress("trk_len_v",                &trk_len_v);
+    tree->SetBranchAddress("trk_distance_v",           &trk_distance_v);
+
+    tree->SetBranchAddress("trk_bragg_p_v", &trk_bragg_p_v);
+    tree->SetBranchAddress("trk_bragg_mu_v", &trk_bragg_mu_v);
+    tree->SetBranchAddress("trk_llr_pid_score_v", &trk_llr_pid_score_v);
+
 }
 
 // Function to classify the event
@@ -143,6 +178,24 @@ void EventContainer::EventClassifier(){
 Utility::ClassificationEnums EventContainer::getEventClassification() {
 	EventClassifier();
 	return classification;
+}
+
+
+// Function to evaluate derived variables
+void EventContainer::populateDerivedVariables(){
+
+	// populate derived variables
+    auto it = std::max_element(trk_len_v->begin(), trk_len_v->end());
+    longestTrackIndex = std::distance(trk_len_v->begin(), it);
+
+    trk_llr_pid_score = trk_llr_pid_score_v->at(longestTrackIndex); 	// LLR PID Score
+    trk_score = trk_score_v->at(longestTrackIndex); 					// Pandora track score
+    trk_distance_alt = trk_distance_v->at(longestTrackIndex); 			// Distance from vertex
+    trk_bragg_mu_alt = trk_bragg_mu_v->at(longestTrackIndex); 				
+
+    
+
+
 }
 
 

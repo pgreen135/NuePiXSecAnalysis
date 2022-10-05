@@ -7,3 +7,4 @@
 *.pid
 AnalyzeNue
 bin
+.DS_Store

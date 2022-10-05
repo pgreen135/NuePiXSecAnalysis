@@ -26,6 +26,9 @@ public:
 	// Functions to classify the event
 	void  EventClassifier();
 	Utility::ClassificationEnums getEventClassification();
+
+	// Functions to populate derived event variables
+	void populateDerivedVariables();
     
     
     // ----------------------------------
@@ -90,6 +93,48 @@ public:
     float topological_score;  	// Reco: topological Score
     float CosmicIPAll3D;        // Reco: 3D distance of shower start from closest spacepoint of any pfp not in the neutrino slice
 
+    // -- Shower Reconstruction
+    float shr_distance;         // Reco: distance between leading shower vertex and reconstructed neutrino vertex
+    float shr_score;            // Reco: Pandora track score for the leading shower
+    float shr_energy;
+    float hits_ratio;           // Reco: ratio between hits from showers and total number of hits in the slice
+    float shrmoliereavg;        // Reco: average angle between the shower’s direction and its 3D spacepoints
+
+    unsigned int shr_tkfit_nhits_Y;     // Reco: number of hits in the 1x4 cm box on the Y plane with the track fitting
+    unsigned int shr_tkfit_nhits_V;     // Reco: number of hits in the 1x4 cm box on the V plane with the track fitting
+    unsigned int shr_tkfit_nhits_U;     // Reco: number of hits in the 1x4 cm box on the U plane with the track fitting
+
+    float shr_tkfit_dedx_Y;      // Reco: dE/dx of the leading shower on the Y plane with the track fitting
+    float shr_tkfit_dedx_V;      // Reco: dE/dx of the leading shower on the V plane with the track fitting
+    float shr_tkfit_dedx_U;      // Reco: dE/dx of the leading shower on the U plane with the track fitting
+
+    // Track Reconstruction
+    float trk_len;		// Track: Length of the longest track
+    float trk_distance;	// Track: Distance between longest track and reconstructed neutrino vertex
+
+    float trk_bragg_pion; // Track Bragg Likelihood Pion
+    float trk_bragg_p;	// Track Bragg Likelihood Proton
+    float trk_bragg_mu; 
+
+    std::vector<float> *trk_score_v       = nullptr; // PFP track score
+    std::vector<float> *trk_sce_start_x_v = nullptr;
+    std::vector<float> *trk_sce_start_y_v = nullptr;
+    std::vector<float> *trk_sce_start_z_v = nullptr;
+    std::vector<float> *trk_sce_end_x_v   = nullptr;
+    std::vector<float> *trk_sce_end_y_v   = nullptr;
+    std::vector<float> *trk_sce_end_z_v   = nullptr;
+    std::vector<float> *trk_len_v         = nullptr;
+    std::vector<float> *trk_distance_v    = nullptr; 
+
+    std::vector<float> *trk_bragg_p_v     	= nullptr;
+    std::vector<float> *trk_bragg_mu_v    	= nullptr;
+    std::vector<float> *trk_llr_pid_score_v = nullptr; // LLR PID - Muon/Proton separation
+
+    int longestTrackIndex;
+    float trk_llr_pid_score;
+    float trk_distance_alt;
+    float trk_score;
+    float trk_bragg_mu_alt;
 };
 
 #endif

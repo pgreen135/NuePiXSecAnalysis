@@ -16,6 +16,9 @@ StackedHistTool::StackedHistTool(std::string histname, std::string title, int nb
   StyleHistsStack();
 
   invalid_total_x = 0.;
+
+  // set event counts to zero
+  eventCount = std::vector<int>(nHists,0);
 }
 
 // Set histogram order (moved to be in a separate function from the constructor to allow for overload of constructor for 1D or 2D histograms)
@@ -42,6 +45,7 @@ void StackedHistTool::Fill(Utility::ClassificationEnums topology, double value)
 {
   unsigned int n_hist = StackedHistTool::GetHistN(topology);
   hists[n_hist]->Fill(value);
+  eventCount[n_hist]++;
 }
 
 // -------------------------- Function to fill the correct histogram -------------------------- //
@@ -193,6 +197,21 @@ void StackedHistTool::PrintHistIntegrals()
 
     }
 }
+void StackedHistTool::PrintEventIntegrals()
+{
+  // Calculate and print out relative integrals (percentage of events that are each topology)
+	// Compute total integral
+	double total_integral = 0;
+	for (int i_hist=0; i_hist < nHists; i_hist++){
+	  total_integral += eventCount[i_hist];
+	}
+	std::cout << "Total number of events: " << total_integral << std::endl;
+	for (int i_hist=0; i_hist < nHists; i_hist++){
+	  Utility::ClassificationEnums topology = StackedHistTool::GetTopologyFromHistN((unsigned int)i_hist);
+
+	  std::cout << "Number of events for toplogy " << topologyenum2str(topology) << ": " << eventCount[i_hist] << std::endl;// << "\t\t Fraction of total: " << integral/total_integral << std::endl;
+	}
+}
 
 // ---------------------- Function to get histogram integrals ---------------------- //
 double StackedHistTool::GetTotalIntegral()
@@ -282,14 +301,45 @@ std::string StackedHistTool::PlotVariableEnum2str(Utility::PlotVariableEnums plo
   	break;
   case Utility::kCosmicImpactParameter:
   	returnString = "Cosmic Impact Parameter [cm]";
-  	break;  	  	
+  	break;
+  case Utility::kShowerScore:
+  	returnString = "Shower Score";
+  	break;
+  case Utility::kShowerEnergy:
+    returnString = "Shower Energy [GeV]";
+    break;
+  case Utility::kHitRatio:
+  	returnString = "Shower Hit Ratio";
+  	break;
+  case Utility::kMoliereAverage:
+    returnString = "Leading Shower Moliere Average [deg]";
+    break;
+  case Utility::kTrackLength:
+    returnString = "Track Length [cm]";
+    break;
+  case Utility::kTrackBraggPion:
+    returnString = "Pion Bragg Peak Score";
+    break;
+  case Utility::kTrackBraggP:
+    returnString = "Proton Bragg Peak Score";
+    break;
+  case Utility::kTrackBraggMu:
+    returnString = "Muon Bragg Peak Score";
+    break;
+  case Utility::kLLRPID:
+    returnString = "LLR PID Score";
+    break; 
+  case Utility::kTrackScore:
+    returnString = "Pandora Track Score";
+    break;
+  case Utility::kTrackDistance:
+    returnString = "Track Distance Vertex [cm]";
+    break;    		  	  	
   default:
     std::cout << "[ERROR: StackedHistTool] Could not find string conversion for enum " << plotvariable << std::endl;
     returnString = "Unknown";
     break;
-  }
-
-  
+  }  
 
   return returnString;
 }

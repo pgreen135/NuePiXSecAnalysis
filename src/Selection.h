@@ -17,6 +17,7 @@ public:
 	~Selection(){};
 
 	bool ApplySelection(const EventContainer &evt);
+	bool ApplyPionSelection(const EventContainer &evt);
 	// ----------------------------------
 
 
@@ -45,6 +46,26 @@ protected:
 
 	// Pandora topological score
 	bool ApplyTopologicalScoreCut(float topological_score);
+
+	// Cosmic impact parameter
+	bool ApplyCosmicImpactParameterCut(float CosmicIPAll3D);
+
+	// Leading shower score
+	bool ApplyShowerScoreCut(float shr_score);
+
+	// Leading shower hit ratio
+	bool ApplyShowerHitRatioCut(float hits_ratio);
+
+	// Leading shower Moliere average
+	bool ApplyMoliereAverageCut(float shrmoliereavg);
+
+	// Neutral pion rejection: dE/dx and vertex distance
+	float GetdEdxMax(unsigned int shr_tkfit_nhits_Y, unsigned int shr_tkfit_nhits_V, unsigned int shr_tkfit_nhits_U,
+						float shr_tkfit_dedx_Y, float shr_tkfit_dedx_V, float shr_tkfit_dedx_U);
+	bool ApplyNeutralPionRejectionCut(float dEdxMax, float shr_distance);
+
+	// Track Length
+	bool ApplyTrackLengthCut(float trk_len);								
 
 };
 

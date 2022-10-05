@@ -29,14 +29,14 @@ int main() {
   	Utility _utility;
   	EventContainer _event(tree, _utility);
   	Selection _selection(_utility);
-  	StackedHistTool histStack("", "", 40, 0, 200, _utility);
+  	StackedHistTool histStack("", "", 30, 0, 3, _utility);
 
   	// loop through events
   	int n_entries = tree->GetEntries();
   	std::cout << "Initial number events: " << n_entries << std::endl;
 
   	for (int e = 0; e < n_entries; e++) {
-  	//for (int e = 0; e < 10000; e++) {
+  	//for (int e = 0; e < 50000; e++) {
 
     	tree->GetEntry(e);
 
@@ -48,21 +48,30 @@ int main() {
 	    bool selected = _selection.ApplySelection(_event);
 	    if(!selected) continue;
 
+	    // populate derived variables [not in ntuple]
+	    //_event.populateDerivedVariables();
+
+	    // apply pion selection
+	    //bool pionselected = _selection.ApplyPionSelection(_event);
+	    //if(!pionselected) continue;
+
 	    // get event classification
 	    Utility::ClassificationEnums classification = _event.getEventClassification();
 
+	    //std::cout << _event.shr_energy << std::endl;
+
 	    // fill histogram
-	    histStack.Fill(classification, _event.CosmicIPAll3D);
+	    histStack.Fill(classification, _event.shr_energy);
 	}
 
 	
 
 	TCanvas *canv = new TCanvas("canv", "canv", 1080, 1080);
-  	histStack.DrawStack(canv, Utility::kCosmicImpactParameter);
-  	histStack.PrintHistIntegrals();
+  	histStack.DrawStack(canv, Utility::kShowerEnergy);
+  	histStack.PrintEventIntegrals();
 
   	
-  	canv->Print("plot_postTopologicalScore_CosmicImpactParameter.root");
+  	canv->Print("plot_postPionSelection_ShowerEnergy.root");
 
 
 	return 0;

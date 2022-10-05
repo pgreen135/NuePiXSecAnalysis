@@ -29,6 +29,7 @@ class StackedHistTool{
  
   void PrintHistIntegrals();
   double GetTotalIntegral();
+  void PrintEventIntegrals();
  
   void SaveHistStack();
 
@@ -40,6 +41,8 @@ class StackedHistTool{
 
   THStack *stack;
   TH1F *hists[25];
+
+  std::vector<int> eventCount;  // to keep track of number of events of each classification 
 
   double invalid_total_x;
   double invalid_total_y;

@@ -22,17 +22,18 @@ public:
 
 	// Event classification enums
 	enum ClassificationEnums {
-		kCCNue1pi = 0,
-		kCCNueNpi = 1,
-		kCCNuepizero = 2,
-		kCCNueOther = 3,
-		kCCNumupizero = 4,
-		kCCNumuOther = 5,
-		kNCpizero = 6,
-		kNCOther = 7,
-		kOutFV = 8,
-		kCosmic = 9,
-		kUnknown = 10
+		kCCNue1pi,
+		kCCNueNpi,
+		kCCNuepizero,
+		kCCNueOther,
+		kCCNumupizero,
+		kCCNumuOther,
+		kNCpizero,
+		kNCOther,
+		kOutFV,
+		kCosmic,
+		kBeamOff,
+		kUnknown
 	};
 
 	// PlotVariable enums
@@ -43,7 +44,18 @@ public:
 		kNTrack,
 		kContainedFraction,
 		kTopologicalScore,
-		kCosmicImpactParameter
+		kCosmicImpactParameter,
+		kShowerScore,
+		kShowerEnergy,
+		kHitRatio,
+		kMoliereAverage,
+		kTrackLength,
+		kTrackBraggPion,
+		kTrackBraggP,
+		kTrackBraggMu,
+		kLLRPID,
+		kTrackScore,
+		kTrackDistance
 	};
 
 }; 
