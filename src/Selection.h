@@ -16,8 +16,15 @@ public:
 	// Destructor
 	~Selection(){};
 
-	bool ApplySelection(const EventContainer &evt);
+	// Selection
+	bool ApplyPreSelection(const EventContainer &evt, Utility::FileTypeEnums type);
+	bool ApplyCosmicRejection(const EventContainer &evt);
+
+	bool ApplyElectronSelection(const EventContainer &_evt);
 	bool ApplyPionSelection(const EventContainer &evt);
+
+	bool ApplyNeutralPionRejection(const EventContainer &_evt);
+	bool ApplyProtonRejection(const EventContainer &_evt);
 	// ----------------------------------
 
 
@@ -59,13 +66,29 @@ protected:
 	// Leading shower Moliere average
 	bool ApplyMoliereAverageCut(float shrmoliereavg);
 
-	// Neutral pion rejection: dE/dx and vertex distance
-	float GetdEdxMax(unsigned int shr_tkfit_nhits_Y, unsigned int shr_tkfit_nhits_V, unsigned int shr_tkfit_nhits_U,
-						float shr_tkfit_dedx_Y, float shr_tkfit_dedx_V, float shr_tkfit_dedx_U);
+	// Leading shower energy fraction
+	bool ApplyLeadingShowerEnergyFractionCut(float shr_energyFraction);
+
+	// Neutral pion rejection: dE/dx and vertex distance	
 	bool ApplyNeutralPionRejectionCut(float dEdxMax, float shr_distance);
 
 	// Track Length
-	bool ApplyTrackLengthCut(float trk_len);								
+	bool ApplyTrackLengthCut(float trk_len);
+
+	// Track Vertex Distance
+	bool ApplyTrackVertexDistanceCut(float trk_distance);
+
+	// Track Score
+	bool ApplyTrackScoreCut(float trk_score);
+
+	// Track Shower Opening Angle
+	bool ApplyTrackShowerOpeningAngleCut(float tksh_angle);
+
+	// LLR PID Score
+	bool ApplyLLRPIDScoreCut(float trk_llr_pid_score);
+
+	// Proton Bragg peak score
+	bool ApplyProtonBraggPeakScoreCut(float trk_bragg_p); 								
 
 };
 

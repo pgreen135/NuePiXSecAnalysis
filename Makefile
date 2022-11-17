@@ -13,7 +13,6 @@ DEBUGFLAGS= -O0 -g -D _DEBUG
 MAIN = AnalyzeNue
 
 # List the object files here
-# OBJ_FILES = bin/main.o bin/utility.o bin/selection.o bin/selection_cuts.o bin/Passed_Container.o bin/histogram_helper.o bin/histogram_plotter.o bin/SliceContainer.o bin/TreeHelper.o
 OBJ_FILES = bin/*.o
 
 # Main Target
@@ -35,5 +34,5 @@ bin/%.o: src/%.cxx
 # Clean compilation
 clean:
 	@echo "\033[0;31m"
-	rm nuexsec bin/*
+	rm AnalyzeNue bin/*
 	@echo

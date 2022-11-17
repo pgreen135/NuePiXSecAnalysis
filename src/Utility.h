@@ -20,11 +20,22 @@ public:
 	// ----------------------------------
 
 
+	// File types
+	enum FileTypeEnums{
+		kMC,
+		kEXT,
+		kDirt
+	};
+
 	// Event classification enums
 	enum ClassificationEnums {
-		kCCNue1pi,
+		//kCCNue1pi,
+		kCCNue1pi0p,
+		kCCNue1piNp,
 		kCCNueNpi,
 		kCCNuepizero,
+		kCCNue1p,
+		kCCNueNp,
 		kCCNueOther,
 		kCCNumupizero,
 		kCCNumuOther,
@@ -33,6 +44,7 @@ public:
 		kOutFV,
 		kCosmic,
 		kBeamOff,
+		kOutOfCryo,
 		kUnknown
 	};
 
@@ -42,6 +54,7 @@ public:
 		kNuE,
 		kNShower,
 		kNTrack,
+		kVertexInFV,
 		kContainedFraction,
 		kTopologicalScore,
 		kCosmicImpactParameter,
@@ -49,13 +62,21 @@ public:
 		kShowerEnergy,
 		kHitRatio,
 		kMoliereAverage,
+		kShowerEnergyRatio,
+		kShowerdEdxMax,
+		kNeutralPionInvariantMass,
 		kTrackLength,
+		kTrackScore,
+		kTrackDistance,
+		kTrackTheta,
+		kTrackPhi,
 		kTrackBraggPion,
 		kTrackBraggP,
 		kTrackBraggMu,
 		kLLRPID,
-		kTrackScore,
-		kTrackDistance
+		kTrackdEdx,
+		kPi0InvMassDifference,
+		kTrackShowerAngle		
 	};
 
 }; 
