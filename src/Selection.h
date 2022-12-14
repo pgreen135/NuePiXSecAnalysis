@@ -17,14 +17,19 @@ public:
 	~Selection(){};
 
 	// Selection
-	bool ApplyPreSelection(const EventContainer &evt, Utility::FileTypeEnums type);
-	bool ApplyCosmicRejection(const EventContainer &evt);
+	// Pre-selection
+	bool ApplyPreSelection(const EventContainer &_evt, Utility::FileTypeEnums type);
+	bool ApplyReconstructionCompletenessCheck(const EventContainer &_evt);
 
+	// Candidate Identification
 	bool ApplyElectronSelection(const EventContainer &_evt);
-	bool ApplyPionSelection(const EventContainer &evt);
+	bool ApplyPionSelection(EventContainer &_evt, Utility::FileTypeEnums type);
 
+	// Background rejection
+	bool ApplyCosmicRejection(const EventContainer &_evt);
 	bool ApplyNeutralPionRejection(const EventContainer &_evt);
-	bool ApplyProtonRejection(const EventContainer &_evt);
+	bool ApplyProtonRejection(EventContainer &_evt, Utility::FileTypeEnums type);
+	
 	// ----------------------------------
 
 
@@ -51,17 +56,20 @@ protected:
 	// Fraction of PFP hits contained within fiducial volume
 	bool ApplyContainedFractionCut(float contained_fraction);
 
-	// Pandora topological score
-	bool ApplyTopologicalScoreCut(float topological_score);
-
-	// Cosmic impact parameter
-	bool ApplyCosmicImpactParameterCut(float CosmicIPAll3D);
+	// Fraction of hits associated with tracks and showers
+	bool ApplyAssociatedHitsFractionCut(float associated_hits_fraction);
 
 	// Leading shower score
 	bool ApplyShowerScoreCut(float shr_score);
 
 	// Leading shower hit ratio
 	bool ApplyShowerHitRatioCut(float hits_ratio);
+
+	// Pandora topological score
+	bool ApplyTopologicalScoreCut(float topological_score);
+
+	// Cosmic impact parameter
+	bool ApplyCosmicImpactParameterCut(float CosmicIPAll3D);
 
 	// Leading shower Moliere average
 	bool ApplyMoliereAverageCut(float shrmoliereavg);
@@ -72,6 +80,11 @@ protected:
 	// Neutral pion rejection: dE/dx and vertex distance	
 	bool ApplyNeutralPionRejectionCut(float dEdxMax, float shr_distance);
 
+	// Neutral pion rejection: second shower tagger
+	bool ApplySecondShowerClusterCut(int secondshower_U_nhit, int secondshower_V_nhit, int secondshower_Y_nhit, 
+							  		 float secondshower_U_vtxdist, float secondshower_V_vtxdist, float secondshower_Y_vtxdist, 
+							  		 float secondshower_U_anglediff, float secondshower_V_anglediff, float secondshower_Y_anglediff);
+
 	// Track Length
 	bool ApplyTrackLengthCut(float trk_len);
 
@@ -81,6 +94,9 @@ protected:
 	// Track Score
 	bool ApplyTrackScoreCut(float trk_score);
 
+	// Track Containment
+	bool ApplyTrackContainmentCut(float trk_sce_end_x, float trk_sce_end_y, float trk_sce_end_z);
+
 	// Track Shower Opening Angle
 	bool ApplyTrackShowerOpeningAngleCut(float tksh_angle);
 
@@ -88,7 +104,13 @@ protected:
 	bool ApplyLLRPIDScoreCut(float trk_llr_pid_score);
 
 	// Proton Bragg peak score
-	bool ApplyProtonBraggPeakScoreCut(float trk_bragg_p); 								
+	bool ApplyProtonBraggPeakScoreCut(float trk_bragg_p);
+
+	// Pion Bragg Peak Score
+	bool ApplyPionBraggPeakScoreCut(float trk_bragg_pion);
+
+	// Track Trunk dE/dx
+	bool ApplyTrackTrunkdEdxCut(float trk_trunk_dEdx); 								
 
 };
 

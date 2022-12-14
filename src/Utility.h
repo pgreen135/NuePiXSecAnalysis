@@ -17,8 +17,11 @@ public:
 
 	// Function to check if point is within FV
 	bool inFV(const double x, const double y, const double z) const;
-	// ----------------------------------
 
+	// Function to check if track is exiting
+	bool isExiting(const double x, const double y, const double z) const;
+	
+	// ----------------------------------
 
 	// File types
 	enum FileTypeEnums{
@@ -56,6 +59,7 @@ public:
 		kNTrack,
 		kVertexInFV,
 		kContainedFraction,
+		kAssociatedHitsFraction,
 		kTopologicalScore,
 		kCosmicImpactParameter,
 		kShowerScore,
@@ -63,6 +67,7 @@ public:
 		kHitRatio,
 		kMoliereAverage,
 		kShowerEnergyRatio,
+		kSecondShowerEnergy,
 		kShowerdEdxMax,
 		kNeutralPionInvariantMass,
 		kTrackLength,
@@ -75,8 +80,12 @@ public:
 		kTrackBraggMu,
 		kLLRPID,
 		kTrackdEdx,
+		kTrackWiggliness,
 		kPi0InvMassDifference,
-		kTrackShowerAngle		
+		kTrackShowerAngle,
+		kNTrackDaughters,
+		kSecondShowerNHit,
+		kShowerLLRPID		
 	};
 
 }; 

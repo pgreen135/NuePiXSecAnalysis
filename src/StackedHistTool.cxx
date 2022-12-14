@@ -334,6 +334,9 @@ std::string StackedHistTool::PlotVariableEnum2str(Utility::PlotVariableEnums plo
   case Utility::kContainedFraction:
   	returnString = "Contained Fraction [Hits in FV / Hits in Slice]";
   	break;
+  case Utility::kAssociatedHitsFraction:
+    returnString = "Fraction of hits in slice associated with tracks or showers";
+    break;
   case Utility::kTopologicalScore:
   	returnString = "Pandora Topological Score";
   	break;
@@ -345,6 +348,9 @@ std::string StackedHistTool::PlotVariableEnum2str(Utility::PlotVariableEnums plo
   	break;
   case Utility::kShowerEnergy:
     returnString = "Shower Energy [GeV]";
+    break;
+  case Utility::kSecondShowerEnergy:
+    returnString = "Second Shower Energy [GeV]";
     break;
   case Utility::kHitRatio:
   	returnString = "Shower Hit Ratio";
@@ -382,6 +388,9 @@ std::string StackedHistTool::PlotVariableEnum2str(Utility::PlotVariableEnums plo
   case Utility::kTrackdEdx:
     returnString = "Track dE/dx [MeV/cm]";
     break;
+  case Utility::kTrackWiggliness:
+    returnString = "Track Average Deflections";
+    break;  
   case Utility::kTrackDistance:
     returnString = "Track Distance Vertex [cm]";
     break; 
@@ -396,7 +405,16 @@ std::string StackedHistTool::PlotVariableEnum2str(Utility::PlotVariableEnums plo
     break;
   case Utility::kTrackShowerAngle:
     returnString = "Track-Shower Opening Angle [deg]";
-    break;   		  	  	
+    break;
+  case Utility::kNTrackDaughters:
+    returnString = "Number of Track Daughters";
+    break;
+  case Utility::kSecondShowerNHit:
+    returnString = "Second Shower NHits";
+    break;
+  case Utility::kShowerLLRPID:
+    returnString = "Shower LLR PID Score";
+    break;       		  	  	
   default:
     std::cout << "[ERROR: StackedHistTool] Could not find string conversion for enum " << plotvariable << std::endl;
     returnString = "Unknown";
