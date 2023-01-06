@@ -22,7 +22,7 @@ bool Selection::ApplyPreSelection(const EventContainer &_evt, Utility::FileTypeE
 
 	if(!ApplySliceIDCut(_evt.nslice)) return false;									// slice ID
 	
-	if(!ApplyElectronPionCanidateCut(_evt.n_showers, _evt.n_tracks)) return false;	// electron + pion candidate
+	if(!ApplySignalCanidateCut(_evt.n_showers_contained, _evt.n_tracks_contained)) return false;	// electron + pion candidate
 	
 	if(!ApplyVertexFVCut(_evt.reco_nu_vtx_sce_x, _evt.reco_nu_vtx_sce_y, _evt.reco_nu_vtx_sce_z)) return false;	// neutrino vertex in fiducial volume
 	
@@ -40,9 +40,13 @@ bool Selection::ApplyReconstructionCompletenessCheck(const EventContainer &_evt)
 
 // ------------------------------------------------------------------------------
 
-bool Selection::ApplyElectronSelection(const EventContainer &_evt) {
+bool Selection::ApplyGoodShowerSelection(const EventContainer &_evt) {
+
+	if(!ApplyShowerEnergyCut(_evt.shr_energy_cali)) return false;					// shower energy
 
 	if(!ApplyShowerScoreCut(_evt.shr_score)) return false;							// shower score
+
+	if(!ApplyShowerSubclustersCut(_evt.shrsubclusters)) return false;				// number of shower subclusters
 
 	if(!ApplyShowerHitRatioCut(_evt.hits_ratio)) return false;						// shower hits ratio
 
@@ -51,33 +55,59 @@ bool Selection::ApplyElectronSelection(const EventContainer &_evt) {
 
 // ------------------------------------------------------------------------------
 
-bool Selection::ApplyPionSelection(EventContainer &_evt, Utility::FileTypeEnums type) {
+bool Selection::ApplyGoodTrackSelection(EventContainer &_evt, Utility::FileTypeEnums type) {
 
 	bool primaryTrackPasses = false;
 	bool secondaryTrackPasses = false;
+	bool tertiaryTrackPasses = false;
 
 	// primary track
-	if (ApplyTrackLengthCut(_evt.trk_len) && 
+	if (!_evt.hasSpuriousLeadingTrack &&
+		ApplyTrackLengthCut(_evt.trk_len) && 
 		ApplyTrackScoreCut(_evt.trk_score) &&
-		ApplyTrackVertexDistanceCut(_evt.trk_distance) &&
-		//ApplyTrackContainmentCut(_evt.trk_sce_end_x, _evt.trk_sce_end_y, _evt.trk_sce_end_z) &&
-		ApplyTrackShowerOpeningAngleCut(_evt.tksh_angle)) primaryTrackPasses = true;			  										// track length, score, distance, containment, track-shower opening angle
+		ApplyTrackContainmentCut(_evt.trk_sce_end_x, _evt.trk_sce_end_y, _evt.trk_sce_end_z) &&
+		ApplyTrackVertexDistanceCut(_evt.trk_distance)) primaryTrackPasses = true;  	// track length, score, distance, containment
 
-	// secondary track - not available for Run 1 Dirt, and tksh_angle not available 	
+	// secondary track - not available for Run 1 Dirt	
 	if (type == Utility::kMC || type == Utility::kEXT) {	
 		if (ApplyTrackLengthCut(_evt.trk2_len) && 
 			ApplyTrackScoreCut(_evt.trk2_score) &&
-			//ApplyTrackContainmentCut(_evt.trk2_sce_end_x, _evt.trk2_sce_end_y, _evt.trk2_sce_end_z) &&
+			ApplyTrackContainmentCut(_evt.trk2_sce_end_x, _evt.trk2_sce_end_y, _evt.trk2_sce_end_z) &&
 			ApplyTrackVertexDistanceCut(_evt.trk2_distance)) secondaryTrackPasses = true;		// track length, score, distance, containment
+	}
+
+	// tertiary track - only available in MC
+	if (type == Utility::kMC) {
+		if (ApplyTrackLengthCut(_evt.trk3_len) && 
+			ApplyTrackScoreCut(_evt.trk3_score) &&
+			ApplyTrackContainmentCut(_evt.trk3_sce_end_x, _evt.trk3_sce_end_y, _evt.trk3_sce_end_z) &&
+			ApplyTrackVertexDistanceCut(_evt.trk3_distance)) tertiaryTrackPasses = true;		// track length, score, distance, containment
 	}
 
 	// update selection status variables in event for use later
 	_evt.primaryTrackValid = primaryTrackPasses;
 	_evt.secondaryTrackValid = secondaryTrackPasses;
+	_evt.tertiaryTrackValid = tertiaryTrackPasses;
 
-	if (primaryTrackPasses || secondaryTrackPasses) return true;
+	if (primaryTrackPasses || secondaryTrackPasses || tertiaryTrackPasses) return true;
 	else return false;
 }
+
+// ------------------------------------------------------------------------------
+bool Selection::ApplyReconstructionFailureChecks(const EventContainer &_evt, Utility::FileTypeEnums type) { 
+
+	if (!ApplyTrackShowerOpeningAngleCut(_evt.tksh_angle)) return false;	// primary track-shower opening angle
+
+	if (type == Utility::kMC || type == Utility::kEXT) {	
+		if (!ApplyShrTrackFitCut(_evt.trkfit)) return false;				// shower track fit hits fraction
+    }
+
+    if (!ApplyShrTrackLengthCut(_evt.shr_trk_len)) return false;			// shower track fit length
+
+    if (!ApplyShowerCylFractionCut(_evt.CylFrac2h_1cm)) return false;		// leading shower 1cm cylinder energy fraction	
+
+	return true;
+} 
 
 // ------------------------------------------------------------------------------
 
@@ -94,15 +124,15 @@ bool Selection::ApplyCosmicRejection(const EventContainer &_evt) {
 
 bool Selection::ApplyNeutralPionRejection(const EventContainer &_evt){
 
-	if(!ApplyNeutralPionRejectionCut(_evt.shr_trkfit_gap10_dedx_max, _evt.shr_distance)) return false;		// neutral pion rejection: shower dE/dx and vertex separation
+	if(!ApplyNumberShowersCut(_evt.n_showers_contained)) return false; 	// number of showers
 
+	if(!ApplyNeutralPionRejectionCut(_evt.shr_trkfit_gap10_dedx_max, _evt.shr_distance)) return false;		// neutral pion rejection: shower dE/dx and vertex separation
+	
 	if(!ApplyMoliereAverageCut(_evt.shrmoliereavg)) return false;					// shower moliere average
 	
 	if(!ApplyLeadingShowerEnergyFractionCut(_evt.shr_energyFraction)) return false;	// leading shower energy fraction
 
-	if(!ApplySecondShowerClusterCut(_evt.secondshower_U_nhit, _evt.secondshower_V_nhit, _evt.secondshower_Y_nhit,
-							 		_evt.secondshower_U_vtxdist, _evt.secondshower_V_vtxdist, _evt.secondshower_Y_vtxdist,
-							 		_evt.secondshower_U_anglediff, _evt.secondshower_V_anglediff, _evt.secondshower_Y_anglediff)) return false; // second shower cluster tagger
+	if(!ApplySecondShowerClusterCut(_evt.secondshower_Y_nhit, _evt.secondshower_Y_vtxdist, _evt.secondshower_Y_anglediff)) return false; // second shower cluster tagger
 
 	return true;
 }
@@ -114,28 +144,54 @@ bool Selection::ApplyProtonRejection(EventContainer &_evt, Utility::FileTypeEnum
 	
 	bool primaryTrackPasses = false;
 	bool secondaryTrackPasses = false;
+	bool tertiaryTrackPasses = false;
 
-	// primary track - some variables only available for MC
+	// primary track - some variables only available for MC currently
 	if (_evt.primaryTrackValid) {
-		if (ApplyLLRPIDScoreCut(_evt.trk_llr_pid_score) &&
-	        ApplyTrackTrunkdEdxCut(_evt.trk_dEdx_trunk_max) 
-	        ) primaryTrackPasses = true;
+		if (ApplyLLRPIDScoreCut(_evt.trk_llr_pid_score)) {
+			if (type == Utility::kMC) {
+				if (ApplyTrackTrunkdEdxCut(_evt.trk_dEdx_trunk_max) &&
+				    ApplyTrackBraggPeakScoreCut(_evt.trk_bragg_mip_max, _evt.trk_bragg_pion_max)) primaryTrackPasses = true;
+				    
+			}
+			else primaryTrackPasses = true;
+		}   
 	}
 
-	// secondary track, not available for Dirt + some variables only available for MC
+	// secondary track, not available for Dirt + some variables only available for MC currently
 	if (_evt.secondaryTrackValid) {
 		if (type == Utility::kMC || type == Utility::kEXT) {
-			if (ApplyLLRPIDScoreCut(_evt.trk2_llr_pid_score) && 
-				ApplyTrackTrunkdEdxCut(_evt.trk2_dEdx_trunk_max) 
-				) secondaryTrackPasses = true;
+			if (ApplyLLRPIDScoreCut(_evt.trk2_llr_pid_score)) {
+				if (type == Utility::kMC) {
+						if (ApplyTrackTrunkdEdxCut(_evt.trk2_dEdx_trunk_max) &&
+					        ApplyTrackBraggPeakScoreCut(_evt.trk2_bragg_mip_max, _evt.trk2_bragg_pion_max)) secondaryTrackPasses = true;
+				}
+				else secondaryTrackPasses = true; 
+			}
 		}
+	}
+
+	// tertiary track, only available for MC currently
+	if (_evt.tertiaryTrackValid && type == Utility::kMC) {
+		if (ApplyLLRPIDScoreCut(_evt.trk3_llr_pid_score) &&
+			ApplyTrackTrunkdEdxCut(_evt.trk3_dEdx_trunk_max) &&
+			ApplyTrackBraggPeakScoreCut(_evt.trk3_bragg_mip_max, _evt.trk3_bragg_pion_max)) tertiaryTrackPasses = true;
 	}
 
 	// update selection status variables in event for use later
 	_evt.primaryTrackPionlike = primaryTrackPasses;
-	_evt.secondaryTrackPionlike = secondaryTrackPasses;	
-	
-	if (primaryTrackPasses || secondaryTrackPasses) return true;
+	_evt.secondaryTrackPionlike = secondaryTrackPasses;
+	_evt.tertiaryTrackPionlike = tertiaryTrackPasses;
+
+	// count number of tracks that pass
+	int nPass = 0;
+	if (primaryTrackPasses) nPass++;
+	if (secondaryTrackPasses) nPass++;
+	if (tertiaryTrackPasses) nPass++;	
+
+	// require 1 and only 1 charged pion candidate
+	//if (primaryTrackPasses || secondaryTrackPasses || tertiaryTrackPasses) return true;
+	if (nPass == 1) return true;
 	else return false;
 	
 }
@@ -166,7 +222,7 @@ bool Selection::ApplySliceIDCut(int nslice){
 }
 
 // Electron + Pion candidate: minimum 1 track and 1 shower
-bool Selection::ApplyElectronPionCanidateCut(int n_showers, int n_tracks){
+bool Selection::ApplySignalCanidateCut(int n_showers, int n_tracks){
 	if (n_tracks >= 1 && n_showers >= 1) return true;
 	else return false; 
 }
@@ -190,6 +246,12 @@ bool Selection::ApplyAssociatedHitsFractionCut(float associated_hits_fraction) {
 	else return false;
 }
 
+// Shower energy
+bool Selection::ApplyShowerEnergyCut(float shr_energy) {
+	if (shr_energy >= 0.07) return true;
+	else return false;
+}	
+
 // Shower score
 bool Selection::ApplyShowerScoreCut(float shr_score){
 	if (shr_score <= 0.1 && shr_score >= -0.1) return true; // >= -0.1  to check is defined, rather than default value
@@ -198,25 +260,37 @@ bool Selection::ApplyShowerScoreCut(float shr_score){
 
 // Shower hit ratio
 bool Selection::ApplyShowerHitRatioCut(float hits_ratio){
-	if (hits_ratio >= 0.5) return true;
+	if (hits_ratio >= 0.45) return true;
 	else return false;
 }
 
 // Pandora topological score
 bool Selection::ApplyTopologicalScoreCut(float topological_score){
-	if(topological_score > 0.4 || topological_score <= 0.01) return true;
+	if(topological_score > 0.2) return true;
 	else return false;
 }
 
 // Cosmic impact parameter
 bool Selection::ApplyCosmicImpactParameterCut(float CosmicIPAll3D) {
-	if (CosmicIPAll3D > 15) return true;
+	if (CosmicIPAll3D > 20) return true;
+	else return false;
+}
+
+// Number of showers
+bool Selection::ApplyNumberShowersCut(int n_showers_contained) {
+	if(n_showers_contained <= 2) return true;
 	else return false;
 }
 
 // Leading shower Moliere average
 bool Selection::ApplyMoliereAverageCut(float shrmoliereavg){
-	if(shrmoliereavg <= 10) return true;
+	if(shrmoliereavg > 1 && shrmoliereavg < 9) return true;
+	else return false;
+}
+
+// Leading shower subclusters 
+bool Selection::ApplyShowerSubclustersCut(unsigned int shrsubclusters) {
+	if(shrsubclusters >= 4) return true;
 	else return false;
 }
 
@@ -226,10 +300,16 @@ bool Selection::ApplyLeadingShowerEnergyFractionCut(float shr_energyFraction){
 	else return false;
 }
 
+// Leading shower fraction of energy in 1cm cylinder from shower center [see PeLEE]
+bool Selection::ApplyShowerCylFractionCut(float CylFrac2h_1cm) {
+	if(CylFrac2h_1cm > 0.01) return true;
+	else return false;	
+}
+
 // Neutral pion rejection: shower dE/dx and vertex distance
 // apply 2D cut
 bool Selection::ApplyNeutralPionRejectionCut(float dEdxMax, float shr_distance) {
-		
+	
 	if (dEdxMax <= 0) {
     	return false;
     }
@@ -249,7 +329,7 @@ bool Selection::ApplyNeutralPionRejectionCut(float dEdxMax, float shr_distance) 
         return false;
     }
     else if (dEdxMax >= 5){
-        if (shr_distance > 1 ) return false;
+        if (shr_distance > 1.0 ) return false;
         else return true;
     }
     else{
@@ -261,11 +341,7 @@ bool Selection::ApplyNeutralPionRejectionCut(float dEdxMax, float shr_distance) 
 // Neutral pion rejection: second shower tagger
 // To do: optimize
 // Only using Y plane - increased noise etc, causing issues with other planes
-bool Selection::ApplySecondShowerClusterCut(int secondshower_U_nhit, int secondshower_V_nhit, int secondshower_Y_nhit, 
-											float secondshower_U_vtxdist, float secondshower_V_vtxdist, float secondshower_Y_vtxdist, 
-											float secondshower_U_anglediff, float secondshower_V_anglediff, float secondshower_Y_anglediff) {
-	//if (secondshower_U_nhit > 25 && secondshower_U_vtxdist < 100 && secondshower_U_anglediff > 10 && secondshower_U_anglediff != 9999) return false;
-	//if (secondshower_V_nhit > 25 && secondshower_V_vtxdist < 100 && secondshower_V_anglediff > 10 && secondshower_V_anglediff != 9999) return false;
+bool Selection::ApplySecondShowerClusterCut(int secondshower_Y_nhit, float secondshower_Y_vtxdist, float secondshower_Y_anglediff) {
 	if (secondshower_Y_nhit > 25 && secondshower_Y_vtxdist < 100 && secondshower_Y_anglediff > 10 && secondshower_Y_anglediff != 9999) return false;
 	return true;
 }
@@ -284,7 +360,7 @@ bool Selection::ApplyTrackVertexDistanceCut(float trk_distance) {
 
 // Track Score
 bool Selection::ApplyTrackScoreCut(float trk_score) {
-	if(trk_score >= 0.7 && trk_score <= 1.1) return true;
+	if(trk_score >= 0.75 && trk_score <= 1.1) return true;
 	else return false;
 }
 
@@ -296,7 +372,7 @@ bool Selection::ApplyTrackContainmentCut(float trk_sce_end_x, float trk_sce_end_
 
 // Track Shower Opening Angle (remove back-to-back tracks)
 bool Selection::ApplyTrackShowerOpeningAngleCut(float tksh_angle) {
-	if(std::acos(tksh_angle) * 180 / 3.14159 < 160) return true;
+	if(tksh_angle < 160) return true;
 	else return false;
 }
 
@@ -306,24 +382,29 @@ bool Selection::ApplyLLRPIDScoreCut(float trk_llr_pid_score) {
 	else return false;
 }
 
-// Proton Bragg Peak Score
-bool Selection::ApplyProtonBraggPeakScoreCut(float trk_bragg_p) {
-	if(trk_bragg_p <= 0.225) return true;
-	else return false;
-}
-
-// Pion Bragg Peak Score
-bool Selection::ApplyPionBraggPeakScoreCut(float trk_bragg_pion) {
-	if(trk_bragg_pion >= 0.225) return true;
-	else return false;
-}
-
 // Track Trunk dE/dx
 bool Selection::ApplyTrackTrunkdEdxCut(float trk_dEdx_trunk) {
-	if(trk_dEdx_trunk <= 3.5 || trk_dEdx_trunk == 9999) return true;
+	if(trk_dEdx_trunk <= 3.6 || trk_dEdx_trunk == 9999) return true;
 	else return false;
-}		
+}
 
+// Track Bragg Peak Score
+bool Selection::ApplyTrackBraggPeakScoreCut(float trk_bragg_mip, float trk_bragg_pion) {
+	if (trk_bragg_mip < 0.1 && trk_bragg_pion < 0.6) return false;
+	else return true;
+}
+
+// Shower Track Fit
+bool Selection::ApplyShrTrackFitCut(float trkfit) {
+	if (trkfit < 0.45) return true;
+	else return false;
+}
+
+// Shower Track Fit Length
+bool Selection::ApplyShrTrackLengthCut(float shr_trk_len) {
+	if (shr_trk_len <= 300) return true;
+	else return false;
+}
 
 
 

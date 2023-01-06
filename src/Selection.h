@@ -22,10 +22,11 @@ public:
 	bool ApplyReconstructionCompletenessCheck(const EventContainer &_evt);
 
 	// Candidate Identification
-	bool ApplyElectronSelection(const EventContainer &_evt);
-	bool ApplyPionSelection(EventContainer &_evt, Utility::FileTypeEnums type);
+	bool ApplyGoodShowerSelection(const EventContainer &_evt);
+	bool ApplyGoodTrackSelection(EventContainer &_evt, Utility::FileTypeEnums type);
 
 	// Background rejection
+	bool ApplyReconstructionFailureChecks(const EventContainer &_evt, Utility::FileTypeEnums type);
 	bool ApplyCosmicRejection(const EventContainer &_evt);
 	bool ApplyNeutralPionRejection(const EventContainer &_evt);
 	bool ApplyProtonRejection(EventContainer &_evt, Utility::FileTypeEnums type);
@@ -48,7 +49,7 @@ protected:
 	bool ApplySliceIDCut(int nslice);
 
 	// Electron + Pion candidate cut
-	bool ApplyElectronPionCanidateCut(int n_showers, int n_tracks);
+	bool ApplySignalCanidateCut(int n_showers, int n_tracks);
 
 	// Vertex within fiducial volume
 	bool ApplyVertexFVCut(float reco_nu_vtx_sce_x, float reco_nu_vtx_sce_y, float reco_nu_vtx_sce_z);
@@ -58,6 +59,9 @@ protected:
 
 	// Fraction of hits associated with tracks and showers
 	bool ApplyAssociatedHitsFractionCut(float associated_hits_fraction);
+
+	// Leading shower energy
+	bool ApplyShowerEnergyCut(float shr_energy);
 
 	// Leading shower score
 	bool ApplyShowerScoreCut(float shr_score);
@@ -74,16 +78,23 @@ protected:
 	// Leading shower Moliere average
 	bool ApplyMoliereAverageCut(float shrmoliereavg);
 
+	// Leading shower subclusters 
+	bool ApplyShowerSubclustersCut(unsigned int shrsubclusters);
+
 	// Leading shower energy fraction
 	bool ApplyLeadingShowerEnergyFractionCut(float shr_energyFraction);
 
+	// Leading shower fraction of energy in 1cm cylinder from shower center [see PeLEE]
+	bool ApplyShowerCylFractionCut(float CylFrac2h_1cm);
+
+	// Number of showers
+    bool ApplyNumberShowersCut(int n_showers_contained);
+	
 	// Neutral pion rejection: dE/dx and vertex distance	
 	bool ApplyNeutralPionRejectionCut(float dEdxMax, float shr_distance);
 
 	// Neutral pion rejection: second shower tagger
-	bool ApplySecondShowerClusterCut(int secondshower_U_nhit, int secondshower_V_nhit, int secondshower_Y_nhit, 
-							  		 float secondshower_U_vtxdist, float secondshower_V_vtxdist, float secondshower_Y_vtxdist, 
-							  		 float secondshower_U_anglediff, float secondshower_V_anglediff, float secondshower_Y_anglediff);
+	bool ApplySecondShowerClusterCut(int secondshower_Y_nhit, float secondshower_Y_vtxdist, float secondshower_Y_anglediff);
 
 	// Track Length
 	bool ApplyTrackLengthCut(float trk_len);
@@ -103,14 +114,17 @@ protected:
 	// LLR PID Score
 	bool ApplyLLRPIDScoreCut(float trk_llr_pid_score);
 
-	// Proton Bragg peak score
-	bool ApplyProtonBraggPeakScoreCut(float trk_bragg_p);
-
-	// Pion Bragg Peak Score
-	bool ApplyPionBraggPeakScoreCut(float trk_bragg_pion);
-
 	// Track Trunk dE/dx
-	bool ApplyTrackTrunkdEdxCut(float trk_trunk_dEdx); 								
+	bool ApplyTrackTrunkdEdxCut(float trk_trunk_dEdx);
+
+	// Track Bragg Peak Score
+	bool ApplyTrackBraggPeakScoreCut(float trk_bragg_mip, float trk_bragg_pion); 
+
+	// Shower Track Fit
+	bool ApplyShrTrackFitCut(float trkfit);	
+
+	// Shower Track Fit Length
+	bool ApplyShrTrackLengthCut(float shr_trk_len);							
 
 };
 

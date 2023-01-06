@@ -287,7 +287,7 @@ std::string StackedHistTool::topologyenum2str(Utility::ClassificationEnums topol
     returnString = "NC #pi^{0}";
     break;
   case Utility::kCosmic:
-    returnString = "Cosmic";
+    returnString = "Cosmic-Cont.";
     break;
   case Utility::kOutFV:
     returnString = "Out of FV";

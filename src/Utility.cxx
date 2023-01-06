@@ -38,13 +38,12 @@ bool Utility::inFV(const double x, const double y, const double z) const {
 }
 
 // Function to check whether a track is exiting
-// Same definition as FV, except without buffer in Z
-// i.e. requirement on track start is more strict
+// Currently same definition as FV, but could be altered
 bool Utility::isExiting(const double x, const double y, const double z) const {
-	// 10cm 
+	// NTuples definition
 	if ( x   >= 10 && x <= 246
-		 && y   >= -106 && y <= 106
-	  	 && z   >= 10 && z <= 1026  ) {
+		 && y   >= -101 && y <= 101
+	  	 && z   >= 10 && z <= 986  ) {
 	  	return true;
 	}
 	else return false;
