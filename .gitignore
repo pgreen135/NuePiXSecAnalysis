@@ -6,5 +6,5 @@
 *.png
 *.pid
 AnalyzeNue
-bin
+build
 .DS_Store

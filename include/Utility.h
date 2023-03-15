@@ -25,16 +25,24 @@ public:
 
 	// File types
 	enum FileTypeEnums{
+		kIntrinsic,
 		kMC,
 		kEXT,
 		kDirt
 	};
 
+	// Run periods
+	enum RunPeriodEnums {
+		kRun1,
+		kRun3b,
+	};
+
 	// Event classification enums
 	enum ClassificationEnums {
-		//kCCNue1pi,
 		kCCNue1pi0p,
 		kCCNue1piNp,
+		//kCCNueBar1pi0p,
+		//kCCNueBar1piNp,
 		kCCNueNpi,
 		kCCNuepizero,
 		kCCNue1p,

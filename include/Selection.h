@@ -3,8 +3,9 @@
 
 // class containing selection cuts and tools to run selection on an event
 
-#include "Utility.h"
-#include "EventContainer.h"
+#include "../include/Utility.h"
+#include "../include/EventContainer.h"
+#include "../include/BDTTool.h"
 
 class Selection {
 
@@ -18,7 +19,7 @@ public:
 
 	// Selection
 	// Pre-selection
-	bool ApplyPreSelection(const EventContainer &_evt, Utility::FileTypeEnums type);
+	bool ApplyPreSelection(const EventContainer &_evt, Utility::FileTypeEnums type, Utility::RunPeriodEnums runPeriod);
 	bool ApplyReconstructionCompletenessCheck(const EventContainer &_evt);
 
 	// Candidate Identification
@@ -29,6 +30,7 @@ public:
 	bool ApplyReconstructionFailureChecks(const EventContainer &_evt, Utility::FileTypeEnums type);
 	bool ApplyCosmicRejection(const EventContainer &_evt);
 	bool ApplyNeutralPionRejection(const EventContainer &_evt);
+	bool ApplyNeutralPionRejectionBDT(EventContainer &_evt, const BDTTool &_bdt);
 	bool ApplyProtonRejection(EventContainer &_evt, Utility::FileTypeEnums type);
 	
 	// ----------------------------------
@@ -95,6 +97,12 @@ protected:
 
 	// Neutral pion rejection: second shower tagger
 	bool ApplySecondShowerClusterCut(int secondshower_Y_nhit, float secondshower_Y_vtxdist, float secondshower_Y_anglediff);
+
+	// Neutral pion rejection: loose cuts
+	bool ApplyLooseNeutralPionRejection(int n_showers_contained, float shr_energyFraction, float shr_distance);
+
+	// Neutral pion rejection: BDT
+	bool ApplyElectronPhotonBDTCut(float bdtscore_electronPhoton);
 
 	// Track Length
 	bool ApplyTrackLengthCut(float trk_len);

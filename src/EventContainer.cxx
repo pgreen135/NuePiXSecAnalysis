@@ -1,4 +1,4 @@
-#include "EventContainer.h"
+#include "../include/EventContainer.h"
 
 #include <iostream>
 #include <algorithm>
@@ -75,6 +75,7 @@ EventContainer::EventContainer(TTree *tree, const Utility &utility): _utility{ u
 
     tree->SetBranchAddress("shr_id", &shr_id);
     tree->SetBranchAddress("shr2_id", &shr2_id);
+    tree->SetBranchAddress("shr3_id", &shr3_id);
     tree->SetBranchAddress("shr_distance", &shr_distance);
     tree->SetBranchAddress("shr_score", &shr_score);
     tree->SetBranchAddress("shr_energy_cali", &shr_energy_cali);
@@ -112,6 +113,14 @@ EventContainer::EventContainer(TTree *tree, const Utility &utility): _utility{ u
     tree->SetBranchAddress("shr_tkfit_gap10_nhits_V", &shr_tkfit_gap10_nhits_V);
     tree->SetBranchAddress("shr_tkfit_gap10_nhits_U", &shr_tkfit_gap10_nhits_U);
 
+    tree->SetBranchAddress("shr_tkfit_2cm_dedx_Y", &shr_tkfit_2cm_dedx_Y);
+    tree->SetBranchAddress("shr_tkfit_2cm_dedx_V", &shr_tkfit_2cm_dedx_V);
+    tree->SetBranchAddress("shr_tkfit_2cm_dedx_U", &shr_tkfit_2cm_dedx_U);
+
+    tree->SetBranchAddress("shr_tkfit_2cm_nhits_Y", &shr_tkfit_2cm_nhits_Y);
+    tree->SetBranchAddress("shr_tkfit_2cm_nhits_V", &shr_tkfit_2cm_nhits_V);
+    tree->SetBranchAddress("shr_tkfit_2cm_nhits_U", &shr_tkfit_2cm_nhits_U);
+
     tree->SetBranchAddress("shrclusdir0", &shrclusdir0);
     tree->SetBranchAddress("shrclusdir1", &shrclusdir1);
     tree->SetBranchAddress("shrclusdir2", &shrclusdir2);
@@ -121,6 +130,7 @@ EventContainer::EventContainer(TTree *tree, const Utility &utility): _utility{ u
     tree->SetBranchAddress("shrsubclusters2", &shrsubclusters2);
 
     tree->SetBranchAddress("shrPCA1CMed_5cm", &shrPCA1CMed_5cm);
+    tree->SetBranchAddress("CylFrac1h_1cm", &CylFrac1h_1cm);
     tree->SetBranchAddress("CylFrac2h_1cm", &CylFrac2h_1cm);
 
     tree->SetBranchAddress("secondshower_U_nhit", &secondshower_U_nhit);
@@ -223,21 +233,18 @@ EventContainer::EventContainer(TTree *tree, const Utility &utility): _utility{ u
     tree->SetBranchAddress("trk_trunk_dEdx_v_v",	&trk_trunk_dEdx_v_v);
     tree->SetBranchAddress("trk_trunk_dEdx_y_v",	&trk_trunk_dEdx_y_v);
 
-    // track deflections
-    tree->SetBranchAddress("trk_avg_deflection_mean_v",		&trk_avg_deflection_mean_v);
-    tree->SetBranchAddress("trk_avg_deflection_stdev_v",	&trk_avg_deflection_stdev_v);
-    tree->SetBranchAddress("trk_avg_deflection_separation_mean_v",	&trk_avg_deflection_separation_mean_v);  
+}
 
-    // track end spacepoints
-    tree->SetBranchAddress("trk_end_spacepoints_v",		&trk_end_spacepoints_v);
-            
+// Destructor
+EventContainer::~EventContainer(){
+	
 }
 
 // Function to classify the event
 void EventContainer::EventClassifier(Utility::FileTypeEnums type){
 
 	// --- MC classification --
-	if (type == Utility::kMC) {
+	if (type == Utility::kMC || type == Utility::kIntrinsic) {
 		// identify cosmic / cosmic contaminated events
 		// check fraction of hits that are not matched to neutrino
 		if (nu_purity_from_pfp <= 0.5) {
@@ -286,12 +293,16 @@ void EventContainer::EventClassifier(Utility::FileTypeEnums type){
 						// check number of protons
 						if (nproton >= 1) {
 							// classify as CC nue 1pi Np
+							//if (nu_pdg == 12) 
 							classification = Utility::kCCNue1piNp;
+							//else classification = Utility::kCCNueBar1piNp;
 							return;	
 						}
 						else {
 							// classify as CC nue 1pi 0p
+							//if (nu_pdg == 12) 
 							classification = Utility::kCCNue1pi0p;
+							//else classification = Utility::kCCNueBar1pi0p;
 							return;	
 						}
 						
@@ -380,16 +391,31 @@ void EventContainer::applyEventRecoveryAlgorithms(Utility::FileTypeEnums type) {
 
 // Failure mode #1: split showers
 void EventContainer::failureRecoverySplitShowers() {
-	
-	// identify events with failure
+
+	bool shr2Split = false;
+
+	// identify events with failure: secondary shower
 	if (n_tracks_contained > 0 && n_showers_contained > 1 && shr_score <= 0.1 && shrsubclusters >= 4 && shr12_p1_dstart < 20 && tk1sh2_distance > 60 && tk1sh2_distance != 9999) {
+		
+		hasSplitPrimaryShower = true;
+		
+		// update event ntuple variables
+		n_showers_contained--;
+		shrsubclusters += shr2subclusters;
+		if (shr1shr2moliereavg > 0) shrmoliereavg = shr1shr2moliereavg;
+		if (shr2_energy != 9999) shr_energy_cali += shr2_energy;
+
+	}
+
+	// identify events with failure: tertiary shower
+	if (n_tracks_contained > 0 && n_showers_contained > 1 && shr_score <= 0.1 && shrsubclusters >= 4 && shr13_p1_dstart < 20 && tk1sh3_distance > 60 && tk1sh3_distance != 9999) {
 		
 		hasSplitPrimaryShower = true;
 
 		// update event ntuple variables
 		n_showers_contained--;
-		shrsubclusters += shr2subclusters;
-		if (shr1shr2moliereavg > 0) shrmoliereavg = shr1shr2moliereavg;
+		shrsubclusters += shr3subclusters;
+		if (shr3_energy != 9999) shr_energy_cali += shr3_energy;
 
 	}
 }
@@ -476,7 +502,7 @@ void EventContainer::populateDerivedVariables(Utility::FileTypeEnums type){
 	}
 
 	// Shower dE/dx
-	GetdEdxMax(false);	// standard
+	GetdEdxMax(false);	// first 2cm only 
 	GetdEdxMax(true); 	// with 10mm gap from start
  
 	// Primary track information
@@ -494,33 +520,16 @@ void EventContainer::populateDerivedVariables(Utility::FileTypeEnums type){
         trk_dir_x = trk_dir_x_v->at(trk_id-1);
         trk_dir_y = trk_dir_y_v->at(trk_id-1);  	
         trk_dir_z = trk_dir_z_v->at(trk_id-1);
-
-		if (type == Utility::kMC) {
-			trk_avg_deflection_mean = trk_avg_deflection_mean_v->at(trk_id-1)*180/3.1415;			// wiggliness, mean
-			trk_avg_deflection_stdev = trk_avg_deflection_stdev_v->at(trk_id-1)*180/3.1415;			// wiggliness, stdev
-			trk_avg_deflection_separation_mean = trk_avg_deflection_separation_mean_v->at(trk_id-1); // wiggliness, spacepoint separations
-			trk_end_spacepoints = trk_end_spacepoints_v->at(trk_id-1); // daughter spacepoints
-		}
-		else {
-			trk_avg_deflection_mean = 9999;
-			trk_avg_deflection_stdev = 9999;
-			trk_avg_deflection_separation_mean = 9999;
-			trk_end_spacepoints = 9999;
-		}
 	}
 	else {
 		trk_llr_pid_score = 9999;
 		trk_daughters = 9999;
-		trk_avg_deflection_mean = 9999;
-		trk_avg_deflection_stdev = 9999;
-		trk_avg_deflection_separation_mean = 9999;
 		trk_start_x = 9999;
 		trk_start_y = 9999;
 		trk_start_z = 9999;
 		trk_sce_end_x = 9999;
 		trk_sce_end_y = 9999;
 		trk_sce_end_z = 9999;
-		trk_end_spacepoints = 9999;
 		trk_dir_x = 9999;
 		trk_dir_y = 9999;
 		trk_dir_z = 9999;
@@ -528,7 +537,7 @@ void EventContainer::populateDerivedVariables(Utility::FileTypeEnums type){
 
 	// Secondary track information
 	if (trk2_id < trk_sce_start_x_v->size() && trk2_id != 0) {
-
+		
 		trk2_bragg_p = trk_bragg_p_v->at(trk2_id-1); 				// Bragg Proton
 		trk2_bragg_mu = trk_bragg_mu_v->at(trk2_id-1); 				// Bragg Muon
 		trk2_bragg_mip = trk_bragg_mip_v->at(trk2_id-1); 			// Bragg MIP
@@ -555,21 +564,9 @@ void EventContainer::populateDerivedVariables(Utility::FileTypeEnums type){
         trk2subclusters0 = pfpplanesubclusters_U_v->at(trk2_id-1);
         trk2subclusters1 = pfpplanesubclusters_V_v->at(trk2_id-1);
         trk2subclusters2 = pfpplanesubclusters_Y_v->at(trk2_id-1);
-
-		if (type == Utility::kMC) {
-			trk2_bragg_pion = trk_bragg_pion_v->at(trk2_id-1); 									// Bragg Pion
-			trk2_avg_deflection_mean = trk_avg_deflection_mean_v->at(trk2_id-1)*180/3.1415;		// wiggliness, mean
-			trk2_avg_deflection_stdev = trk_avg_deflection_stdev_v->at(trk2_id-1)*180/3.1415;	// wiggliness, stdev
-			trk2_end_spacepoints = trk_end_spacepoints_v->at(trk2_id-1); // daughter spacepoints
-			trk2_bkt_pdg = backtracked_pdg_v->at(trk2_id-1);			// Backtracked PDG
-		}
-		else {
-			trk2_bragg_pion = 9999;
-			trk2_avg_deflection_mean = 9999;
-			trk2_avg_deflection_stdev = 9999;
-			trk2_bkt_pdg = 9999;
-			trk2_end_spacepoints = 9999;
-		}
+		trk2_bragg_pion = trk_bragg_pion_v->at(trk2_id-1); 			// Bragg Pion
+		if (type != Utility::kEXT) trk2_bkt_pdg = backtracked_pdg_v->at(trk2_id-1);			// Backtracked PDG
+		else trk2_bkt_pdg = 9999;
 	}
 	else {
 		trk2_len = 0;
@@ -581,8 +578,6 @@ void EventContainer::populateDerivedVariables(Utility::FileTypeEnums type){
 		trk2_bragg_mip = 9999;
 		trk2_llr_pid_score = 9999;
 		trk2_daughters = 9999;
-		trk2_avg_deflection_mean = 9999;
-		trk2_avg_deflection_stdev = 9999; 
 		trk2_bkt_pdg = 9999;
 		trk2_start_x = 9999;
 		trk2_start_y = 9999;
@@ -590,7 +585,6 @@ void EventContainer::populateDerivedVariables(Utility::FileTypeEnums type){
 		trk2_sce_end_x = 9999;
 		trk2_sce_end_y = 9999;
 		trk2_sce_end_z = 9999;
-		trk2_end_spacepoints = 9999;
 		trk2_dir_x = 9999;
 		trk2_dir_y = 9999;
 		trk2_dir_z = 9999;
@@ -606,7 +600,7 @@ void EventContainer::populateDerivedVariables(Utility::FileTypeEnums type){
 	}
 
 	// tertiary track information
-	if (type == Utility::kMC && trk3_id < trk_sce_start_x_v->size() && trk3_id != 0) {
+	if (trk3_id < trk_sce_start_x_v->size() && trk3_id != 0) {
 
 		trk3_bragg_p = trk_bragg_p_v->at(trk3_id-1); 				// Bragg Proton
 		trk3_bragg_mu = trk_bragg_mu_v->at(trk3_id-1); 				// Bragg Muon
@@ -619,12 +613,9 @@ void EventContainer::populateDerivedVariables(Utility::FileTypeEnums type){
 		trk3_sce_end_x = trk_sce_end_x_v->at(trk3_id-1); 			// Track end
         trk3_sce_end_y = trk_sce_end_y_v->at(trk3_id-1); 			// Track end
         trk3_sce_end_z = trk_sce_end_z_v->at(trk3_id-1); 			// Track end
-
 		trk3_bragg_pion = trk_bragg_pion_v->at(trk3_id-1); 									// Bragg Pion
-		trk3_avg_deflection_mean = trk_avg_deflection_mean_v->at(trk3_id-1)*180/3.1415;		// wiggliness, mean
-		trk3_avg_deflection_stdev = trk_avg_deflection_stdev_v->at(trk3_id-1)*180/3.1415;	// wiggliness, stdev
-		trk3_end_spacepoints = trk_end_spacepoints_v->at(trk3_id-1); // daughter spacepoints
-		trk3_bkt_pdg = backtracked_pdg_v->at(trk3_id-1);			// Backtracked PDG
+		if (type != Utility::kEXT) trk3_bkt_pdg = backtracked_pdg_v->at(trk3_id-1);			// Backtracked PDG
+		else trk3_bkt_pdg = 9999;
 	}
 	else {
 		trk3_len = 0;
@@ -636,19 +627,16 @@ void EventContainer::populateDerivedVariables(Utility::FileTypeEnums type){
 		trk3_bragg_mip = 9999;
 		trk3_llr_pid_score = 9999;
 		trk3_daughters = 9999;
-		trk3_avg_deflection_mean = 9999;
-		trk3_avg_deflection_stdev = 9999; 
 		trk3_bkt_pdg = 9999;
 		trk3_sce_end_x = 9999;
 		trk3_sce_end_y = 9999;
 		trk3_sce_end_z = 9999;
-		trk3_end_spacepoints = 9999;
 	}
 
 
 	// track PID variables, best plane 
 	// primary track
-	if (type == Utility::kMC && trk_id < trk_sce_start_x_v->size() && trk_id != 0) {
+	if (trk_id < trk_sce_start_x_v->size() && trk_id != 0) {
 		trk_dEdx_trunk_max = GetTrackTrunkdEdxBestPlane(trk_id);
 		trk_bragg_pion_max = GetTrackBraggPionBestPlane(trk_id);
 		trk_bragg_mip_max = GetTrackBraggMIPBestPlane(trk_id);
@@ -659,7 +647,7 @@ void EventContainer::populateDerivedVariables(Utility::FileTypeEnums type){
 		trk_bragg_mip_max = 9999;
 	}
 	// secondary track
-	if (type == Utility::kMC && trk2_id < trk_sce_start_x_v->size() && trk2_id != 0) {
+	if (trk2_id < trk_sce_start_x_v->size() && trk2_id != 0) {
 		trk2_dEdx_trunk_max = GetTrackTrunkdEdxBestPlane(trk2_id);
 		trk2_bragg_pion_max = GetTrackBraggPionBestPlane(trk2_id);
 		trk2_bragg_mip_max = GetTrackBraggMIPBestPlane(trk2_id);
@@ -670,7 +658,7 @@ void EventContainer::populateDerivedVariables(Utility::FileTypeEnums type){
 		trk2_bragg_mip_max = 9999;
 	}
 	// tertiary track
-	if (type == Utility::kMC && trk3_id < trk_sce_start_x_v->size() && trk3_id != 0) {
+	if (trk3_id < trk_sce_start_x_v->size() && trk3_id != 0) {
 		trk3_dEdx_trunk_max = GetTrackTrunkdEdxBestPlane(trk3_id);
 		trk3_bragg_pion_max = GetTrackBraggPionBestPlane(trk3_id);
 		trk3_bragg_mip_max = GetTrackBraggMIPBestPlane(trk3_id);
@@ -735,6 +723,23 @@ void EventContainer::populateDerivedVariables(Utility::FileTypeEnums type){
     	shr2pid = 9999;
     }
 
+    // Tertiary shower information
+    if (shr3_id < shr_start_x_v->size() && shr3_id != 0) {
+    	shr3_energy = shr_energy_y_v->at(shr3_id-1)/1000;	// shower energy, in GeV
+    	shr3_start_x = shr_start_x_v->at(shr3_id-1);
+    	shr3_start_y = shr_start_y_v->at(shr3_id-1);
+    	shr3_start_z = shr_start_z_v->at(shr3_id-1);
+    	shr3subclusters = pfpplanesubclusters_U_v->at(shr3_id-1) + pfpplanesubclusters_V_v->at(shr3_id-1) + pfpplanesubclusters_Y_v->at(shr3_id-1);	
+    }
+    else {
+    	shr3_energy = 9999;
+    	shr3_start_x = 9999;
+    	shr3_start_y = 9999;
+    	shr3_start_z = 9999;
+    	shr3subclusters = 9999;
+    }
+    
+
     // convert tksh angle
     tksh_angle = std::acos(tksh_angle) * 180 / 3.14159;
 
@@ -747,12 +752,29 @@ void EventContainer::populateDerivedVariables(Utility::FileTypeEnums type){
 	}
 	else shr12_p1_dstart = 9999;
 
+	// Tertiary shower opening angle
+	if (n_showers > 1 && shr_dir_x != 9999 && shr3_start_x != 9999) {
+
+    	TVector3 showerDir(shr_dir_x, shr_dir_y, shr_dir_z);
+    	TVector3 shower13StartDist(shr3_start_x - shr_start_x, shr3_start_y - shr_start_y, shr3_start_z - shr_start_z);
+    	shr13_p1_dstart = showerDir.Angle(shower13StartDist) * 180 / 3.14159;
+	}
+	else shr13_p1_dstart = 9999;	
+
 	// second shower distance from primary track
 	if (n_showers_contained > 1 && n_tracks_contained > 0 && trk_start_x != 9999 & shr2_start_x != 9999) {
 		tk1sh2_distance = std::sqrt( std::pow(shr2_start_x - trk_start_x, 2) + std::pow(shr2_start_y - trk_start_y, 2) + std::pow(shr2_start_z - trk_start_z, 2) );
 	}
 	else {
 		tk1sh2_distance = 9999;
+	}
+
+	// tertiary shower distance from primary track
+	if (n_showers_contained > 1 && n_tracks_contained > 0 && trk_start_x != 9999 & shr3_start_x != 9999) {
+		tk1sh3_distance = std::sqrt( std::pow(shr3_start_x - trk_start_x, 2) + std::pow(shr3_start_y - trk_start_y, 2) + std::pow(shr3_start_z - trk_start_z, 2) );
+	}
+	else {
+		tk1sh3_distance = 9999;
 	}
 
 	// distance between primary track and secondary track
@@ -817,9 +839,6 @@ void EventContainer::populateDerivedVariables(Utility::FileTypeEnums type){
 	primaryTrackPionlike = false;
 	secondaryTrackPionlike = false;
 
-    // neutral pion invariant mass difference
-   	//if (n_showers > 1) neutralPionInvariantMassDifference = std::abs(pi0_mass_U - 134.9768);
-   	//else neutralPionInvariantMassDifference = 999; 
 }
 
 // get shower dE/dx on plane with the most hits
@@ -842,12 +861,12 @@ void EventContainer::GetdEdxMax(bool includeGap = false) {
 		temp_shr_tkfit_dedx_Y = shr_tkfit_gap10_dedx_Y;
 	}
 	else {
-		temp_shr_hits_u_tot = shr_tkfit_nhits_U;
-    	temp_shr_hits_v_tot = shr_tkfit_nhits_V;
-    	temp_shr_hits_y_tot = shr_tkfit_nhits_Y;
-		temp_shr_tkfit_dedx_U = shr_tkfit_dedx_U;
-		temp_shr_tkfit_dedx_V = shr_tkfit_dedx_V;
-		temp_shr_tkfit_dedx_Y = shr_tkfit_dedx_Y;   
+		temp_shr_hits_u_tot = shr_tkfit_2cm_nhits_U;
+    	temp_shr_hits_v_tot = shr_tkfit_2cm_nhits_V;
+    	temp_shr_hits_y_tot = shr_tkfit_2cm_nhits_Y;
+		temp_shr_tkfit_dedx_U = shr_tkfit_2cm_dedx_U;
+		temp_shr_tkfit_dedx_V = shr_tkfit_2cm_dedx_V;
+		temp_shr_tkfit_dedx_Y = shr_tkfit_2cm_dedx_Y;   
 	}
 	// If the dedx is undefined, set the hits to zero
     if (temp_shr_tkfit_dedx_U <= 0) temp_shr_hits_u_tot = 0;
@@ -889,7 +908,7 @@ void EventContainer::GetdEdxMax(bool includeGap = false) {
 
     // set variable
     if (includeGap) shr_trkfit_gap10_dedx_max = temp_shr_trkfit_dedx_max;
-    else shr_trkfit_dedx_max = temp_shr_trkfit_dedx_max;
+    else shr_trkfit_2cm_dedx_max = temp_shr_trkfit_dedx_max;
 
 }
 
@@ -1041,3 +1060,8 @@ float EventContainer::GetTrackBraggMIPBestPlane(unsigned int trackID) {
 	}
 	else return 9999;
 }
+
+
+
+
+

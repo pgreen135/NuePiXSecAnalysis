@@ -1,4 +1,4 @@
-#include "StackedHistTool.h"
+#include "../include/StackedHistTool.h"
 
 // -------------------------- Constructor -------------------------- //
 // Intended to be very general so you can make histograms of whatever you like

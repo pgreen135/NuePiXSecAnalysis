@@ -10,7 +10,7 @@
 #include <TTree.h>
 #include <TVector3.h>
 
-#include "Utility.h"
+#include "../include/Utility.h"
 
 class EventContainer {
 
@@ -22,7 +22,7 @@ public:
 	EventContainer(TTree *tree, const Utility &utility);
 
 	// Destructor
-	~EventContainer(){};
+	~EventContainer();
 
 	// Functions to classify the event
 	void  EventClassifier(Utility::FileTypeEnums type);
@@ -43,8 +43,7 @@ public:
 	float GetTrackTrunkdEdxBestPlane(unsigned int trackID);
 	float GetTrackBraggPionBestPlane(unsigned int trackID);
 	float GetTrackBraggMIPBestPlane(unsigned int trackID);
-    
-    
+ 
     // ----------------------------------
 
     // --- Utility ---
@@ -67,6 +66,10 @@ public:
     bool primaryTrackPionlike;
     bool secondaryTrackPionlike;
     bool tertiaryTrackPionlike;
+
+    // --- BDT Scores ---
+    double BDTScoreElectronPhoton;
+    double BDTScoreProtonPion;
 
 	// --- Event information ---
 	int run, sub, evt;			// run, subrun, event numbers
@@ -189,6 +192,10 @@ public:
     unsigned int shr_tkfit_gap10_nhits_V;   // Reco - shower: number of hits in the 1x4 cm box on the V plane with the track fitting, gap 10mm from start
     unsigned int shr_tkfit_gap10_nhits_U;   // Reco - shower: number of hits in the 1x4 cm box on the U plane with the track fitting, gap 10mm from start
 
+    unsigned int shr_tkfit_2cm_nhits_Y;   // Reco - shower: number of hits in the 1x2 cm box on the Y plane with the track fitting, first 2cm only 
+    unsigned int shr_tkfit_2cm_nhits_V;   // Reco - shower: number of hits in the 1x2 cm box on the V plane with the track fitting, first 2cm only
+    unsigned int shr_tkfit_2cm_nhits_U;   // Reco - shower: number of hits in the 1x2 cm box on the U plane with the track fitting, first 2cm only
+
     unsigned int trk2_tkfit_nhits_u;
     unsigned int trk2_tkfit_nhits_v;
     unsigned int trk2_tkfit_nhits_y;
@@ -208,6 +215,11 @@ public:
     float shr_tkfit_gap10_dedx_U;      // Reco - shower: dE/dx of the leading shower on the U plane with the track fitting, gap 10mm from vertex
     float shr_trkfit_gap10_dedx_max;   // Reco - shower: dE/dx of the leading shower on plane with the most hits (derived variable), gap 10mm from vertex
 
+    float shr_tkfit_2cm_dedx_Y;      // Reco - shower: dE/dx of the leading shower on the Y plane with the track fitting, first 2cm only 
+    float shr_tkfit_2cm_dedx_V;      // Reco - shower: dE/dx of the leading shower on the V plane with the track fitting, first 2cm only
+    float shr_tkfit_2cm_dedx_U;      // Reco - shower: dE/dx of the leading shower on the U plane with the track fitting, first 2cm only
+    float shr_trkfit_2cm_dedx_max;   // Reco - shower: dE/dx of the leading shower on plane with the most hits (derived variable), first 2cm only
+
     float trk2_tkfit_dedx_u;
     float trk2_tkfit_dedx_v;
     float trk2_tkfit_dedx_y;
@@ -222,6 +234,7 @@ public:
     unsigned int shrsubclusters2;   // number of clusters shower can be broken into, Y plane
 
     float shrPCA1CMed_5cm;			// metric of shower linearity
+    float CylFrac1h_1cm;            // fraction of shower energy within cyclinder 1cm radius from track direction, first half only - low for showers, high for tracks, very low for misreconstructed pi0
     float CylFrac2h_1cm; 			// fraction of shower energy within cyclinder 1cm radius from track direction, second half only - low for showers, high for tracks, very low for misreconstructed pi0
 
     // Seconary Shower
@@ -246,6 +259,17 @@ public:
     float tk2sh1_angle;			// Angle between primary shower and secondary track
     float tk1tk2_angle;			// Angle between primary and secondary track
     float shr2pid; 				// second shower LLR PID, treating as track-like (mis-reconstructed)
+
+    // Tertiary shower
+    unsigned int shr3_id;
+    float shr3_energy;
+    float shr3_start_x;
+    float shr3_start_y;
+    float shr3_start_z;
+    int shr3subclusters;
+   
+    float shr13_p1_dstart;
+    float tk1sh3_distance; 
 
     // All showers
     float shr_energy_tot_cali;  // Reco - shower: the energy of the showers (in GeV) (calibrated)
@@ -275,9 +299,6 @@ public:
     float trk_score;		// Reco - track: Pandora track score for the longest track
     float trk_theta;        // Reco - track: Reconstructed theta angle for the longest track
     float trk_phi;          // Reco - track: Reconstructed phi angle for the longest track
-    float trk_avg_deflection_mean; 		// Reco - track: average deflections mean longest track
-    float trk_avg_deflection_stdev; 	// Reco - track: average deflections stdev longest track
-    float trk_avg_deflection_separation_mean;
     float trk_start_x;
     float trk_start_y;
     float trk_start_z;
@@ -288,8 +309,7 @@ public:
     float trk_dir_y;
     float trk_dir_z;
     unsigned int trk_daughters; 		// Reco - track: number of daughters
-    int trk_end_spacepoints;
-
+   
     int trk_bkt_pdg;      // Backtracker - track: Backtrack PDG
 
     float trk_bragg_pion; 	// Reco - track: Track Bragg Likelihood Pion
@@ -306,8 +326,6 @@ public:
     float trk2_len;			// Reco - track: Length of the second longest track
     float trk2_distance;	// Reco - track: Distance between second longest track start and reconstructed neutrino vertex
     float trk2_score;		// Reco - track: Pandora track score for the second longest track
-    float trk2_avg_deflection_mean; 	// Reco - track: average deflections mean second longest track
-    float trk2_avg_deflection_stdev; 	// Reco - track: average deflections stdev second longest track
     float trk2_start_x;
     float trk2_start_y;
     float trk2_start_z;
@@ -318,8 +336,7 @@ public:
     float trk2_dir_y;
     float trk2_dir_z;
     unsigned int trk2_daughters;		// Reco - track: number of daughters
-    int trk2_end_spacepoints;
-
+    
     int trk2_bkt_pdg;			// Backtracker - track: Backtrack PDG
     
     float trk2_bragg_p;			// Reco - track: Track Bragg Likelihood Proton
@@ -340,14 +357,11 @@ public:
     float trk3_len;			// Reco - track: Length of the second longest track
     float trk3_distance;	// Reco - track: Distance between second longest track start and reconstructed neutrino vertex
     float trk3_score;		// Reco - track: Pandora track score for the second longest track
-    float trk3_avg_deflection_mean; 	// Reco - track: average deflections mean second longest track
-    float trk3_avg_deflection_stdev; 	// Reco - track: average deflections stdev second longest track
     float trk3_sce_end_x;
     float trk3_sce_end_y;
     float trk3_sce_end_z;
     
     unsigned int trk3_daughters;		// Reco - track: number of daughters
-    int trk3_end_spacepoints;
     int trk3_bkt_pdg;			// Backtracker - track: Backtrack PDG
     
     float trk3_bragg_p;			// Reco - track: Track Bragg Likelihood Proton
@@ -438,15 +452,7 @@ public:
     
     std::vector<float> *trk_trunk_dEdx_u_v = nullptr;
     std::vector<float> *trk_trunk_dEdx_v_v = nullptr; 
-    std::vector<float> *trk_trunk_dEdx_y_v = nullptr;
-    
-    // track deflections [ Requires re-run NTuples]
-    std::vector<float> *trk_avg_deflection_mean_v = nullptr;
-    std::vector<float> *trk_avg_deflection_stdev_v = nullptr;
-    std::vector<float> *trk_avg_deflection_separation_mean_v = nullptr;
-
-    // track spacepoints [Requires re-run NTuples]
-    std::vector<int> *trk_end_spacepoints_v = nullptr;    
+    std::vector<float> *trk_trunk_dEdx_y_v = nullptr;    
 
     // --- Full MC truth vectors ---
     std::vector<int>   *mc_pdg_v  = nullptr;  // True: Vector of all MC particles
