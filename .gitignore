@@ -1,10 +1,8 @@
 *.pdf
 *.root
 *.dat
-*.txt
 *.o
 *.png
 *.pid
-AnalyzeNue
 build
 .DS_Store
