@@ -25,11 +25,16 @@ CreateTrainingTree::CreateTrainingTree() {
 	electronPhotonSeparationTree->Branch("shr_trkfit_2cm_dedx_max", &shr_trkfit_2cm_dedx_max);
 	electronPhotonSeparationTree->Branch("shrmoliereavg", &shrmoliereavg);
 	electronPhotonSeparationTree->Branch("shr_energyFraction", &shr_energyFraction);
-	electronPhotonSeparationTree->Branch("CylFrac2h_1cm", &CylFrac2h_1cm);
 	electronPhotonSeparationTree->Branch("shrsubclusters", &shrsubclusters);
 	electronPhotonSeparationTree->Branch("secondshower_Y_nhit", &secondshower_Y_nhit);
 	electronPhotonSeparationTree->Branch("secondshower_Y_vtxdist", &secondshower_Y_vtxdist);
 	electronPhotonSeparationTree->Branch("secondshower_Y_anglediff", &secondshower_Y_anglediff);
+	electronPhotonSeparationTree->Branch("secondshower_U_nhit", &secondshower_U_nhit);
+	electronPhotonSeparationTree->Branch("secondshower_U_vtxdist", &secondshower_U_vtxdist);
+	electronPhotonSeparationTree->Branch("secondshower_U_anglediff", &secondshower_U_anglediff);
+	electronPhotonSeparationTree->Branch("secondshower_V_nhit", &secondshower_V_nhit);
+	electronPhotonSeparationTree->Branch("secondshower_V_vtxdist", &secondshower_V_vtxdist);
+	electronPhotonSeparationTree->Branch("secondshower_V_anglediff", &secondshower_V_anglediff);
 }
 
 CreateTrainingTree::~CreateTrainingTree(){
@@ -53,7 +58,6 @@ void CreateTrainingTree::addEvent(const EventContainer &_evt, Utility::Classific
 	if (_evt.shrmoliereavg >= 0) shrmoliereavg = _evt.shrmoliereavg;
 	else shrmoliereavg = 9999;
 	shr_energyFraction = _evt.shr_energyFraction;
-	CylFrac2h_1cm = _evt.CylFrac2h_1cm;
 	shrsubclusters = _evt.shrsubclusters;
 
 	secondshower_Y_nhit = _evt.secondshower_Y_nhit;
@@ -61,6 +65,18 @@ void CreateTrainingTree::addEvent(const EventContainer &_evt, Utility::Classific
 	else secondshower_Y_vtxdist = 9999;
 	if (_evt.secondshower_Y_anglediff >= 0 && _evt.secondshower_Y_anglediff < 9000) secondshower_Y_anglediff = _evt.secondshower_Y_anglediff;
 	else secondshower_Y_anglediff = 9999;
+
+	secondshower_U_nhit = _evt.secondshower_U_nhit;
+	if (_evt.secondshower_U_vtxdist >= 0 && _evt.secondshower_U_vtxdist < 9000) secondshower_U_vtxdist = _evt.secondshower_U_vtxdist;
+	else secondshower_U_vtxdist = 9999;
+	if (_evt.secondshower_U_anglediff >= 0 && _evt.secondshower_U_anglediff < 9000) secondshower_U_anglediff = _evt.secondshower_U_anglediff;
+	else secondshower_U_anglediff = 9999;
+
+	secondshower_V_nhit = _evt.secondshower_V_nhit;
+	if (_evt.secondshower_V_vtxdist >= 0 && _evt.secondshower_V_vtxdist < 9000) secondshower_V_vtxdist = _evt.secondshower_V_vtxdist;
+	else secondshower_V_vtxdist = 9999;
+	if (_evt.secondshower_V_anglediff >= 0 && _evt.secondshower_V_anglediff < 9000) secondshower_V_anglediff = _evt.secondshower_V_anglediff;
+	else secondshower_V_anglediff = 9999;
 
 	// determine whether signal or background, and save
 	if (classification == Utility::kCCNue1pi0p || classification == Utility::kCCNue1piNp || classification == Utility::kCCNueNpi) {

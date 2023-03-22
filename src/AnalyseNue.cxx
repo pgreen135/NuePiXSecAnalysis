@@ -16,6 +16,8 @@
 #include <TH1F.h>
 #include <TH2F.h>
 #include <TStyle.h>
+#include <TEfficiency.h>
+#include <TGraphAsymmErrors.h>
 
 #include <TSystem.h>
 
@@ -23,8 +25,10 @@
 int main() {
 	
 	// Files [Run 1]
-    std::string filename_intrinsic = "/Users/patrick/Data/MicroBooNE/CrossSections/samplesPandora/run1_slim/neutrinoselection_filt_run1_intrinsic_slim.root";
+    std::string filename_intrinsic = "/Users/patrick/Data/MicroBooNE/CrossSections/samplesPandora/run1_slim_Mar23/neutrinoselection_filt_run1_intrinsic_slim.root";
     std::string filename_mc = "/Users/patrick/Data/MicroBooNE/CrossSections/samplesPandora/run1_slim/neutrinoselection_filt_run1_overlay_slim.root";
+    //std::string filename_mc = "/Users/patrick/Data/MicroBooNE/CrossSections/samplesPandora/run1_slim_Mar23/neutrinoselection_filt_run1_overlay_slim_60MeVThreshold.root";
+    //std::string filename_mc = "/Users/patrick/Data/MicroBooNE/CrossSections/samplesPandora/run1_slim_Mar23/neutrinoselection_filt_run1_overlay_slim_shrenergies.root";
 	std::string filename_dirt = "/Users/patrick/Data/MicroBooNE/CrossSections/samplesPandora/run1_slim/neutrinoselection_filt_run1_dirt_slim.root";
 	std::string filename_beamoff = "/Users/patrick/Data/MicroBooNE/CrossSections/samplesPandora/run1_slim/neutrinoselection_filt_run1_beamoff_slim.root";
 
@@ -32,9 +36,12 @@ int main() {
 	//std::string filename_mc = "/Users/patrick/Data/MicroBooNE/CrossSections/samplesPandora/run3b_slim/neutrinoselection_filt_run3b_overlay_slim.root";
 
 	// Weights [Run 1]
-	//double weight_mc = 1;		// POT_beam-on / POT_mc
-	double weight_intrinsic = 0.008405127 * 0.9502;	// intrinsic nue 2.3795e+22 [slim]  2.3795e+22
+	double weight_intrinsic = 1;		// POT_beam-on / POT_mc
+	//double weight_intrinsic = 0.008405127 * 0.9502;	// intrinsic nue 2.3795e+22 [slim]  2.3795e+22
+    //double weight_intrinsic = 0.008398562;	// intrinsic nue 2.38136e+22 [slim Mar23]
 	double weight_mc = 0.08569; 	// 2.33391e+21 [slim]
+	//double weight_mc = 0.08559; // 2.33671e+21 [slim Mar23 60 MeV Threshold]
+	//double weight_mc = 0.0862887; // 2.3178e+21 [slim Mar23 shr energies]
 	double weight_dirt = 0.12245; 	// 1.63329e+21 [slim]
 	double weight_beamoff = 0.5612; // 0.98 * HW_beam-on / HW_beam-off
 
@@ -44,7 +51,7 @@ int main() {
 	// Initialise Classes
   	Utility _utility;
   	Selection _selection(_utility);
-  	StackedHistTool _histStack("", "", 6, 0, 6, _utility);
+  	StackedHistTool _histStack("", "", 100, 0, 1, _utility);
   	BDTTool _BDTTool(true, false);
   	//CreateTrainingTree _trainingTree;
 
@@ -57,9 +64,12 @@ int main() {
   	
   	//TH2F *hist2D = new TH2F("", "", 20, 0, 10, 30, 0, 15);
   	//TH2F *hist2D_bg = new TH2F("", "", 20, 0, 10, 30, 0, 15);
+
+  	Double_t bins[22] = {0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 250, 300, 350, 400, 450, 500, 600, 700, 800, 900, 1000};
+	TEfficiency* pEff = new TEfficiency("","",21,bins);
 	
-  	
-  	/*
+
+	/*
 	// --- Intrinsic Nue MC -- 
   	// read file
 	TFile *f_intrinsic = NULL;
@@ -74,8 +84,8 @@ int main() {
   	int n_entries_intrinsic = tree_intrinsic->GetEntries();
   	std::cout << "Initial number events [Intrinsic]: " << n_entries_intrinsic << std::endl;
 
-  	//for (int e = 0; e < n_entries_intrinsic; e++) {
-  	for (int e = 0; e < 70000; e++) {
+  	for (int e = 0; e < n_entries_intrinsic; e++) {
+  	//for (int e = 0; e < 10; e++) {
   		
     	tree_intrinsic->GetEntry(e);    	
 
@@ -90,55 +100,89 @@ int main() {
 	    _event_intrinsic.applyEventRecoveryAlgorithms(Utility::kIntrinsic);
 
 	    // apply selection
-	    // pre-selection
-	    bool passPreSelection = _selection.ApplyPreSelection(_event_intrinsic, Utility::kIntrinsic, Utility::kRun1);
-	    if(!passPreSelection) continue;	    
+	    // trigger [MC only]
+	    bool passTrigger = _selection.ApplyMCTrigger(_event_intrinsic, Utility::kIntrinsic, Utility::kRun1);
+	    if (!passTrigger) continue;
 
-	    // reconstruction completeness (separated out from pre-selection to avoid calculating derived variables for all events)
-	    bool passReconstructionCompletenessCheck = _selection.ApplyReconstructionCompletenessCheck(_event_intrinsic);
-	    if(!passReconstructionCompletenessCheck) continue;
+	    // get event classification
+	    Utility::ClassificationEnums classification = _event_intrinsic.getEventClassification(Utility::kIntrinsic);
+
+	    //if (!(classification == Utility::kCCNue1piNp || classification == Utility::kCCNue1pi0p)) continue;
+
+	    // pre-selection
+	    bool passPreSelection = _selection.ApplyPreSelection(_event_intrinsic);
+	    if(!passPreSelection) {
+	    	pEff->Fill(false, _event_intrinsic.pion_e*1000 - 139.570);
+	    	//continue;
+	    }	    
 
 	    // good shower selection
 	    bool passGoodShowerIdentification = _selection.ApplyGoodShowerSelection(_event_intrinsic);
-	    if(!passGoodShowerIdentification) continue;
+	    if(!passGoodShowerIdentification) {
+	    	pEff->Fill(false, _event_intrinsic.pion_e*1000 - 139.570);
+	    	//continue;
+	    }
 
 	    // good track selection
 	    bool passGoodTrackSelection = _selection.ApplyGoodTrackSelection(_event_intrinsic, Utility::kIntrinsic);
-	    //if(!passGoodTrackSelection) continue;
+	    if(!passGoodTrackSelection) {
+	    	pEff->Fill(false, _event_intrinsic.pion_e*1000 - 139.570);
+	    	//continue;
+	    }
 
 	    // reconstruction failure checks
 	    bool passReconstructionFailureChecks = _selection.ApplyReconstructionFailureChecks(_event_intrinsic, Utility::kIntrinsic);
-	    if(!passReconstructionFailureChecks) continue;
+	    if(!passReconstructionFailureChecks) {
+	    	pEff->Fill(false, _event_intrinsic.pion_e*1000 - 139.570);
+	    	//continue;
+	    }
 
 	    // cosmic rejection
 	    bool passCosmicRejection = _selection.ApplyCosmicRejection(_event_intrinsic);
-	    if(!passCosmicRejection) continue;
+	    if(!passCosmicRejection) {
+	    	pEff->Fill(false, _event_intrinsic.pion_e*1000 - 139.570);
+	    	//continue;
+	    }
 
 	    // evaluate BDTs
 	    ///_event_intrinsic.evaluateBDTs();		   	    
 
 	    // neutral pion rejection
-	    bool passNeutralPionRejection = _selection.ApplyNeutralPionRejectionBDT(_event_intrinsic);
-	    if(!passNeutralPionRejection) continue;	
+	    bool passNeutralPionRejection = _selection.ApplyNeutralPionRejection(_event_intrinsic);
+	    //bool passNeutralPionRejection = _selection.ApplyNeutralPionRejectionBDT(_event_intrinsic);
+	    if(!passNeutralPionRejection) {
+	    	pEff->Fill(false, _event_intrinsic.pion_e*1000 - 139.570);
+	    	//continue;
+	    }	
 
 	    // proton rejection
 	    bool passProtonRejection = _selection.ApplyProtonRejection(_event_intrinsic, Utility::kIntrinsic);
-	    //if(!passProtonRejection) continue;
-
-	    // get event classification
-	    Utility::ClassificationEnums classification = _event_intrinsic.getEventClassification(Utility::kIntrinsic);
-
+	    if(!passProtonRejection) {
+	    	pEff->Fill(false, _event_intrinsic.pion_e*1000 - 139.570);
+	    	//continue;
+	    }
 	    
 	    if(classification == Utility::kCCNue1piNp || classification == Utility::kCCNue1pi0p) {
-	    	hist2D->Fill(_event_intrinsic.shr_trkfit_gap10_dedx_max, _event_intrinsic.shr_distance, weight_intrinsic);
+	    //if(classification == Utility::kCCNue1pi0p) {
+	    //	_histStack.Fill(classification, _event_intrinsic.trk_len, weight_intrinsic);
+	    	//hist2D->Fill(_event_intrinsic.shr_trkfit_gap10_dedx_max, _event_intrinsic.shr_distance, weight_intrinsic);
+
+	    	pEff->Fill(true, _event_intrinsic.pion_e*1000 - 139.570);	
+	    	
 	    }
 
+
+
+
+	    
+
+	    
 	    // fill stacked histogram, selected topologies only
 	    if (classification == Utility::kCCNue1pi0p || classification == Utility::kCCNue1piNp || classification == Utility::kCCNueNpi || classification == Utility::kCCNuepizero || 
 	    	classification == Utility::kCCNue1p || classification == Utility::kCCNueNp || classification == Utility::kCCNueOther || 
 	    	classification == Utility::kCCNue1piNp ){
 	    	
-	    	_histStack.Fill(classification, _event_intrinsic.bdtscore_electronPhoton, weight_intrinsic);
+	    	_histStack.Fill(classification, _event_intrinsic.elec_e - (0.511/1000), weight_intrinsic);
 
 	    	
 		    // fill testing plot
@@ -164,22 +208,25 @@ int main() {
 		    	hist2D->Fill(_event_intrinsic.trk3_bragg_pion_max, _event_intrinsic.trk3_bragg_mip_max, weight_intrinsic);
 		    }
 		    
-
-	    	//if (_event_intrinsic.primaryTrackValid) _histStack.Fill(classification, _event_intrinsic.trk_len, weight_intrinsic);
-			//else if (_event_intrinsic.secondaryTrackValid) _histStack.Fill(classification, _event_intrinsic.trk2_len, weight_intrinsic);
-			//else if (_event_intrinsic.tertiaryTrackValid) _histStack.Fill(classification, _event_intrinsic.trk3_len, weight_intrinsic);
+	    	//if (_event_intrinsic.primaryTrackValid) _histStack.Fill(classification, _event_intrinsic.trk_energy_muon, weight_intrinsic);
+			//else if (_event_intrinsic.secondaryTrackValid) _histStack.Fill(classification, _event_intrinsic.trk2_energy_muon, weight_intrinsic);
+			//else if (_event_intrinsic.tertiaryTrackValid) _histStack.Fill(classification, _event_intrinsic.trk3_energy_muon, weight_intrinsic);
 
 		}
 		
+		
+		//if (_event_intrinsic.n_showers_contained == 2) _histStack.Fill(classification, _event_intrinsic.shr2_energy, weight_intrinsic);
+		
+		
 
 	    // add event to training tree (if required)
-	    if(classification == Utility::kCCNuepizero && e > 12500) continue; 	// prevent excess of nue pi0
-		_trainingTree.addEvent(_event_intrinsic, classification);
+	    //if(classification == Utility::kCCNuepizero && e > 12500) continue; 	// prevent excess of nue pi0
+		//_trainingTree.addEvent(_event_intrinsic, classification);
 
 	}
 	*/
-	
 
+	
 	// --- Overlay MC ---	
 	// read file
 	TFile *f_mc = NULL;
@@ -210,13 +257,13 @@ int main() {
 	    _event_mc.applyEventRecoveryAlgorithms(Utility::kMC);
 
 	    // apply selection
-	    // pre-selection
-	    bool passPreSelection = _selection.ApplyPreSelection(_event_mc, Utility::kMC, Utility::kRun1);
-	    if(!passPreSelection) continue;	    
+	    // trigger [MC only]
+	    bool passTrigger = _selection.ApplyMCTrigger(_event_mc, Utility::kMC, Utility::kRun1);
+	    if (!passTrigger) continue;
 
-	    // reconstruction completeness (separated out from pre-selection to avoid calculating derived variables for all events)
-	    bool passReconstructionCompletenessCheck = _selection.ApplyReconstructionCompletenessCheck(_event_mc);
-	    if(!passReconstructionCompletenessCheck) continue;
+	    // pre-selection
+	    bool passPreSelection = _selection.ApplyPreSelection(_event_mc);
+	    if(!passPreSelection) continue;	    
 
 	    // good shower selection
 	    bool passGoodShowerIdentification = _selection.ApplyGoodShowerSelection(_event_mc);
@@ -235,8 +282,8 @@ int main() {
 	    if(!passCosmicRejection) continue;
 
 	    // neutral pion rejection
-	    //bool passNeutralPionRejection = _selection.ApplyNeutralPionRejection(_event_mc);
-	    bool passNeutralPionRejection = _selection.ApplyNeutralPionRejectionBDT(_event_mc, _BDTTool);
+	    bool passNeutralPionRejection = _selection.ApplyNeutralPionRejection(_event_mc);
+	    //bool passNeutralPionRejection = _selection.ApplyNeutralPionRejectionBDT(_event_mc, _BDTTool);
 	    if(!passNeutralPionRejection) continue;	
 
 	    // proton rejection
@@ -313,15 +360,16 @@ int main() {
 	    }
 	    
 
-	    //_histStack.Fill(classification, _event_mc.n_showers_contained, weight_mc);
+	    //if (_event_mc.n_showers_contained == 2) 
+	    _histStack.Fill(classification, _event_mc.n_showers_contained, weight_mc);
 		
-		if (_event_mc.primaryTrackValid) _histStack.Fill(classification, _event_mc.trk_daughters, weight_mc);
-		else if (_event_mc.secondaryTrackValid) _histStack.Fill(classification, _event_mc.trk2_daughters, weight_mc);
-		else if (_event_mc.tertiaryTrackValid) _histStack.Fill(classification, _event_mc.trk3_daughters, weight_mc);
+		//if (_event_mc.primaryTrackValid) _histStack.Fill(classification, _event_mc.trk1_calo_energy, weight_mc);
+		//else if (_event_mc.secondaryTrackValid) _histStack.Fill(classification, _event_mc.trk2_calo_energy, weight_mc);
+		//else if (_event_mc.tertiaryTrackValid) _histStack.Fill(classification, _event_mc.trk3_calo_energy, weight_mc);
 
-	  	//if (_event_mc.primaryTrackPionlike) _histStack.Fill(classification, _event_mc.trk_llr_pid_score, weight_mc);
-	    //else if (_event_mc.secondaryTrackPionlike) _histStack.Fill(classification, _event_mc.trk2_llr_pid_score, weight_mc);
-	  	//else _histStack.Fill(classification, _event_mc.trk3_llr_pid_score, weight_mc);
+	  	//if (_event_mc.primaryTrackPionlike) _histStack.Fill(classification, _event_mc.trk_energy_proton, weight_mc);
+	    //else if (_event_mc.secondaryTrackPionlike) _histStack.Fill(classification, _event_mc.trk2_energy_proton, weight_mc);
+	  	//else _histStack.Fill(classification, _event_mc.trk3_energy_proton, weight_mc);
 
 	  	// add event to training tree (if required)
 	  	//_trainingTree.addEvent(_event_mc, classification);
@@ -329,7 +377,7 @@ int main() {
 
 	}
 	
-	/*
+	
 	// --- Beam Off ---
 	// read file
 	TFile *f_beamoff = NULL;
@@ -360,13 +408,13 @@ int main() {
 	    _event_beamoff.applyEventRecoveryAlgorithms(Utility::kEXT);
 
 	    // apply selection
-	    // pre-selection
-	    bool passPreSelection = _selection.ApplyPreSelection(_event_beamoff, Utility::kEXT, Utility::kRun1);
-	    if(!passPreSelection) continue;
+	    // trigger [MC only]
+	    bool passTrigger = _selection.ApplyMCTrigger(_event_beamoff, Utility::kEXT, Utility::kRun1);
+	    if (!passTrigger) continue;
 
-	    // reconstruction completeness (separated out from pre-selection to avoid calculating derived variables for all events)
-	    bool passReconstructionCompletenessCheck = _selection.ApplyReconstructionCompletenessCheck(_event_beamoff);
-	    if(!passReconstructionCompletenessCheck) continue;
+	    // pre-selection
+	    bool passPreSelection = _selection.ApplyPreSelection(_event_beamoff);
+	    if(!passPreSelection) continue;
 
 	    // good shower identification
 	    bool passGoodShowerIdentification = _selection.ApplyGoodShowerSelection(_event_beamoff);
@@ -408,6 +456,7 @@ int main() {
 
 	}
 
+
 	// --- Dirt ---
 	// read file
 	TFile *f_dirt = NULL;
@@ -438,13 +487,13 @@ int main() {
 	    _event_dirt.applyEventRecoveryAlgorithms(Utility::kDirt);
 
 	    // apply selection
-	    // pre-selection
-	    bool passPreSelection = _selection.ApplyPreSelection(_event_dirt, Utility::kDirt, Utility::kRun1);
-	    if(!passPreSelection) continue;
+	    // trigger [MC only]
+	    bool passTrigger = _selection.ApplyMCTrigger(_event_dirt, Utility::kDirt, Utility::kRun1);
+	    if (!passTrigger) continue;
 
-	    // reconstruction completeness (separated out from pre-selection to avoid calculating derived variables for all events)
-	    bool passReconstructionCompletenessCheck = _selection.ApplyReconstructionCompletenessCheck(_event_dirt);
-	    if(!passReconstructionCompletenessCheck) continue;
+	    // pre-selection
+	    bool passPreSelection = _selection.ApplyPreSelection(_event_dirt);
+	    if(!passPreSelection) continue;	    
 
 	    // good shower identification
 	    bool passGoodShowerIdentification = _selection.ApplyGoodShowerSelection(_event_dirt);
@@ -483,8 +532,7 @@ int main() {
 		//else if (_event_dirt.secondaryTrackValid) _histStack.Fill(classification, _event_dirt.trk2_len, weight_dirt);
 		//else if (_event_dirt.tertiaryTrackValid) _histStack.Fill(classification, _event_dirt.trk3_len, weight_dirt);
 
-	}
-	*/
+	}	
 	
 
 	// write training tree
@@ -494,7 +542,7 @@ int main() {
 	_histStack.PrintEventIntegrals();
 
 	TCanvas *canv = new TCanvas("canv", "canv", 1080, 1080);
-  	_histStack.DrawStack(canv, Utility::kNShower);
+  	_histStack.DrawStack(canv, Utility::kElectronETrue);
   	//_histStack.PrintEventIntegrals();
 
   	
@@ -503,10 +551,10 @@ int main() {
   	//canv->Print("plot_postHitRatio_LeadingShowerEnergy.root");
   	//canv->Print("plot_postNeutralPionRejection_MoliereAverage.root");
   	//canv->Print("plot_postTrackLength_TrackDistance.root");
-  	canv->Print("plot_NShowers.root");
+  	canv->Print("plot_electronEnergy.root");
 
   	
-	
+	/*
   	TCanvas *c1 = new TCanvas("c1","",200,10,1080,1080);
   	c1->cd();
   	gStyle->SetOptStat(0);
@@ -550,7 +598,7 @@ int main() {
 	gStyle->SetOptStat(0);
 	
   	c1->Print("PionPID.root");
-	
+	*/
 
 
   	
@@ -591,6 +639,28 @@ int main() {
 
   	c1->Print("ProtonRejection_trackTrunkdEdx.root");
 	*/
+  	
+  	/*
+  	TCanvas *c1 = new TCanvas("c1","",200,10,1080,1080);
+  	c1->cd();
+  	gStyle->SetOptStat(0);
 
+  	pEff->SetLineWidth(2);
+
+	pEff->Draw("AP");
+	c1->Pad()->Update();
+
+  	TGraphAsymmErrors *gg=pEff->GetPaintedGraph();
+
+  	c1->Clear();
+
+  	gg->SetTitle("Selection Efficiency");
+  	gg->GetXaxis()->SetTitle("Pion Truth KE [MeV]");
+  	gg->GetYaxis()->SetTitle("Efficiency");
+
+	gg->Draw("AP");
+	c1->Print("SelectionEfficiency40MeV.root");
+	*/
+	
 	return 0;
 }

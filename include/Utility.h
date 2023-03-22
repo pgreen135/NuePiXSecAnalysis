@@ -92,8 +92,12 @@ public:
 		kPi0InvMassDifference,
 		kTrackShowerAngle,
 		kNTrackDaughters,
+		kTrackEnergy,
 		kSecondShowerNHit,
-		kShowerLLRPID		
+		kShowerLLRPID,
+		kPionETrue,
+		kNeutrinoETrue,
+		kElectronETrue		
 	};
 
 }; 

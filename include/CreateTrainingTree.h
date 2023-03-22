@@ -50,13 +50,19 @@ private:
 
 	float shrmoliereavg;
 	float shr_energyFraction;
-	float CylFrac2h_1cm;
 	float shrsubclusters;
 
 	float secondshower_Y_nhit;
 	float secondshower_Y_vtxdist;
 	float secondshower_Y_anglediff;
 
+	float secondshower_U_nhit;
+	float secondshower_U_vtxdist;
+	float secondshower_U_anglediff;
+
+	float secondshower_V_nhit;
+	float secondshower_V_vtxdist;
+	float secondshower_V_anglediff;
 }; 
 
 #endif

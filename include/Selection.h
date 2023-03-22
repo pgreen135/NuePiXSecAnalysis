@@ -19,9 +19,9 @@ public:
 
 	// Selection
 	// Pre-selection
-	bool ApplyPreSelection(const EventContainer &_evt, Utility::FileTypeEnums type, Utility::RunPeriodEnums runPeriod);
-	bool ApplyReconstructionCompletenessCheck(const EventContainer &_evt);
-
+	bool ApplyMCTrigger(const EventContainer &_evt, Utility::FileTypeEnums type, Utility::RunPeriodEnums runPeriod);
+	bool ApplyPreSelection(const EventContainer &_evt);
+	
 	// Candidate Identification
 	bool ApplyGoodShowerSelection(const EventContainer &_evt);
 	bool ApplyGoodTrackSelection(EventContainer &_evt, Utility::FileTypeEnums type);
@@ -90,7 +90,7 @@ protected:
 	bool ApplyShowerCylFractionCut(float CylFrac2h_1cm);
 
 	// Number of showers
-    bool ApplyNumberShowersCut(int n_showers_contained);
+    bool ApplyNumberShowersCut(int n_showers_contained, float shr2_energy);
 	
 	// Neutral pion rejection: dE/dx and vertex distance	
 	bool ApplyNeutralPionRejectionCut(float dEdxMax, float shr_distance);
@@ -106,6 +106,9 @@ protected:
 
 	// Track Length
 	bool ApplyTrackLengthCut(float trk_len);
+
+	// Track Energy
+	bool ApplyTrackEnergyCut(float trk_energy);
 
 	// Track Vertex Distance
 	bool ApplyTrackVertexDistanceCut(float trk_distance);

@@ -11,9 +11,7 @@ Selection::Selection(const Utility &util): _utility{ util } {
 
 // ------------------------------------------------------------------------------
 
-bool Selection::ApplyPreSelection(const EventContainer &_evt, Utility::FileTypeEnums type, Utility::RunPeriodEnums runPeriod) {
-	
-	
+bool Selection::ApplyMCTrigger(const EventContainer &_evt, Utility::FileTypeEnums type, Utility::RunPeriodEnums runPeriod) {
 	// MC only cuts
 	if (type == Utility::kMC || type == Utility::kDirt || type == Utility::kIntrinsic) {
 		
@@ -28,8 +26,14 @@ bool Selection::ApplyPreSelection(const EventContainer &_evt, Utility::FileTypeE
 		if(!ApplyCommonOpticalFilterPECut(_evt.opfilter_pe_beam)) return false;		    // common optical filter (beam) [MC only]	(should this be applied?)
 		if(!ApplyCommonOpticalFilterMichelCut(_evt.opfilter_pe_veto)) return false;	    // common optical filter (michel veto) [MC only]  (should this be applied?)
 	}
-		
 
+	return true;
+}
+
+// ------------------------------------------------------------------------------
+
+bool Selection::ApplyPreSelection(const EventContainer &_evt) {
+	
 	if(!ApplySliceIDCut(_evt.nslice)) return false;									// slice ID
 	
 	if(!ApplySignalCanidateCut(_evt.n_showers_contained, _evt.n_tracks_contained)) return false;	// electron + pion candidate
@@ -37,14 +41,9 @@ bool Selection::ApplyPreSelection(const EventContainer &_evt, Utility::FileTypeE
 	if(!ApplyVertexFVCut(_evt.reco_nu_vtx_sce_x, _evt.reco_nu_vtx_sce_y, _evt.reco_nu_vtx_sce_z)) return false;	// neutrino vertex in fiducial volume
 	
 	if(!ApplyContainedFractionCut(_evt.contained_fraction)) return false; 			// contained fraction
-	
-	return true;
-}
-
-bool Selection::ApplyReconstructionCompletenessCheck(const EventContainer &_evt) {
 
 	if(!ApplyAssociatedHitsFractionCut(_evt.associated_hits_fraction)) return false;	// fraction of hits associated with tracks/showers
-
+	
 	return true;
 }
 
@@ -73,6 +72,7 @@ bool Selection::ApplyGoodTrackSelection(EventContainer &_evt, Utility::FileTypeE
 
 	// primary track
 	if (!_evt.hasSpuriousLeadingTrack &&
+		ApplyTrackEnergyCut(_evt.trk_energy_muon) &&
 		ApplyTrackLengthCut(_evt.trk_len) && 
 		ApplyTrackScoreCut(_evt.trk_score) &&
 		ApplyTrackContainmentCut(_evt.trk_sce_end_x, _evt.trk_sce_end_y, _evt.trk_sce_end_z) &&
@@ -80,14 +80,16 @@ bool Selection::ApplyGoodTrackSelection(EventContainer &_evt, Utility::FileTypeE
 		) primaryTrackPasses = true;  	// track length, score, distance, containment
 
 	// secondary track	
-	if (ApplyTrackLengthCut(_evt.trk2_len) && 
+	if (ApplyTrackEnergyCut(_evt.trk2_energy_muon) &&
+		ApplyTrackLengthCut(_evt.trk2_len) && 
 		ApplyTrackScoreCut(_evt.trk2_score) &&
 		ApplyTrackContainmentCut(_evt.trk2_sce_end_x, _evt.trk2_sce_end_y, _evt.trk2_sce_end_z) &&
 		ApplyTrackVertexDistanceCut(_evt.trk2_distance)
 		) secondaryTrackPasses = true;		// track length, score, distance, containment
 
 	// tertiary track - only available in MC, dirt
-	if (ApplyTrackLengthCut(_evt.trk3_len) && 
+	if (ApplyTrackEnergyCut(_evt.trk3_energy_muon) &&
+		ApplyTrackLengthCut(_evt.trk3_len) && 
 		ApplyTrackScoreCut(_evt.trk3_score) &&
 		ApplyTrackContainmentCut(_evt.trk3_sce_end_x, _evt.trk3_sce_end_y, _evt.trk3_sce_end_z) &&
 		ApplyTrackVertexDistanceCut(_evt.trk3_distance)
@@ -131,7 +133,7 @@ bool Selection::ApplyCosmicRejection(const EventContainer &_evt) {
 
 bool Selection::ApplyNeutralPionRejection(const EventContainer &_evt){
 
-	if(!ApplyNumberShowersCut(_evt.n_showers_contained)) return false; 	// number of showers
+	if(!ApplyNumberShowersCut(_evt.n_showers_contained, _evt.shr_energy_second_cali)) return false; 	// number of showers
 
 	if(!ApplyNeutralPionRejectionCut(_evt.shr_trkfit_gap10_dedx_max, _evt.shr_distance)) return false;		// neutral pion rejection: shower dE/dx and vertex separation
 	
@@ -286,7 +288,8 @@ bool Selection::ApplyCosmicImpactParameterCut(float CosmicIPAll3D) {
 }
 
 // Number of showers
-bool Selection::ApplyNumberShowersCut(int n_showers_contained) {
+bool Selection::ApplyNumberShowersCut(int n_showers_contained,  float shr_energy_second_cali) {
+	//if(n_showers_contained == 1 || (n_showers_contained == 2 && shr_energy_second_cali < 0.1)) return true;
 	if(n_showers_contained <= 2) return true;
 	else return false;
 }
@@ -399,7 +402,13 @@ bool Selection::ApplyElectronPhotonBDTCut(float bdtscore_electronPhoton) {
 
 // Track Length
 bool Selection::ApplyTrackLengthCut(float trk_len) {
-	if (trk_len >= 10) return true;
+	if (trk_len >= 5) return true;
+	else return false;
+}
+
+// Track Energy
+bool Selection::ApplyTrackEnergyCut(float trk_energy){
+	if (trk_energy >= 0.04) return true; // 40 MeV
 	else return false;
 }
 

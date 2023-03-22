@@ -409,12 +409,24 @@ std::string StackedHistTool::PlotVariableEnum2str(Utility::PlotVariableEnums plo
   case Utility::kNTrackDaughters:
     returnString = "Number of Track Daughters";
     break;
+  case Utility::kTrackEnergy:
+    returnString = "Track Energy [GeV]";
+    break;
   case Utility::kSecondShowerNHit:
     returnString = "Second Shower NHits";
     break;
   case Utility::kShowerLLRPID:
     returnString = "Shower LLR PID Score";
-    break;       		  	  	
+    break;
+  case Utility::kPionETrue:
+    returnString = "Pion True KE [MeV]";
+    break;
+  case Utility::kNeutrinoETrue:
+    returnString = "True Neutrino Energy [GeV]";
+    break;
+  case Utility::kElectronETrue:
+    returnString = "True Electron Energy [GeV]";
+    break;            		  	  	
   default:
     std::cout << "[ERROR: StackedHistTool] Could not find string conversion for enum " << plotvariable << std::endl;
     returnString = "Unknown";

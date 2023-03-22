@@ -79,6 +79,8 @@ EventContainer::EventContainer(TTree *tree, const Utility &utility): _utility{ u
     tree->SetBranchAddress("shr_distance", &shr_distance);
     tree->SetBranchAddress("shr_score", &shr_score);
     tree->SetBranchAddress("shr_energy_cali", &shr_energy_cali);
+    tree->SetBranchAddress("shr_energy_second_cali", &shr_energy_second_cali);
+    tree->SetBranchAddress("shr_energy_third_cali", &shr_energy_third_cali);
     tree->SetBranchAddress("shr_energy_tot_cali", &shr_energy_tot_cali);    
     tree->SetBranchAddress("hits_ratio", &hits_ratio);
     tree->SetBranchAddress("shrmoliereavg", &shrmoliereavg);
@@ -177,7 +179,10 @@ EventContainer::EventContainer(TTree *tree, const Utility &utility): _utility{ u
 
     tree->SetBranchAddress("trk_len_v",                &trk_len_v);
     tree->SetBranchAddress("trk_distance_v",           &trk_distance_v);
-
+	tree->SetBranchAddress("trk_calo_energy_y_v",      &trk_calo_energy_y_v);
+	tree->SetBranchAddress("trk_energy_proton_v",      &trk_energy_proton_v);
+	tree->SetBranchAddress("trk_energy_muon_v",      &trk_energy_muon_v);
+	
     tree->SetBranchAddress("trk_bragg_p_v", &trk_bragg_p_v);
     tree->SetBranchAddress("trk_bragg_mu_v", &trk_bragg_mu_v);
     tree->SetBranchAddress("trk_bragg_pion_v", &trk_bragg_pion_v);
@@ -393,6 +398,7 @@ void EventContainer::applyEventRecoveryAlgorithms(Utility::FileTypeEnums type) {
 void EventContainer::failureRecoverySplitShowers() {
 
 	bool shr2Split = false;
+	bool shr3Split = false;
 
 	// identify events with failure: secondary shower
 	if (n_tracks_contained > 0 && n_showers_contained > 1 && shr_score <= 0.1 && shrsubclusters >= 4 && shr12_p1_dstart < 20 && tk1sh2_distance > 60 && tk1sh2_distance != 9999) {
@@ -403,8 +409,10 @@ void EventContainer::failureRecoverySplitShowers() {
 		n_showers_contained--;
 		shrsubclusters += shr2subclusters;
 		if (shr1shr2moliereavg > 0) shrmoliereavg = shr1shr2moliereavg;
+		//if (shr_energy_second_cali > 0) shr_energy_cali += shr_energy_second_cali;
 		if (shr2_energy != 9999) shr_energy_cali += shr2_energy;
 
+		shr2Split = true;
 	}
 
 	// identify events with failure: tertiary shower
@@ -415,9 +423,24 @@ void EventContainer::failureRecoverySplitShowers() {
 		// update event ntuple variables
 		n_showers_contained--;
 		shrsubclusters += shr3subclusters;
+		//if (shr_energy_third_cali > 0) shr_energy_cali += shr_energy_third_cali;
 		if (shr3_energy != 9999) shr_energy_cali += shr3_energy;
 
+		shr3Split = true;
 	}
+
+	// update secondary and tertiary shower energies as appropriate
+	if (shr2Split && shr3Split) {
+		shr_energy_second_cali = 0;
+		shr_energy_third_cali = 0;
+	}
+	else if (shr2Split) {
+		shr_energy_second_cali = shr_energy_third_cali;
+	}
+	else if (shr3Split) {
+		shr_energy_third_cali = 0;
+	}
+	
 }
 
 // Failure mode #2: spurious leading track
@@ -520,6 +543,9 @@ void EventContainer::populateDerivedVariables(Utility::FileTypeEnums type){
         trk_dir_x = trk_dir_x_v->at(trk_id-1);
         trk_dir_y = trk_dir_y_v->at(trk_id-1);  	
         trk_dir_z = trk_dir_z_v->at(trk_id-1);
+        trk_calo_energy = trk_calo_energy_y_v->at(trk_id-1);
+        trk_energy_proton = trk_energy_proton_v->at(trk_id-1);
+        trk_energy_muon = trk_energy_muon_v->at(trk_id-1);
 	}
 	else {
 		trk_llr_pid_score = 9999;
@@ -533,6 +559,9 @@ void EventContainer::populateDerivedVariables(Utility::FileTypeEnums type){
 		trk_dir_x = 9999;
 		trk_dir_y = 9999;
 		trk_dir_z = 9999;
+		trk_calo_energy = 9999;
+		trk_energy_proton = 0;
+        trk_energy_muon = 0;
 	}
 
 	// Secondary track information
@@ -565,6 +594,9 @@ void EventContainer::populateDerivedVariables(Utility::FileTypeEnums type){
         trk2subclusters1 = pfpplanesubclusters_V_v->at(trk2_id-1);
         trk2subclusters2 = pfpplanesubclusters_Y_v->at(trk2_id-1);
 		trk2_bragg_pion = trk_bragg_pion_v->at(trk2_id-1); 			// Bragg Pion
+		trk2_calo_energy = trk_calo_energy_y_v->at(trk2_id-1);
+		trk2_energy_proton = trk_energy_proton_v->at(trk2_id-1);
+        trk2_energy_muon = trk_energy_muon_v->at(trk2_id-1);
 		if (type != Utility::kEXT) trk2_bkt_pdg = backtracked_pdg_v->at(trk2_id-1);			// Backtracked PDG
 		else trk2_bkt_pdg = 9999;
 	}
@@ -597,6 +629,9 @@ void EventContainer::populateDerivedVariables(Utility::FileTypeEnums type){
 		trk2subclusters0 = 9999;
 		trk2subclusters1 = 9999;
 		trk2subclusters2 = 9999;
+		trk2_calo_energy = 9999;
+		trk2_energy_proton = 0;
+        trk2_energy_muon = 0;
 	}
 
 	// tertiary track information
@@ -613,7 +648,10 @@ void EventContainer::populateDerivedVariables(Utility::FileTypeEnums type){
 		trk3_sce_end_x = trk_sce_end_x_v->at(trk3_id-1); 			// Track end
         trk3_sce_end_y = trk_sce_end_y_v->at(trk3_id-1); 			// Track end
         trk3_sce_end_z = trk_sce_end_z_v->at(trk3_id-1); 			// Track end
-		trk3_bragg_pion = trk_bragg_pion_v->at(trk3_id-1); 									// Bragg Pion
+		trk3_bragg_pion = trk_bragg_pion_v->at(trk3_id-1);
+		trk3_calo_energy = trk_calo_energy_y_v->at(trk3_id-1);
+		trk3_energy_proton = trk_energy_proton_v->at(trk3_id-1);
+        trk3_energy_muon = trk_energy_muon_v->at(trk3_id-1); 									// Bragg Pion
 		if (type != Utility::kEXT) trk3_bkt_pdg = backtracked_pdg_v->at(trk3_id-1);			// Backtracked PDG
 		else trk3_bkt_pdg = 9999;
 	}
@@ -631,6 +669,9 @@ void EventContainer::populateDerivedVariables(Utility::FileTypeEnums type){
 		trk3_sce_end_x = 9999;
 		trk3_sce_end_y = 9999;
 		trk3_sce_end_z = 9999;
+		trk3_calo_energy = 0;
+		trk3_energy_proton = 0;
+        trk3_energy_muon = 0;
 	}
 
 
@@ -826,6 +867,14 @@ void EventContainer::populateDerivedVariables(Utility::FileTypeEnums type){
     	shr_trk_len = 9999;
     }
 
+    // Pion-hypothesis track energies (A. Smith)
+    if (trk_len > 0) trk_energy_pion = CalculatePionEnergyRange(trk_len);
+    else trk_energy_pion = 0;
+    if (trk2_len > 0) trk2_energy_pion = CalculatePionEnergyRange(trk2_len);
+    else trk2_energy_pion = 0;
+    if (trk3_len > 0) trk3_energy_pion = CalculatePionEnergyRange(trk3_len);
+    else trk3_energy_pion = 0;
+
     // initialise reconstruction failure condition variables
     hasSplitPrimaryShower = false;
     hasSpuriousLeadingTrack = false;
@@ -835,9 +884,11 @@ void EventContainer::populateDerivedVariables(Utility::FileTypeEnums type){
 	// Initialise selection condition variables
 	primaryTrackValid = false;
 	secondaryTrackValid = false;
+	tertiaryTrackValid = false;
 
 	primaryTrackPionlike = false;
 	secondaryTrackPionlike = false;
+	tertiaryTrackPionlike = false;
 
 }
 
@@ -1059,6 +1110,17 @@ float EventContainer::GetTrackBraggMIPBestPlane(unsigned int trackID) {
 		return trk_bragg_mip_u_v->at(trackID-1);
 	}
 	else return 9999;
+}
+
+// pion energy range-based
+// from A. Smith analysis -- docid=33809
+float EventContainer::CalculatePionEnergyRange(float R) {
+
+	float p_range = 0.25798 + (0.0024088 * R) - (0.18828 * std::pow(R, - 0.11687));	// GeV
+	float e_range = std::sqrt(std::pow(p_range, 2) + std::pow(0.13957, 2)) - 0.13957; // GeV
+
+	if (e_range > 0) return e_range;
+	else return 0;
 }
 
 

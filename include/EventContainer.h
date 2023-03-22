@@ -43,6 +43,7 @@ public:
 	float GetTrackTrunkdEdxBestPlane(unsigned int trackID);
 	float GetTrackBraggPionBestPlane(unsigned int trackID);
 	float GetTrackBraggMIPBestPlane(unsigned int trackID);
+    float CalculatePionEnergyRange(float R);
  
     // ----------------------------------
 
@@ -240,6 +241,7 @@ public:
     // Seconary Shower
     unsigned int shr2_id;		// Reco - shower: Secondary shower ID
     float shr2_energy;			// Reco - shower: energy of second shower (in GeV), note - not calibrated variable as missing from ntuples
+    float shr_energy_second_cali;
     float shr2_score;
     float shr2_start_x;
     float shr2_start_y;
@@ -263,6 +265,7 @@ public:
     // Tertiary shower
     unsigned int shr3_id;
     float shr3_energy;
+    float shr_energy_third_cali;
     float shr3_start_x;
     float shr3_start_y;
     float shr3_start_z;
@@ -309,6 +312,10 @@ public:
     float trk_dir_y;
     float trk_dir_z;
     unsigned int trk_daughters; 		// Reco - track: number of daughters
+    float trk_calo_energy;
+    float trk_energy_proton;
+    float trk_energy_muon;
+    float trk_energy_pion;
    
     int trk_bkt_pdg;      // Backtracker - track: Backtrack PDG
 
@@ -336,6 +343,10 @@ public:
     float trk2_dir_y;
     float trk2_dir_z;
     unsigned int trk2_daughters;		// Reco - track: number of daughters
+    float trk2_calo_energy;
+    float trk2_energy_proton;
+    float trk2_energy_muon;
+    float trk2_energy_pion;
     
     int trk2_bkt_pdg;			// Backtracker - track: Backtrack PDG
     
@@ -363,6 +374,10 @@ public:
     
     unsigned int trk3_daughters;		// Reco - track: number of daughters
     int trk3_bkt_pdg;			// Backtracker - track: Backtrack PDG
+    float trk3_calo_energy;
+    float trk3_energy_proton;
+    float trk3_energy_muon;
+    float trk3_energy_pion;
     
     float trk3_bragg_p;			// Reco - track: Track Bragg Likelihood Proton
     float trk3_bragg_mu;		// Reco - track: Track Bragg Likelihood Muon
@@ -397,7 +412,11 @@ public:
     std::vector<float> *trk_dir_y_v 	= nullptr;
     std::vector<float> *trk_dir_z_v 	= nullptr;
     std::vector<float> *trk_len_v         = nullptr;
-    std::vector<float> *trk_distance_v    = nullptr; 
+    std::vector<float> *trk_distance_v    = nullptr;
+    std::vector<float> *trk_calo_energy_y_v = nullptr;
+    std::vector<float> *trk_energy_proton_v = nullptr;
+    std::vector<float> *trk_energy_muon_v = nullptr;
+     
 
     std::vector<float> *trk_bragg_p_v     	= nullptr;
     std::vector<float> *trk_bragg_pion_v   	= nullptr;
