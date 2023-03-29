@@ -40,6 +40,9 @@ EventContainer::EventContainer(TTree *tree, const Utility &utility): _utility{ u
     tree->SetBranchAddress("_opfilter_pe_beam", &opfilter_pe_beam);
     tree->SetBranchAddress("_opfilter_pe_veto", &opfilter_pe_veto);
 
+    tree->SetBranchAddress("weightSplineTimesTune", &weightSplineTimesTune);
+    tree->SetBranchAddress("ppfx_cv", &ppfx_cv);
+
 	tree->SetBranchAddress("nslice", &nslice);
 	tree->SetBranchAddress("n_tracks", &n_tracks);
     tree->SetBranchAddress("n_showers", &n_showers);
@@ -376,8 +379,91 @@ Utility::ClassificationEnums EventContainer::getEventClassification(Utility::Fil
 	return classification;
 }
 
+// Function to calculate CV event weight
+void EventContainer::calculateCVEventWeight(Utility::FileTypeEnums type, Utility::RunPeriodEnums runPeriod) {
+
+	float weight = 1.0;
+
+	// overlay MC events
+	if (type == Utility::kMC || Utility::kIntrinsic) {
+		
+		// CV weight
+		weight = ppfx_cv * weightSplineTimesTune;
+
+		/* 
+		// normalisation scaling of pi0 events performed in LEE analyses, but not included in Krishan's measurement
+		// unclear whether this should be included or not
+		// further re-scale events containing pi-zeros
+		if (npi0 > 0) {
+			weight = weight * 0.759;	// normalisation scaling, from PeLEE analysis  
+		}
+		*/
+	}
+	
+	// dirt events
+	// using scaling factors from Katrina's analysis, DocDb: 39436
+	if (type == Utility::kDirt) {
+		
+		// Run 1
+		if (runPeriod == Utility::kRun1) {
+			weight = 0.65;
+		}
+
+		// Run 3b
+		if (runPeriod == Utility::kRun3b) {
+			weight = 0.45;
+		}	
+	}
+
+	// beam off events
+	if (type == Utility::kEXT) {
+		weight = 0.98;
+	}
+
+	// check weight is sensible
+	weight = checkWeight(weight);
+
+	// set weight in event
+	weight_cv = weight;
+}
+
+// Function to check event weight is sensible
+float EventContainer::checkWeight(float weight) {
+
+	// infinite weight
+	if (std::isinf(weight)) {
+		std::cout << "Warning: infinite event weight" << std::endl;
+		weight = 1.0;
+	}
+
+	// nan weight
+	else if (std::isnan(weight)) {
+		std::cout << "Warning: nan event weight" << std::endl;
+		weight = 1.0;
+	}
+
+	// overly large weight
+	else if (weight > 30.0) {
+		std::cout << "Warning: overly large event weight, " << weight << std::endl;
+		weight = 1.0;
+	}
+
+	// negative weight
+	else if (weight < 0.0) {
+		std::cout << "Warning: overly negative event weight" << std::endl;
+		weight = 1.0;
+	}
+
+	// approximately zero weight
+	else if (weight > -1.0e-4 && weight < 1e-4) {
+		weight = 0.0;
+	}
+
+	return weight;
+}
+
 // apply reconstruction failure recovery algorithms
-void EventContainer::applyEventRecoveryAlgorithms(Utility::FileTypeEnums type) {
+void EventContainer::applyEventRecoveryAlgorithms() {
 
 	// mode #1: shower split into two or more showers
 	failureRecoverySplitShowers(); 

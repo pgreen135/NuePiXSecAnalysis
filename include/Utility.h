@@ -37,6 +37,12 @@ public:
 		kRun3b,
 	};
 
+	// BDT types
+	enum BDTEnums {
+		kElectronPhoton,
+		kPionProton
+	};
+
 	// Event classification enums
 	enum ClassificationEnums {
 		kCCNue1pi0p,

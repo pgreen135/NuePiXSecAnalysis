@@ -26,9 +26,9 @@ int main() {
 	
 	// Files [Run 1]
     std::string filename_intrinsic = "/Users/patrick/Data/MicroBooNE/CrossSections/samplesPandora/run1_slim_Mar23/neutrinoselection_filt_run1_intrinsic_slim.root";
+    //std::string filename_intrinsic = "/Users/patrick/Data/MicroBooNE/CrossSections/samplesPandora/run1_slim_Mar23/neutrinoselection_filt_run1_ccncpizero_slim.root"; // Pi0-rich sample
+    
     std::string filename_mc = "/Users/patrick/Data/MicroBooNE/CrossSections/samplesPandora/run1_slim/neutrinoselection_filt_run1_overlay_slim.root";
-    //std::string filename_mc = "/Users/patrick/Data/MicroBooNE/CrossSections/samplesPandora/run1_slim_Mar23/neutrinoselection_filt_run1_overlay_slim_60MeVThreshold.root";
-    //std::string filename_mc = "/Users/patrick/Data/MicroBooNE/CrossSections/samplesPandora/run1_slim_Mar23/neutrinoselection_filt_run1_overlay_slim_shrenergies.root";
 	std::string filename_dirt = "/Users/patrick/Data/MicroBooNE/CrossSections/samplesPandora/run1_slim/neutrinoselection_filt_run1_dirt_slim.root";
 	std::string filename_beamoff = "/Users/patrick/Data/MicroBooNE/CrossSections/samplesPandora/run1_slim/neutrinoselection_filt_run1_beamoff_slim.root";
 
@@ -36,14 +36,14 @@ int main() {
 	//std::string filename_mc = "/Users/patrick/Data/MicroBooNE/CrossSections/samplesPandora/run3b_slim/neutrinoselection_filt_run3b_overlay_slim.root";
 
 	// Weights [Run 1]
-	double weight_intrinsic = 1;		// POT_beam-on / POT_mc
+	double pot_weight_intrinsic = 1;		// POT_beam-on / POT_mc
 	//double weight_intrinsic = 0.008405127 * 0.9502;	// intrinsic nue 2.3795e+22 [slim]  2.3795e+22
     //double weight_intrinsic = 0.008398562;	// intrinsic nue 2.38136e+22 [slim Mar23]
-	double weight_mc = 0.08569; 	// 2.33391e+21 [slim]
+	double pot_weight_mc = 0.08569; 	// 2.33391e+21 [slim]
 	//double weight_mc = 0.08559; // 2.33671e+21 [slim Mar23 60 MeV Threshold]
 	//double weight_mc = 0.0862887; // 2.3178e+21 [slim Mar23 shr energies]
-	double weight_dirt = 0.12245; 	// 1.63329e+21 [slim]
-	double weight_beamoff = 0.5612; // 0.98 * HW_beam-on / HW_beam-off
+	double pot_weight_dirt = 0.12245; 	// 1.63329e+21 [slim]
+	double pot_weight_beamoff = 0.5727; // HW_beam-on / HW_beam-off
 
 	// Weights [Run 3b]
 	//double weight_mc = 0.25081; // 1.99351e+21 [slim]
@@ -51,9 +51,9 @@ int main() {
 	// Initialise Classes
   	Utility _utility;
   	Selection _selection(_utility);
-  	StackedHistTool _histStack("", "", 100, 0, 1, _utility);
+  	StackedHistTool _histStack("", "", 10, 0, 3, _utility);
   	BDTTool _BDTTool(true, false);
-  	//CreateTrainingTree _trainingTree;
+  	//CreateTrainingTree _trainingTree(Utility::kElectronPhoton);
 
   	// Testing histogram
   	TH1F *hist_sig = new TH1F("", "", 50, 0, 10);
@@ -68,7 +68,6 @@ int main() {
   	Double_t bins[22] = {0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 250, 300, 350, 400, 450, 500, 600, 700, 800, 900, 1000};
 	TEfficiency* pEff = new TEfficiency("","",21,bins);
 	
-
 	/*
 	// --- Intrinsic Nue MC -- 
   	// read file
@@ -84,6 +83,7 @@ int main() {
   	int n_entries_intrinsic = tree_intrinsic->GetEntries();
   	std::cout << "Initial number events [Intrinsic]: " << n_entries_intrinsic << std::endl;
 
+  	
   	for (int e = 0; e < n_entries_intrinsic; e++) {
   	//for (int e = 0; e < 10; e++) {
   		
@@ -147,13 +147,20 @@ int main() {
 	    // evaluate BDTs
 	    ///_event_intrinsic.evaluateBDTs();		   	    
 
+	    // loose neutral pion rejection
+
+
 	    // neutral pion rejection
-	    bool passNeutralPionRejection = _selection.ApplyNeutralPionRejection(_event_intrinsic);
-	    //bool passNeutralPionRejection = _selection.ApplyNeutralPionRejectionBDT(_event_intrinsic);
+	    //bool passNeutralPionRejection = _selection.ApplyNeutralPionRejection(_event_intrinsic);
+	    bool passNeutralPionRejection = _selection.ApplyNeutralPionRejectionBDT(_event_intrinsic, _BDTTool);
 	    if(!passNeutralPionRejection) {
 	    	pEff->Fill(false, _event_intrinsic.pion_e*1000 - 139.570);
 	    	//continue;
-	    }	
+	    }
+
+	    // loose proton rejection
+	    //bool passLooseProtonRejection = _selection.ApplyLooseProtonRejection(_event_intrinsic, Utility::kIntrinsic);
+	    //if (!passLooseProtonRejection) continue;
 
 	    // proton rejection
 	    bool passProtonRejection = _selection.ApplyProtonRejection(_event_intrinsic, Utility::kIntrinsic);
@@ -182,7 +189,7 @@ int main() {
 	    	classification == Utility::kCCNue1p || classification == Utility::kCCNueNp || classification == Utility::kCCNueOther || 
 	    	classification == Utility::kCCNue1piNp ){
 	    	
-	    	_histStack.Fill(classification, _event_intrinsic.elec_e - (0.511/1000), weight_intrinsic);
+	    	//_histStack.Fill(classification, _event_intrinsic.elec_e - (0.511/1000), weight_intrinsic);
 
 	    	
 		    // fill testing plot
@@ -215,18 +222,18 @@ int main() {
 		}
 		
 		
-		//if (_event_intrinsic.n_showers_contained == 2) _histStack.Fill(classification, _event_intrinsic.shr2_energy, weight_intrinsic);
+		
+		_histStack.Fill(classification, _event_intrinsic.n_showers, weight_intrinsic);
 		
 		
 
 	    // add event to training tree (if required)
-	    //if(classification == Utility::kCCNuepizero && e > 12500) continue; 	// prevent excess of nue pi0
-		//_trainingTree.addEvent(_event_intrinsic, classification);
+		_trainingTree.addEvent(_event_intrinsic, classification);
 
 	}
 	*/
-
 	
+
 	// --- Overlay MC ---	
 	// read file
 	TFile *f_mc = NULL;
@@ -242,7 +249,6 @@ int main() {
   	std::cout << "Initial number events [MC]: " << n_entries_mc << std::endl;
 
   	for (int e = 0; e < n_entries_mc; e++) {
-  	//for (int e = 0; e < 50000; e++) {
   		
     	tree_mc->GetEntry(e);    	
 
@@ -250,61 +256,25 @@ int main() {
 	      std::cout << Form("%i0%% Completed...\n", e / (n_entries_mc/10));
 	    }
 
-	    // populate derived variables [not in ntuples]
-	    _event_mc.populateDerivedVariables(Utility::kMC);
+	    bool passSelection = _selection.ApplyCutBasedSelection(_event_mc, Utility::kMC, Utility::kRun1);
+	    if (!passSelection) continue;
 
-	    // apply reconstruction recovery algorithms
-	    _event_mc.applyEventRecoveryAlgorithms(Utility::kMC);
+	    // fill histogram
+	    _histStack.Fill(_event_mc.classification, _event_mc.nu_e, pot_weight_mc * _event_mc.weight_cv);	
 
-	    // apply selection
-	    // trigger [MC only]
-	    bool passTrigger = _selection.ApplyMCTrigger(_event_mc, Utility::kMC, Utility::kRun1);
-	    if (!passTrigger) continue;
+	    // add event to training tree (if required)
+	  	//_trainingTree.addEvent(_event_mc, _event_mc.classification);  
 
-	    // pre-selection
-	    bool passPreSelection = _selection.ApplyPreSelection(_event_mc);
-	    if(!passPreSelection) continue;	    
-
-	    // good shower selection
-	    bool passGoodShowerIdentification = _selection.ApplyGoodShowerSelection(_event_mc);
-	    if(!passGoodShowerIdentification) continue;
-
-	    // good track selection
-	    bool passGoodTrackSelection = _selection.ApplyGoodTrackSelection(_event_mc, Utility::kMC);
-	    if(!passGoodTrackSelection) continue;
-
-	    // reconstruction failure checks
-	    bool passReconstructionFailureChecks = _selection.ApplyReconstructionFailureChecks(_event_mc, Utility::kMC);
-	    if(!passReconstructionFailureChecks) continue;
-
-	    // cosmic rejection
-	    bool passCosmicRejection = _selection.ApplyCosmicRejection(_event_mc);
-	    if(!passCosmicRejection) continue;
-
-	    // neutral pion rejection
-	    bool passNeutralPionRejection = _selection.ApplyNeutralPionRejection(_event_mc);
-	    //bool passNeutralPionRejection = _selection.ApplyNeutralPionRejectionBDT(_event_mc, _BDTTool);
-	    if(!passNeutralPionRejection) continue;	
-
-	    // proton rejection
-	    bool passProtonRejection = _selection.ApplyProtonRejection(_event_mc, Utility::kMC);
-	    if(!passProtonRejection) continue;
-
-	    // get event classification
-	    Utility::ClassificationEnums classification = _event_mc.getEventClassification(Utility::kMC);
-
-		//// fill testing plot 
-	    if(classification == Utility::kCCNue1piNp || classification == Utility::kCCNue1pi0p) {
-	    	hist2D->Fill(_event_mc.shr_trkfit_gap10_dedx_max, _event_mc.shr_distance, weight_mc);
-	    }
+		// fill testing plot 
+	    //if(classification == Utility::kCCNue1piNp || classification == Utility::kCCNue1pi0p) {
+	    //	hist2D->Fill(_event_mc.shr_trkfit_gap10_dedx_max, _event_mc.shr_distance, weight_mc);
+	    //}
 	    
-	    if (classification == Utility::kCCNumupizero || classification == Utility::kNCpizero) {
-	    	hist2D_bg->Fill(_event_mc.shr_trkfit_gap10_dedx_max, _event_mc.shr_distance, weight_mc);
-	    }
+	    //if (classification == Utility::kCCNumupizero || classification == Utility::kNCpizero) {
+	    //	hist2D_bg->Fill(_event_mc.shr_trkfit_gap10_dedx_max, _event_mc.shr_distance, weight_mc);
+	    //}	 
 	    
-	    
-	 
-	    
+
 	    
 	    
 	    //if (_event_mc.npion == 1 && (_event_mc.trk_bkt_pdg == 211 || _event_mc.trk_bkt_pdg == -211)) {
@@ -338,30 +308,30 @@ int main() {
 	    
 	    // fill testing plot
 	    // primary
-	    if (_event_mc.trk_bkt_pdg == 2212 && _event_mc.primaryTrackPionlike) {
-	    	hist2D_bg->Fill(_event_mc.trk_bragg_pion_max, _event_mc.trk_bragg_mip_max, weight_mc);
-	    }
-	    if ((_event_mc.trk_bkt_pdg == 211 || _event_mc.trk_bkt_pdg == -211) && _event_mc.primaryTrackPionlike) {
-	    	hist2D->Fill(_event_mc.trk_bragg_pion_max, _event_mc.trk_bragg_mip_max, weight_mc);
-	    }
+	    //if (_event_mc.trk_bkt_pdg == 2212 && _event_mc.primaryTrackPionlike) {
+	    //	hist2D_bg->Fill(_event_mc.trk_bragg_pion_max, _event_mc.trk_bragg_mip_max, weight_mc);
+	    //}
+	    //if ((_event_mc.trk_bkt_pdg == 211 || _event_mc.trk_bkt_pdg == -211) && _event_mc.primaryTrackPionlike) {
+	    //	hist2D->Fill(_event_mc.trk_bragg_pion_max, _event_mc.trk_bragg_mip_max, weight_mc);
+	    //}
 	    // secondary
-	    if (_event_mc.trk2_bkt_pdg == 2212 && _event_mc.secondaryTrackPionlike) {
-	    	hist2D_bg->Fill(_event_mc.trk2_bragg_pion_max, _event_mc.trk2_bragg_mip_max, weight_mc);
-	    }
-	    if ((_event_mc.trk2_bkt_pdg == 211 || _event_mc.trk2_bkt_pdg == -211) && _event_mc.secondaryTrackPionlike) {
-	    	hist2D->Fill(_event_mc.trk2_bragg_pion_max, _event_mc.trk2_bragg_mip_max, weight_mc);
-	    }
+	    //if (_event_mc.trk2_bkt_pdg == 2212 && _event_mc.secondaryTrackPionlike) {
+	    //	hist2D_bg->Fill(_event_mc.trk2_bragg_pion_max, _event_mc.trk2_bragg_mip_max, weight_mc);
+	    //}
+	    //if ((_event_mc.trk2_bkt_pdg == 211 || _event_mc.trk2_bkt_pdg == -211) && _event_mc.secondaryTrackPionlike) {
+	    //	hist2D->Fill(_event_mc.trk2_bragg_pion_max, _event_mc.trk2_bragg_mip_max, weight_mc);
+	    //}
 	    // tertiary
-	    if (_event_mc.trk3_bkt_pdg == 2212 && _event_mc.tertiaryTrackPionlike) {
-	    	hist2D_bg->Fill(_event_mc.trk3_bragg_pion_max, _event_mc.trk3_bragg_mip_max, weight_mc);
-	    }
-	    if ((_event_mc.trk3_bkt_pdg == 211 || _event_mc.trk3_bkt_pdg == -211) && _event_mc.tertiaryTrackPionlike) {
-	    	hist2D->Fill(_event_mc.trk3_bragg_pion_max, _event_mc.trk3_bragg_mip_max, weight_mc);
-	    }
+	    //if (_event_mc.trk3_bkt_pdg == 2212 && _event_mc.tertiaryTrackPionlike) {
+	    //	hist2D_bg->Fill(_event_mc.trk3_bragg_pion_max, _event_mc.trk3_bragg_mip_max, weight_mc);
+	    //}
+	    //if ((_event_mc.trk3_bkt_pdg == 211 || _event_mc.trk3_bkt_pdg == -211) && _event_mc.tertiaryTrackPionlike) {
+	    //	hist2D->Fill(_event_mc.trk3_bragg_pion_max, _event_mc.trk3_bragg_mip_max, weight_mc);
+	    //}
 	    
 
 	    //if (_event_mc.n_showers_contained == 2) 
-	    _histStack.Fill(classification, _event_mc.n_showers_contained, weight_mc);
+	    //_histStack.Fill(classification, _event_mc.nu_e, weight_mc);
 		
 		//if (_event_mc.primaryTrackValid) _histStack.Fill(classification, _event_mc.trk1_calo_energy, weight_mc);
 		//else if (_event_mc.secondaryTrackValid) _histStack.Fill(classification, _event_mc.trk2_calo_energy, weight_mc);
@@ -371,12 +341,10 @@ int main() {
 	    //else if (_event_mc.secondaryTrackPionlike) _histStack.Fill(classification, _event_mc.trk2_energy_proton, weight_mc);
 	  	//else _histStack.Fill(classification, _event_mc.trk3_energy_proton, weight_mc);
 
-	  	// add event to training tree (if required)
-	  	//_trainingTree.addEvent(_event_mc, classification);
-
+	  	
 
 	}
-	
+
 	
 	// --- Beam Off ---
 	// read file
@@ -393,7 +361,6 @@ int main() {
   	std::cout << "Initial number events [Beam Off]: " << n_entries_beamoff << std::endl;
 
   	for (int e = 0; e < n_entries_beamoff; e++) {
-  	//for (int e = 0; e < 50000; e++) {
 
     	tree_beamoff->GetEntry(e);
 
@@ -401,58 +368,11 @@ int main() {
 	      std::cout << Form("%i0%% Completed...\n", e / (n_entries_beamoff/10));
 	    }
 
-	    // populate derived variables [not in ntuple]
-	    _event_beamoff.populateDerivedVariables(Utility::kEXT);
-
-	    // apply reconstruction recovery algorithms
-	    _event_beamoff.applyEventRecoveryAlgorithms(Utility::kEXT);
-
-	    // apply selection
-	    // trigger [MC only]
-	    bool passTrigger = _selection.ApplyMCTrigger(_event_beamoff, Utility::kEXT, Utility::kRun1);
-	    if (!passTrigger) continue;
-
-	    // pre-selection
-	    bool passPreSelection = _selection.ApplyPreSelection(_event_beamoff);
-	    if(!passPreSelection) continue;
-
-	    // good shower identification
-	    bool passGoodShowerIdentification = _selection.ApplyGoodShowerSelection(_event_beamoff);
-	    if(!passGoodShowerIdentification) continue;
-
-	    // good track selection
-	    bool passGoodTrackSelection = _selection.ApplyGoodTrackSelection(_event_beamoff, Utility::kEXT);
-	    if(!passGoodTrackSelection) continue;
-
-	    // reconstruction failure checks
-	    bool passReconstructionFailureChecks = _selection.ApplyReconstructionFailureChecks(_event_beamoff, Utility::kEXT);
-	    if(!passReconstructionFailureChecks) continue;
-
-	    // cosmic rejection
-	    bool passCosmicRejection = _selection.ApplyCosmicRejection(_event_beamoff);
-	    if(!passCosmicRejection) continue;
-
-	    // evaluate BDTs
-	    //_event_beamoff.evaluateBDTs();  	    
-	    
-	    // neutral pion rejection
-	    bool passNeutralPionRejection = _selection.ApplyNeutralPionRejection(_event_beamoff);
-	    if(!passNeutralPionRejection) continue;
-
-	    // proton rejection
-	    bool passProtonRejection = _selection.ApplyProtonRejection(_event_beamoff, Utility::kEXT);
-	    if(!passProtonRejection) continue;
-
-	    // get event classification
-	    Utility::ClassificationEnums classification = _event_beamoff.getEventClassification(Utility::kEXT);
+	    bool passSelection = _selection.ApplyCutBasedSelection(_event_beamoff, Utility::kEXT, Utility::kRun1);
+	    if (!passSelection) continue;
 
 	    // fill histogram
-	    _histStack.Fill(classification, _event_beamoff.n_showers_contained, weight_beamoff);
-
-	    //if (_event_beamoff.primaryTrackValid) _histStack.Fill(classification, _event_beamoff.trk_len, weight_beamoff);
-		//else if (_event_beamoff.secondaryTrackValid) _histStack.Fill(classification, _event_beamoff.trk2_len, weight_beamoff);
-		//else if (_event_beamoff.tertiaryTrackValid) _histStack.Fill(classification, _event_beamoff.trk3_len, weight_beamoff);
-
+	    _histStack.Fill(_event_beamoff.classification, _event_beamoff.nu_e, pot_weight_beamoff * _event_beamoff.weight_cv);
 
 	}
 
@@ -472,68 +392,21 @@ int main() {
   	std::cout << "Initial number events [Dirt]: " << n_entries_dirt << std::endl;
 
   	for (int e = 0; e < n_entries_dirt; e++) {
-  	//for (int e = 0; e < 50000; e++) {
 
     	tree_dirt->GetEntry(e);
 
 	    if ( (e != 0) && (n_entries_dirt >= 10) &&  (e % (n_entries_dirt/10) == 0) ) {
 	      std::cout << Form("%i0%% Completed...\n", e / (n_entries_dirt/10));
 	    }
-
-	    // populate derived variables [not in ntuple]
-	    _event_dirt.populateDerivedVariables(Utility::kDirt);
-
-	    // apply reconstruction recovery algorithms
-	    _event_dirt.applyEventRecoveryAlgorithms(Utility::kDirt);
-
-	    // apply selection
-	    // trigger [MC only]
-	    bool passTrigger = _selection.ApplyMCTrigger(_event_dirt, Utility::kDirt, Utility::kRun1);
-	    if (!passTrigger) continue;
-
-	    // pre-selection
-	    bool passPreSelection = _selection.ApplyPreSelection(_event_dirt);
-	    if(!passPreSelection) continue;	    
-
-	    // good shower identification
-	    bool passGoodShowerIdentification = _selection.ApplyGoodShowerSelection(_event_dirt);
-	    if(!passGoodShowerIdentification) continue;
-
-	    // good track selection
-	    bool passGoodTrackSelection = _selection.ApplyGoodTrackSelection(_event_dirt, Utility::kDirt);
-	    if(!passGoodTrackSelection) continue;
-
-	    // reconstruction failure checks
-	    bool passReconstructionFailureChecks = _selection.ApplyReconstructionFailureChecks(_event_dirt, Utility::kDirt);
-	    if(!passReconstructionFailureChecks) continue;	    
-
-	    // cosmic rejection
-	    bool passCosmicRejection = _selection.ApplyCosmicRejection(_event_dirt);
-	    if(!passCosmicRejection) continue;
-
-	    // evaluate BDTs
-	    //_event_dirt.evaluateBDTs();  	 
-
-	    // neutral pion rejection
-	    bool passNeutralPionRejection = _selection.ApplyNeutralPionRejection(_event_dirt);
-	    if(!passNeutralPionRejection) continue;
-
-	    // proton rejection
-	    bool passProtonRejection = _selection.ApplyProtonRejection(_event_dirt, Utility::kDirt);
-	    if(!passProtonRejection) continue;
-
-	    // get event classification
-	    Utility::ClassificationEnums classification = _event_dirt.getEventClassification(Utility::kDirt);
+	    
+	    bool passSelection = _selection.ApplyCutBasedSelection(_event_dirt, Utility::kDirt, Utility::kRun1);
+	    if (!passSelection) continue;
 
 	    // fill histogram
-	    _histStack.Fill(classification, _event_dirt.n_showers_contained, weight_dirt);
-
-	    //if (_event_dirt.primaryTrackValid) _histStack.Fill(classification, _event_dirt.trk_len, weight_dirt);
-		//else if (_event_dirt.secondaryTrackValid) _histStack.Fill(classification, _event_dirt.trk2_len, weight_dirt);
-		//else if (_event_dirt.tertiaryTrackValid) _histStack.Fill(classification, _event_dirt.trk3_len, weight_dirt);
+	    _histStack.Fill(_event_dirt.classification, _event_dirt.nu_e, pot_weight_dirt * _event_dirt.weight_cv);  
 
 	}	
-	
+
 
 	// write training tree
 	//_trainingTree.writeOutputFile();
@@ -542,7 +415,7 @@ int main() {
 	_histStack.PrintEventIntegrals();
 
 	TCanvas *canv = new TCanvas("canv", "canv", 1080, 1080);
-  	_histStack.DrawStack(canv, Utility::kElectronETrue);
+  	_histStack.DrawStack(canv, Utility::kNuE);
   	//_histStack.PrintEventIntegrals();
 
   	
@@ -551,7 +424,7 @@ int main() {
   	//canv->Print("plot_postHitRatio_LeadingShowerEnergy.root");
   	//canv->Print("plot_postNeutralPionRejection_MoliereAverage.root");
   	//canv->Print("plot_postTrackLength_TrackDistance.root");
-  	canv->Print("plot_electronEnergy.root");
+  	canv->Print("plot_neutrinoEnergy.root");
 
   	
 	/*

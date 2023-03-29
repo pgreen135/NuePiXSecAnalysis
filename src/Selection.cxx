@@ -10,6 +10,57 @@ Selection::Selection(const Utility &util): _utility{ util } {
 }
 
 // ------------------------------------------------------------------------------
+bool Selection::ApplyCutBasedSelection(EventContainer &_evt, Utility::FileTypeEnums type, Utility::RunPeriodEnums runPeriod) {
+
+    // populate derived variables
+    _evt.populateDerivedVariables(type);
+
+    // apply reconstruction recovery algorithms
+    _evt.applyEventRecoveryAlgorithms();
+
+	// trigger [impacts MC only]
+	bool passTrigger = ApplyMCTrigger(_evt, type, runPeriod);
+	if (!passTrigger) return false;
+
+	// pre-selection
+	bool passPreSelection = ApplyPreSelection(_evt);
+	if(!passPreSelection) return false;	  
+
+    // good shower selection
+    bool passGoodShowerIdentification = ApplyGoodShowerSelection(_evt);
+    if(!passGoodShowerIdentification) return false;
+
+    // good track selection
+    bool passGoodTrackSelection = ApplyGoodTrackSelection(_evt);
+    if(!passGoodTrackSelection) return false;
+
+    // reconstruction failure checks
+    bool passReconstructionFailureChecks = ApplyReconstructionFailureChecks(_evt);
+    if(!passReconstructionFailureChecks) return false;
+
+    // cosmic rejection
+    bool passCosmicRejection = ApplyCosmicRejection(_evt);
+    if(!passCosmicRejection) return false;
+
+    // neutral pion rejection
+    bool passNeutralPionRejection = ApplyNeutralPionRejection(_evt);
+    if(!passNeutralPionRejection) return false;
+
+    // proton rejection
+    bool passProtonRejection = ApplyProtonRejection(_evt);
+    if(!passProtonRejection) return false;
+
+    // determine event classification
+    _evt.EventClassifier(type);
+
+    // determine event weight
+    _evt.calculateCVEventWeight(type, runPeriod); 
+
+    // event passes
+    return true;
+}
+
+// ------------------------------------------------------------------------------
 
 bool Selection::ApplyMCTrigger(const EventContainer &_evt, Utility::FileTypeEnums type, Utility::RunPeriodEnums runPeriod) {
 	// MC only cuts
@@ -64,7 +115,7 @@ bool Selection::ApplyGoodShowerSelection(const EventContainer &_evt) {
 
 // ------------------------------------------------------------------------------
 
-bool Selection::ApplyGoodTrackSelection(EventContainer &_evt, Utility::FileTypeEnums type) {
+bool Selection::ApplyGoodTrackSelection(EventContainer &_evt) {
 
 	bool primaryTrackPasses = false;
 	bool secondaryTrackPasses = false;
@@ -105,7 +156,7 @@ bool Selection::ApplyGoodTrackSelection(EventContainer &_evt, Utility::FileTypeE
 }
 
 // ------------------------------------------------------------------------------
-bool Selection::ApplyReconstructionFailureChecks(const EventContainer &_evt, Utility::FileTypeEnums type) { 
+bool Selection::ApplyReconstructionFailureChecks(const EventContainer &_evt) { 
 
 	if (!ApplyTrackShowerOpeningAngleCut(_evt.tksh_angle)) return false;	// primary track-shower opening angle
 
@@ -150,15 +201,50 @@ bool Selection::ApplyNeutralPionRejectionBDT(EventContainer &_evt, const BDTTool
 
 	if(!ApplyLooseNeutralPionRejection(_evt.n_showers_contained, _evt.shr_energyFraction, _evt.shr_distance)) return false;
 
-	_evt.BDTScoreElectronPhoton = _bdt.evaluateElectronPhotonBDTScore(_evt);
-	if(!ApplyElectronPhotonBDTCut(_evt.BDTScoreElectronPhoton)) return false;
+	//_evt.BDTScoreElectronPhoton = _bdt.evaluateElectronPhotonBDTScore(_evt);
+	//if(!ApplyElectronPhotonBDTCut(_evt.BDTScoreElectronPhoton)) return false;
 
 	return true;
 }
 
 // ------------------------------------------------------------------------------
 
-bool Selection::ApplyProtonRejection(EventContainer &_evt, Utility::FileTypeEnums type) {
+bool Selection::ApplyLooseProtonRejection(EventContainer &_evt) {
+
+	
+	bool primaryTrackPasses = false;
+	bool secondaryTrackPasses = false;
+	bool tertiaryTrackPasses = false;
+
+	// primary track
+	if (_evt.primaryTrackValid) {
+		if (ApplyLLRPIDScoreCut(_evt.trk_llr_pid_score)) primaryTrackPasses = true;   
+	}
+
+	// secondary track
+	if (_evt.secondaryTrackValid) {
+		if (ApplyLLRPIDScoreCut(_evt.trk2_llr_pid_score)) secondaryTrackPasses = true; 	
+	}
+
+	// tertiary track
+	if (_evt.tertiaryTrackValid) {
+		if (ApplyLLRPIDScoreCut(_evt.trk3_llr_pid_score)) tertiaryTrackPasses = true;
+	}
+
+	// update selection status variables in event for use later
+	_evt.primaryTrackPionlikeLoose = primaryTrackPasses;
+	_evt.secondaryTrackPionlikeLoose = secondaryTrackPasses;
+	_evt.tertiaryTrackPionlikeLoose = tertiaryTrackPasses;
+
+	// require at least one track passes look cuts
+	if (primaryTrackPasses || secondaryTrackPasses || tertiaryTrackPasses) return true;
+	else return false;
+	
+}
+
+// ------------------------------------------------------------------------------
+
+bool Selection::ApplyProtonRejection(EventContainer &_evt) {
 
 	
 	bool primaryTrackPasses = false;
@@ -181,7 +267,7 @@ bool Selection::ApplyProtonRejection(EventContainer &_evt, Utility::FileTypeEnum
 			) secondaryTrackPasses = true; 	
 	}
 
-	// tertiary track, only available for MC, dirt currently
+	// tertiary track
 	if (_evt.tertiaryTrackValid) {
 		if (ApplyLLRPIDScoreCut(_evt.trk3_llr_pid_score) &&
 			ApplyTrackTrunkdEdxCut(_evt.trk3_dEdx_trunk_max) &&
@@ -322,36 +408,6 @@ bool Selection::ApplyShowerCylFractionCut(float CylFrac2h_1cm) {
 // apply 2D cut
 bool Selection::ApplyNeutralPionRejectionCut(float dEdxMax, float shr_distance) {
 	
-	// original
-	/*
-	if (dEdxMax <= 0) {
-    	return false;
-    }
-    else if (dEdxMax > 0 && dEdxMax < 1.5){
-        if (shr_distance > 1.5 ) return false;
-        else return true;
-    }
-    else if (dEdxMax >= 1.5 && dEdxMax < 2.5){ 
-        if (shr_distance > 3.5 ) return false;
-        else return true;
-    }
-    else if (dEdxMax >= 2.5 && dEdxMax < 3.5){
-        if (shr_distance > 1.5 ) return false;
-        else return true;
-    }
-    else if (dEdxMax >= 3.5 && dEdxMax < 5){
-        return false;
-    }
-    else if (dEdxMax >= 5){
-        if (shr_distance > 1.0 ) return false;
-        else return true;
-    }
-    else{
-        std::cout << "Error: [Selection.h] Uncaught dEdx values." << std::endl;
-        return false;
-    }
-    */
-    // looser
     if (dEdxMax <= 0) {
     	return false;
     }

@@ -16,12 +16,12 @@ public:
 
 	// ----------------------------------
 	// Constructor
-	CreateTrainingTree();
+	CreateTrainingTree(Utility::BDTEnums type);
 
 	// Destructor
 	~CreateTrainingTree();
 
-	// Function to add an event
+	// Functions to add an event
 	void addEvent(const EventContainer &_evt, Utility::ClassificationEnums classification);
 
 	// Function to write output file
@@ -31,17 +31,19 @@ public:
 
 private:
 
+	// type
+	Utility::BDTEnums BDTType;
+
 	// output file
 	TFile *outputFile;
 
 	// trees
-	TTree *electronPhotonSeparationTree;
+	TTree *trainingTree;
 
 	// branches
-
-	// --- electron-photon separation tree ---
 	bool isSignal;
-	
+
+	// --- electron-photon separation tree ---	
 	unsigned int n_showers_contained;
 	
 	float shr_distance;
@@ -63,6 +65,13 @@ private:
 	float secondshower_V_nhit;
 	float secondshower_V_vtxdist;
 	float secondshower_V_anglediff;
+
+	// --- pion-proton separation tree --
+    float trk_llr_pid_score;
+    float trk_bragg_mip_max;
+    float trk_bragg_pion_max;
+    float trk_dEdx_trunk_max;
+    float trk_daughters;
 }; 
 
 #endif

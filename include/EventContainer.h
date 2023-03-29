@@ -25,11 +25,15 @@ public:
 	~EventContainer();
 
 	// Functions to classify the event
-	void  EventClassifier(Utility::FileTypeEnums type);
+	void EventClassifier(Utility::FileTypeEnums type);
 	Utility::ClassificationEnums getEventClassification(Utility::FileTypeEnums type);
 
+    // Functions to calculation event weight
+    void calculateCVEventWeight(Utility::FileTypeEnums type, Utility::RunPeriodEnums runPeriod);
+    float checkWeight(float weight);
+
 	// Functions to recover reconstruction failures
-	void applyEventRecoveryAlgorithms(Utility::FileTypeEnums type);
+	void applyEventRecoveryAlgorithms();
 	void failureRecoverySplitShowers();
 	void failureRecoverySpuriousTrack();
 	void failureRecoverySplitTrackShower();
@@ -53,6 +57,10 @@ public:
 	// --- Event classification ---
 	Utility::ClassificationEnums classification;
 
+    // --- Event weight ---
+    // CV weight, before POT scaling
+    float weight_cv; 
+
 	// --- Reconstruction failures information ---
 	bool hasSplitPrimaryShower;
 	bool hasSpuriousLeadingTrack;
@@ -67,6 +75,10 @@ public:
     bool primaryTrackPionlike;
     bool secondaryTrackPionlike;
     bool tertiaryTrackPionlike;
+
+    bool primaryTrackPionlikeLoose;
+    bool secondaryTrackPionlikeLoose;
+    bool tertiaryTrackPionlikeLoose;
 
     // --- BDT Scores ---
     double BDTScoreElectronPhoton;
@@ -108,6 +120,10 @@ public:
     // --- Common optical filter [MC only] ---
     float opfilter_pe_beam; // Common Optical Filter (beam window)
     float opfilter_pe_veto; // Common Optical Filter (michel veto)
+
+    // --- Event weight ---
+    float weightSplineTimesTune;    // Weight from Genie, spline * tune
+    float ppfx_cv;                  // Weight from PPFX CV
 
   	// --- Slice information ---
   	// number

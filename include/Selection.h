@@ -17,21 +17,25 @@ public:
 	// Destructor
 	~Selection(){};
 
-	// Selection
+	// Run Selection
+	bool ApplyCutBasedSelection(EventContainer &_evt, Utility::FileTypeEnums type, Utility::RunPeriodEnums runPeriod);
+
+	// Selection Cuts
 	// Pre-selection
 	bool ApplyMCTrigger(const EventContainer &_evt, Utility::FileTypeEnums type, Utility::RunPeriodEnums runPeriod);
 	bool ApplyPreSelection(const EventContainer &_evt);
 	
 	// Candidate Identification
 	bool ApplyGoodShowerSelection(const EventContainer &_evt);
-	bool ApplyGoodTrackSelection(EventContainer &_evt, Utility::FileTypeEnums type);
+	bool ApplyGoodTrackSelection(EventContainer &_evt);
 
 	// Background rejection
-	bool ApplyReconstructionFailureChecks(const EventContainer &_evt, Utility::FileTypeEnums type);
+	bool ApplyReconstructionFailureChecks(const EventContainer &_evt);
 	bool ApplyCosmicRejection(const EventContainer &_evt);
 	bool ApplyNeutralPionRejection(const EventContainer &_evt);
 	bool ApplyNeutralPionRejectionBDT(EventContainer &_evt, const BDTTool &_bdt);
-	bool ApplyProtonRejection(EventContainer &_evt, Utility::FileTypeEnums type);
+	bool ApplyLooseProtonRejection(EventContainer &_evt);
+	bool ApplyProtonRejection(EventContainer &_evt);
 	
 	// ----------------------------------
 
