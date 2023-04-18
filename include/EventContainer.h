@@ -82,7 +82,10 @@ public:
 
     // --- BDT Scores ---
     double BDTScoreElectronPhoton;
-    double BDTScoreProtonPion;
+    double primaryTrackBDTScorePionProton;
+    double secondaryTrackBDTScorePionProton;
+    double tertiaryTrackBDTScorePionProton;
+    double BDTScorePionProtonAlternate;
 
 	// --- Event information ---
 	int run, sub, evt;			// run, subrun, event numbers
@@ -103,6 +106,7 @@ public:
   	float pion_e;				// Truth: pion energy
 
   	int npi0; 					// Truth: number of neutral pions
+    float pi0_e;
   	
   	int nproton; 				// Truth: number of protons
   	float proton_e;				// Truth: proton energy
@@ -285,6 +289,7 @@ public:
     float shr3_start_x;
     float shr3_start_y;
     float shr3_start_z;
+    float shr3_distance;
     int shr3subclusters;
    
     float shr13_p1_dstart;
@@ -344,6 +349,8 @@ public:
     float trk_llr_pid_score;	// Reco - track: LLR PID longest track
     float trk_dEdx_trunk_max;   // Reco - track: average dE/dx of first third of track, best plane [Requires re-run NTuples]
 
+    int trk_end_spacepoints;
+
     // Seconary track
     unsigned int trk2_id;	// Reco - track: secondary track ID
     float trk2_len;			// Reco - track: Length of the second longest track
@@ -379,6 +386,8 @@ public:
     unsigned int trk2subclusters1;
     unsigned int trk2subclusters2;
 
+    int trk2_end_spacepoints;
+
     // tertiary track
     unsigned int trk3_id;	// Reco - track: secondary track ID
     float trk3_len;			// Reco - track: Length of the second longest track
@@ -403,6 +412,8 @@ public:
     float trk3_bragg_mip_max; 	// Reco - track: Track Bragg Likelihood MIP, best plane
     float trk3_llr_pid_score;	// Reco - track: LLR PID second longest track
     float trk3_dEdx_trunk_max;	// Reco - track: average dE/dx of first third of track, best plane [Requires re-run NTuples]
+
+    int trk3_end_spacepoints;
 
     // Angle and distance between primary track and primary shower
     float tksh_distance;        // Reco: Distance between leading shower vertex and longest track vertex
@@ -471,6 +482,9 @@ public:
     // Full daughter vectors
     std::vector<unsigned int> *pfp_trk_daughters_v = nullptr;
     std::vector<unsigned int> *pfp_shr_daughters_v = nullptr;
+
+    // Track end spacepoints
+    std::vector<unsigned int> *trk_end_spacepoints_v = nullptr;
 
     // Full subcluster vectors
     std::vector<int> *pfpplanesubclusters_U_v = nullptr;

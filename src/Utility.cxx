@@ -1,6 +1,7 @@
 #include "../include/Utility.h"
 
 #include <iostream>
+#include <numeric>
 
 // Constructor
 Utility::Utility() {
@@ -37,6 +38,8 @@ bool Utility::inFV(const double x, const double y, const double z) const {
 	else return false;
 }
 
+// ------------------------------------------------------------------------------
+
 // Function to check whether a track is exiting
 // Currently same definition as FV, but could be altered
 bool Utility::isExiting(const double x, const double y, const double z) const {
@@ -47,4 +50,22 @@ bool Utility::isExiting(const double x, const double y, const double z) const {
 	  	return true;
 	}
 	else return false;
+}
+
+// ------------------------------------------------------------------------------
+
+// Function to check whether number is valid
+bool Utility::isNumber(float input) {
+
+	// infinite 
+	if (std::isinf(input)) {
+		return false;
+	}
+
+	// nan 
+	if (std::isnan(input)) {
+		return false;
+	}
+
+	return true;
 }

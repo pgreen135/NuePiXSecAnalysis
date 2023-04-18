@@ -14,19 +14,21 @@ public:
 
 	// ----------------------------------
 	// Constructor
-	BDTTool(bool loadElectronPhotonBDT, bool loadPionProtonBDT);
+	BDTTool(bool loadElectronPhotonBDT, bool loadPionProtonBDT, bool loadPionProtonBDTAlternate);
 
 	// Destructor
 	~BDTTool();
 
 	// Function to load BDTs
-	void loadBDTs(bool loadElectronPhotonBDT, bool loadPionProtonBDT);
+	void loadBDTs(bool loadElectronPhotonBDT, bool loadPionProtonBDT, bool loadPionProtonBDTAlternate);
 
 	// Functions to evaluate BDT scores
 	// Electron-photon separation
     double evaluateElectronPhotonBDTScore(const EventContainer &_evt) const;
     // Pion-proton separation
-    double evaluatePionProtonBDTScore(const EventContainer &_evt) const;
+    double evaluatePionProtonBDTScore(const EventContainer &_evt, int trackID) const;
+    // pion-proton separation alternate
+	double evaluatePionProtonBDTScoreAlternate(const EventContainer &_evt) const;
 
     // Function to dump BDT models [for testing]
     void dumpBDTModel();
@@ -37,12 +39,16 @@ private:
 
 	// --- BDTs ---
 	bool loadedElectronPhotonBDT; 
-	std::string BDTFileElectronPhoton = "/Users/patrick/Documents/MicroBooNE/CrossSections/NuePiXSec_Analysis/Selection/bdts/bdt_electronPhotonSeparation_withNue.model";
+	std::string BDTFileElectronPhoton = "/Users/patrick/Documents/MicroBooNE/CrossSections/NuePiXSec_Analysis/Selection/bdts/bdt_electronPhoton.json";
     BoosterHandle boosterElectronPhoton;
     
 	bool loadedPionProtonBDT; 
-    std::string BDTFilePionProton = "/Users/patrick/Documents/MicroBooNE/CrossSections/NuePiXSec_Analysis/Selection/bdts/bdt_TOBEADDED.model";
+    std::string BDTFilePionProton = "/Users/patrick/Documents/MicroBooNE/CrossSections/NuePiXSec_Analysis/Selection/bdts/bdt_pionProton.model";
     BoosterHandle boosterPionProton;
+
+    bool loadedPionProtonBDTAlternate; 
+    std::string BDTFilePionProtonAlternate = "/Users/patrick/Documents/MicroBooNE/CrossSections/NuePiXSec_Analysis/Selection/bdts/bdt_pionProtonAlternate.json";
+    BoosterHandle boosterPionProtonAlternate;
     
 };
 

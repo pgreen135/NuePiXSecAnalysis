@@ -20,12 +20,16 @@ public:
 
 	// Function to check if track is exiting
 	bool isExiting(const double x, const double y, const double z) const;
+
+	// Function to check whether number is valid
+	bool isNumber(float input);
 	
 	// ----------------------------------
 
 	// File types
 	enum FileTypeEnums{
 		kIntrinsic,
+		kCCNCPiZero,
 		kMC,
 		kEXT,
 		kDirt
@@ -40,7 +44,8 @@ public:
 	// BDT types
 	enum BDTEnums {
 		kElectronPhoton,
-		kPionProton
+		kPionProton,
+		kPionProtonAlternate
 	};
 
 	// Event classification enums
@@ -82,6 +87,7 @@ public:
 		kMoliereAverage,
 		kShowerEnergyRatio,
 		kSecondShowerEnergy,
+		kShowerDistance,
 		kShowerdEdxMax,
 		kNeutralPionInvariantMass,
 		kTrackLength,
@@ -103,7 +109,9 @@ public:
 		kShowerLLRPID,
 		kPionETrue,
 		kNeutrinoETrue,
-		kElectronETrue		
+		kElectronETrue,
+		kElectronNeutralPionBDT,
+		kPionProtonBDT		
 	};
 
 }; 

@@ -25,10 +25,14 @@
 int main() {
 	
 	// Files [Run 1]
-    std::string filename_intrinsic = "/Users/patrick/Data/MicroBooNE/CrossSections/samplesPandora/run1_slim_Mar23/neutrinoselection_filt_run1_intrinsic_slim.root";
+	// with ppfx weights
+	std::string filename_intrinsic = "/Users/patrick/Data/MicroBooNE/CrossSections/samplesPandora/run1_slim_ppfx/neutrinoselection_filt_run1_intrinsic_slim.root";
+	std::string filename_ccncpizero = "/Users/patrick/Data/MicroBooNE/CrossSections/samplesPandora/run1_slim_ppfx/neutrinoselection_filt_run1_ccncpizero_slim.root";
+	std::string filename_mc = "/Users/patrick/Data/MicroBooNE/CrossSections/samplesPandora/run1_slim_ppfx/neutrinoselection_filt_run1_overlay_slim.root";
+
+	// without ppfx weights
     //std::string filename_intrinsic = "/Users/patrick/Data/MicroBooNE/CrossSections/samplesPandora/run1_slim_Mar23/neutrinoselection_filt_run1_ccncpizero_slim.root"; // Pi0-rich sample
-    
-    std::string filename_mc = "/Users/patrick/Data/MicroBooNE/CrossSections/samplesPandora/run1_slim/neutrinoselection_filt_run1_overlay_slim.root";
+    //std::string filename_mc = "/Users/patrick/Data/MicroBooNE/CrossSections/samplesPandora/run1_slim/neutrinoselection_filt_run1_overlay_slim.root";
 	std::string filename_dirt = "/Users/patrick/Data/MicroBooNE/CrossSections/samplesPandora/run1_slim/neutrinoselection_filt_run1_dirt_slim.root";
 	std::string filename_beamoff = "/Users/patrick/Data/MicroBooNE/CrossSections/samplesPandora/run1_slim/neutrinoselection_filt_run1_beamoff_slim.root";
 
@@ -36,11 +40,16 @@ int main() {
 	//std::string filename_mc = "/Users/patrick/Data/MicroBooNE/CrossSections/samplesPandora/run3b_slim/neutrinoselection_filt_run3b_overlay_slim.root";
 
 	// Weights [Run 1]
-	double pot_weight_intrinsic = 1;		// POT_beam-on / POT_mc
-	//double weight_intrinsic = 0.008405127 * 0.9502;	// intrinsic nue 2.3795e+22 [slim]  2.3795e+22
-    //double weight_intrinsic = 0.008398562;	// intrinsic nue 2.38136e+22 [slim Mar23]
-	double pot_weight_mc = 0.08569; 	// 2.33391e+21 [slim]
-	//double weight_mc = 0.08559; // 2.33671e+21 [slim Mar23 60 MeV Threshold]
+	// with ppfx weights
+	double pot_weight_intrinsic = 1;
+	//double pot_weight_intrinsic = 0.008406;	// intrinsic nue 2.37918e+22 [slim, ppfx]
+	double pot_weight_ccncpizero = 1;
+	//double pot_weight_ccncpizero = 0.015199; // 1.31585e+22 [slim, ppfx]
+	//double pot_weight_mc = 1;	
+	double pot_weight_mc = 0.08895; // [slim, ppfx] 2.24851e+21
+	
+	// without ppfx weights
+	//double pot_weight_mc = 0.08569; 	// 2.33391e+21 [slim]
 	//double weight_mc = 0.0862887; // 2.3178e+21 [slim Mar23 shr energies]
 	double pot_weight_dirt = 0.12245; 	// 1.63329e+21 [slim]
 	double pot_weight_beamoff = 0.5727; // HW_beam-on / HW_beam-off
@@ -51,13 +60,13 @@ int main() {
 	// Initialise Classes
   	Utility _utility;
   	Selection _selection(_utility);
-  	StackedHistTool _histStack("", "", 10, 0, 3, _utility);
-  	BDTTool _BDTTool(true, false);
-  	//CreateTrainingTree _trainingTree(Utility::kElectronPhoton);
+  	StackedHistTool _histStack("", "", 24, -0.1, 1.1, _utility);
+  	BDTTool _BDTTool(true, true, false);
+  	CreateTrainingTree _trainingTree(Utility::kPionProtonAlternate);
 
   	// Testing histogram
-  	TH1F *hist_sig = new TH1F("", "", 50, 0, 10);
-  	TH1F *hist_bg = new TH1F("", "", 50, 0, 10);
+  	TH1F *hist_sig = new TH1F("", "", 22, -1.1, 1.1);
+  	TH1F *hist_bg = new TH1F("", "", 22, -1.1, 1.1);
   	
   	TH2F *hist2D = new TH2F("", "", 22, 0, 1.1, 22, 0, 1.1);
   	TH2F *hist2D_bg = new TH2F("", "", 22, 0, 1.1, 22, 0, 1.1);
@@ -67,9 +76,12 @@ int main() {
 
   	Double_t bins[22] = {0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 250, 300, 350, 400, 450, 500, 600, 700, 800, 900, 1000};
 	TEfficiency* pEff = new TEfficiency("","",21,bins);
+
+	// Dump BDT
+	//_BDTTool.dumpBDTModel();	
 	
 	/*
-	// --- Intrinsic Nue MC -- 
+	// --- Intrinsic Nue Overlay MC -- 
   	// read file
 	TFile *f_intrinsic = NULL;
   	TTree *tree_intrinsic = NULL;
@@ -83,7 +95,6 @@ int main() {
   	int n_entries_intrinsic = tree_intrinsic->GetEntries();
   	std::cout << "Initial number events [Intrinsic]: " << n_entries_intrinsic << std::endl;
 
-  	
   	for (int e = 0; e < n_entries_intrinsic; e++) {
   	//for (int e = 0; e < 10; e++) {
   		
@@ -93,148 +104,123 @@ int main() {
 	      std::cout << Form("%i0%% Completed...\n", e / (n_entries_intrinsic/10));
 	    }
 
-	    // populate derived variables [not in ntuples]
-	    _event_intrinsic.populateDerivedVariables(Utility::kIntrinsic);
+	    //bool passSelection = _selection.ApplyCutBasedSelection(_event_intrinsic, Utility::kIntrinsic, Utility::kRun1);
+	    //if (!passSelection) {
+	    //	pEff->Fill(false, _event_intrinsic.pion_e*1000 - 139.570);
+	    //	continue;
+	    //}
 
-	    // apply reconstruction recovery algorithms
-	    _event_intrinsic.applyEventRecoveryAlgorithms(Utility::kIntrinsic);
-
-	    // apply selection
-	    // trigger [MC only]
-	    bool passTrigger = _selection.ApplyMCTrigger(_event_intrinsic, Utility::kIntrinsic, Utility::kRun1);
-	    if (!passTrigger) continue;
-
-	    // get event classification
-	    Utility::ClassificationEnums classification = _event_intrinsic.getEventClassification(Utility::kIntrinsic);
-
-	    //if (!(classification == Utility::kCCNue1piNp || classification == Utility::kCCNue1pi0p)) continue;
-
-	    // pre-selection
-	    bool passPreSelection = _selection.ApplyPreSelection(_event_intrinsic);
-	    if(!passPreSelection) {
-	    	pEff->Fill(false, _event_intrinsic.pion_e*1000 - 139.570);
-	    	//continue;
-	    }	    
-
-	    // good shower selection
-	    bool passGoodShowerIdentification = _selection.ApplyGoodShowerSelection(_event_intrinsic);
-	    if(!passGoodShowerIdentification) {
-	    	pEff->Fill(false, _event_intrinsic.pion_e*1000 - 139.570);
-	    	//continue;
+	    bool passSelection = _selection.ApplyBDTBasedSelection(_event_intrinsic, _BDTTool, Utility::kIntrinsic, Utility::kRun1);
+	    if (!passSelection) {
+	    //	pEff->Fill(false, _event_intrinsic.pion_e*1000 - 139.570);
+	    	continue;
 	    }
 
-	    // good track selection
-	    bool passGoodTrackSelection = _selection.ApplyGoodTrackSelection(_event_intrinsic, Utility::kIntrinsic);
-	    if(!passGoodTrackSelection) {
-	    	pEff->Fill(false, _event_intrinsic.pion_e*1000 - 139.570);
-	    	//continue;
-	    }
+	    //bool passSelection = _selection.ApplyPionProtonBDTTrainingSelection(_event_intrinsic, Utility::kIntrinsic, Utility::kRun1);
+	    //if (!passSelection) continue;
 
-	    // reconstruction failure checks
-	    bool passReconstructionFailureChecks = _selection.ApplyReconstructionFailureChecks(_event_intrinsic, Utility::kIntrinsic);
-	    if(!passReconstructionFailureChecks) {
-	    	pEff->Fill(false, _event_intrinsic.pion_e*1000 - 139.570);
-	    	//continue;
-	    }
+	    //bool passSelection = _selection.ApplyElectronPhotonBDTTrainingSelection(_event_intrinsic, Utility::kIntrinsic, Utility::kRun1);
+	    //if (!passSelection) continue;
+	     
+	    //pEff->Fill(true, _event_intrinsic.pion_e*1000 - 139.570);	
 
-	    // cosmic rejection
-	    bool passCosmicRejection = _selection.ApplyCosmicRejection(_event_intrinsic);
-	    if(!passCosmicRejection) {
-	    	pEff->Fill(false, _event_intrinsic.pion_e*1000 - 139.570);
-	    	//continue;
-	    }
-
-	    // evaluate BDTs
-	    ///_event_intrinsic.evaluateBDTs();		   	    
-
-	    // loose neutral pion rejection
-
-
-	    // neutral pion rejection
-	    //bool passNeutralPionRejection = _selection.ApplyNeutralPionRejection(_event_intrinsic);
-	    bool passNeutralPionRejection = _selection.ApplyNeutralPionRejectionBDT(_event_intrinsic, _BDTTool);
-	    if(!passNeutralPionRejection) {
-	    	pEff->Fill(false, _event_intrinsic.pion_e*1000 - 139.570);
-	    	//continue;
-	    }
-
-	    // loose proton rejection
-	    //bool passLooseProtonRejection = _selection.ApplyLooseProtonRejection(_event_intrinsic, Utility::kIntrinsic);
-	    //if (!passLooseProtonRejection) continue;
-
-	    // proton rejection
-	    bool passProtonRejection = _selection.ApplyProtonRejection(_event_intrinsic, Utility::kIntrinsic);
-	    if(!passProtonRejection) {
-	    	pEff->Fill(false, _event_intrinsic.pion_e*1000 - 139.570);
-	    	//continue;
-	    }
-	    
-	    if(classification == Utility::kCCNue1piNp || classification == Utility::kCCNue1pi0p) {
-	    //if(classification == Utility::kCCNue1pi0p) {
-	    //	_histStack.Fill(classification, _event_intrinsic.trk_len, weight_intrinsic);
-	    	//hist2D->Fill(_event_intrinsic.shr_trkfit_gap10_dedx_max, _event_intrinsic.shr_distance, weight_intrinsic);
-
-	    	pEff->Fill(true, _event_intrinsic.pion_e*1000 - 139.570);	
-	    	
-	    }
-
-
-
-
-	    
-
-	    
+	    _histStack.Fill(_event_intrinsic.classification, _event_intrinsic.BDTScorePionProtonAlternate, pot_weight_intrinsic * _event_intrinsic.weight_cv);
+	    //if (_event_intrinsic.primaryTrackPionlike) _histStack.Fill(_event_intrinsic.classification, _event_intrinsic.primaryTrackBDTScorePionProton, pot_weight_intrinsic * _event_intrinsic.weight_cv);
+	    //else if (_event_intrinsic.secondaryTrackPionlike) _histStack.Fill(_event_intrinsic.classification, _event_intrinsic.secondaryTrackBDTScorePionProton, pot_weight_intrinsic * _event_intrinsic.weight_cv);
+	  	//else _histStack.Fill(_event_intrinsic.classification, _event_intrinsic.tertiaryTrackBDTScorePionProton, pot_weight_intrinsic * _event_intrinsic.weight_cv);
+	   	
 	    // fill stacked histogram, selected topologies only
-	    if (classification == Utility::kCCNue1pi0p || classification == Utility::kCCNue1piNp || classification == Utility::kCCNueNpi || classification == Utility::kCCNuepizero || 
-	    	classification == Utility::kCCNue1p || classification == Utility::kCCNueNp || classification == Utility::kCCNueOther || 
-	    	classification == Utility::kCCNue1piNp ){
+	    //if (classification == Utility::kCCNue1pi0p || classification == Utility::kCCNue1piNp || classification == Utility::kCCNueNpi || classification == Utility::kCCNuepizero || 
+	    //	classification == Utility::kCCNue1p || classification == Utility::kCCNueNp || classification == Utility::kCCNueOther || 
+	    //	classification == Utility::kCCNue1piNp ){
 	    	
 	    	//_histStack.Fill(classification, _event_intrinsic.elec_e - (0.511/1000), weight_intrinsic);
 
 	    	
 		    // fill testing plot
 		    // primary
-		    if (_event_intrinsic.trk_bkt_pdg == 2212 && _event_intrinsic.primaryTrackPionlike) {
-		    	hist2D_bg->Fill(_event_intrinsic.trk_bragg_pion_max, _event_intrinsic.trk_bragg_mip_max, weight_intrinsic);
-		    }
-		    if ((_event_intrinsic.trk_bkt_pdg == 211 || _event_intrinsic.trk_bkt_pdg == -211) && _event_intrinsic.primaryTrackPionlike) {
-		    	hist2D->Fill(_event_intrinsic.trk_bragg_pion_max, _event_intrinsic.trk_bragg_mip_max, weight_intrinsic);
-		    }
+		//    if (_event_intrinsic.trk_bkt_pdg == 2212 && _event_intrinsic.primaryTrackPionlike) {
+		//    	hist2D_bg->Fill(_event_intrinsic.trk_bragg_pion_max, _event_intrinsic.trk_bragg_mip_max, weight_intrinsic);
+		//    }
+		//    if ((_event_intrinsic.trk_bkt_pdg == 211 || _event_intrinsic.trk_bkt_pdg == -211) && _event_intrinsic.primaryTrackPionlike) {
+		//    	hist2D->Fill(_event_intrinsic.trk_bragg_pion_max, _event_intrinsic.trk_bragg_mip_max, weight_intrinsic);
+		//    }
 		    // secondary
-		    if (_event_intrinsic.trk2_bkt_pdg == 2212 && _event_intrinsic.secondaryTrackPionlike) {
-		    	hist2D_bg->Fill(_event_intrinsic.trk2_bragg_pion_max, _event_intrinsic.trk2_bragg_mip_max, weight_intrinsic);
-		    }
-		    if ((_event_intrinsic.trk2_bkt_pdg == 211 || _event_intrinsic.trk2_bkt_pdg == -211) && _event_intrinsic.secondaryTrackPionlike) {
-		    	hist2D->Fill(_event_intrinsic.trk2_bragg_pion_max, _event_intrinsic.trk2_bragg_mip_max, weight_intrinsic);
-		    }
+		//    if (_event_intrinsic.trk2_bkt_pdg == 2212 && _event_intrinsic.secondaryTrackPionlike) {
+		//    	hist2D_bg->Fill(_event_intrinsic.trk2_bragg_pion_max, _event_intrinsic.trk2_bragg_mip_max, weight_intrinsic);
+		//    }
+		//    if ((_event_intrinsic.trk2_bkt_pdg == 211 || _event_intrinsic.trk2_bkt_pdg == -211) && _event_intrinsic.secondaryTrackPionlike) {
+		//    	hist2D->Fill(_event_intrinsic.trk2_bragg_pion_max, _event_intrinsic.trk2_bragg_mip_max, weight_intrinsic);
+		//    }
 		    // tertiary
-		    if (_event_intrinsic.trk3_bkt_pdg == 2212 && _event_intrinsic.tertiaryTrackPionlike) {
-		    	hist2D_bg->Fill(_event_intrinsic.trk3_bragg_pion_max, _event_intrinsic.trk3_bragg_mip_max, weight_intrinsic);
-		    }
-		    if ((_event_intrinsic.trk3_bkt_pdg == 211 || _event_intrinsic.trk3_bkt_pdg == -211) && _event_intrinsic.tertiaryTrackPionlike) {
-		    	hist2D->Fill(_event_intrinsic.trk3_bragg_pion_max, _event_intrinsic.trk3_bragg_mip_max, weight_intrinsic);
-		    }
+		//   if (_event_intrinsic.trk3_bkt_pdg == 2212 && _event_intrinsic.tertiaryTrackPionlike) {
+		//    	hist2D_bg->Fill(_event_intrinsic.trk3_bragg_pion_max, _event_intrinsic.trk3_bragg_mip_max, weight_intrinsic);
+		//    }
+		//    if ((_event_intrinsic.trk3_bkt_pdg == 211 || _event_intrinsic.trk3_bkt_pdg == -211) && _event_intrinsic.tertiaryTrackPionlike) {
+		//    	hist2D->Fill(_event_intrinsic.trk3_bragg_pion_max, _event_intrinsic.trk3_bragg_mip_max, weight_intrinsic);
+		//    }
 		    
 	    	//if (_event_intrinsic.primaryTrackValid) _histStack.Fill(classification, _event_intrinsic.trk_energy_muon, weight_intrinsic);
 			//else if (_event_intrinsic.secondaryTrackValid) _histStack.Fill(classification, _event_intrinsic.trk2_energy_muon, weight_intrinsic);
 			//else if (_event_intrinsic.tertiaryTrackValid) _histStack.Fill(classification, _event_intrinsic.trk3_energy_muon, weight_intrinsic);
 
-		}
+		//}
 		
 		
-		
-		_histStack.Fill(classification, _event_intrinsic.n_showers, weight_intrinsic);
-		
-		
-
 	    // add event to training tree (if required)
-		_trainingTree.addEvent(_event_intrinsic, classification);
+	    // electron-photon
+	    // _event_intrinsic.classification == Utility::kCCNuepizero ||
+		//if (_event_intrinsic.classification == Utility::kCCNue1pi0p || _event_intrinsic.classification == Utility::kCCNue1piNp || _event_intrinsic.classification == Utility::kCCNueNpi ||
+		//	_event_intrinsic.classification == Utility::kCCNue1p || _event_intrinsic.classification == Utility::kCCNueNp) _trainingTree.addEvent(_event_intrinsic, _event_intrinsic.classification);
+		// pion-proton, all events
+		_trainingTree.addEvent(_event_intrinsic, _event_intrinsic.classification);
 
 	}
 	*/
 	
+	/*
+	// --- CC/NC PiZero Overlay ---
 
-	// --- Overlay MC ---	
+	// read file
+	TFile *f_ccncpizero = NULL;
+  	TTree *tree_ccncpizero = NULL;
+ 	f_ccncpizero = new TFile(filename_ccncpizero.c_str());  
+  	tree_ccncpizero = (TTree*)f_ccncpizero->Get("nuselection/NeutrinoSelectionFilter");
+  	
+  	// initialise event container
+  	EventContainer _event_ccncpizero(tree_ccncpizero, _utility); 	
+
+  	// loop through events
+  	int n_entries_ccncpizero = tree_ccncpizero->GetEntries();
+  	std::cout << "Initial number events [CC/NC PiZero]: " << n_entries_ccncpizero << std::endl;
+  	
+  	for (int e = 0; e < n_entries_ccncpizero; e++) {
+
+    	tree_ccncpizero->GetEntry(e);    	
+
+	    if ( (e != 0) && (n_entries_ccncpizero >= 10) &&  (e % (n_entries_ccncpizero/10) == 0) ) {
+	      std::cout << Form("%i0%% Completed...\n", e / (n_entries_ccncpizero/10));
+	    }
+
+	    //bool passSelection = _selection.ApplyPionProtonBDTTrainingSelection(_event_ccncpizero, Utility::kCCNCPiZero, Utility::kRun1);
+	    //if (!passSelection) continue;
+
+	    bool passSelection = _selection.ApplyElectronPhotonBDTTrainingSelection(_event_ccncpizero, Utility::kCCNCPiZero, Utility::kRun1);
+	    if (!passSelection) continue;
+	     
+	     // fill histogram
+	    _histStack.Fill(_event_ccncpizero.classification, _event_ccncpizero.shr_energyFraction, pot_weight_ccncpizero * _event_ccncpizero.weight_cv);	 
+		
+	    // add event to training tree (if required)
+	    if (_event_ccncpizero.classification == Utility::kCCNuepizero || _event_ccncpizero.classification == Utility::kCCNumupizero || _event_ccncpizero.classification == Utility::kNCpizero ) {
+			_trainingTree.addEvent(_event_ccncpizero, _event_ccncpizero.classification);
+		}
+
+	}
+	*/
+	
+	
+	// --- Nu Overlay MC ---	
 	// read file
 	TFile *f_mc = NULL;
   	TTree *tree_mc = NULL;
@@ -256,14 +242,29 @@ int main() {
 	      std::cout << Form("%i0%% Completed...\n", e / (n_entries_mc/10));
 	    }
 
-	    bool passSelection = _selection.ApplyCutBasedSelection(_event_mc, Utility::kMC, Utility::kRun1);
+	    //bool passSelection = _selection.ApplyCutBasedSelection(_event_mc, Utility::kMC, Utility::kRun1);
+	    //if (!passSelection) continue;
+
+	    bool passSelection = _selection.ApplyBDTBasedSelection(_event_mc, _BDTTool, Utility::kMC, Utility::kRun1);
 	    if (!passSelection) continue;
 
+	    //bool passSelection = _selection.ApplyElectronPhotonBDTTrainingSelection(_event_mc, Utility::kMC, Utility::kRun1);
+	    //if (!passSelection) continue;
+
+	    //bool passSelection = _selection.ApplyPionProtonBDTTrainingSelection(_event_mc, Utility::kMC, Utility::kRun1);
+	    //if (!passSelection) continue;
+
 	    // fill histogram
-	    _histStack.Fill(_event_mc.classification, _event_mc.nu_e, pot_weight_mc * _event_mc.weight_cv);	
+	    _histStack.Fill(_event_mc.classification, _event_mc.shrPCA1CMed_5cm, pot_weight_mc * _event_mc.weight_cv);	
 
 	    // add event to training tree (if required)
-	  	//_trainingTree.addEvent(_event_mc, _event_mc.classification);  
+	    // electron-photon bdt: only CC muon / NC
+	    //if (_event_mc.classification == Utility::kCCNuepizero || _event_mc.classification == Utility::kCCNumupizero || _event_mc.classification == Utility::kNCpizero ) _trainingTree.addEvent(_event_mc, _event_mc.classification);
+	    // pion-proton bdt: muon events only to avoid bias 
+	    //if (_event_mc.nu_pdg == 14 || _event_mc.nu_pdg == -14) _trainingTree.addEvent(_event_mc, _event_mc.classification);
+
+
+
 
 		// fill testing plot 
 	    //if(classification == Utility::kCCNue1piNp || classification == Utility::kCCNue1pi0p) {
@@ -289,16 +290,22 @@ int main() {
 	    // muon
 	    //if ((_event_mc.trk_bkt_pdg == 13 || _event_mc.trk_bkt_pdg == -13) && _event_mc.primaryTrackValid) hist2D_bg->Fill(_event_mc.trk_avg_deflection_separation_mean, _event_mc.trk_avg_deflection_mean);
 	    // proton
-	    //if (_event_mc.trk_bkt_pdg == 2212 && _event_mc.primaryTrackPionlike) hist_bg->Fill(_event_mc.trk_dEdx_trunk_max);
+	    if (_event_mc.trk_bkt_pdg == 2212 && _event_mc.primaryTrackValid) hist_bg->Fill(_event_mc.trk_llr_pid_score);
 	    // pion
-	    //if ((_event_mc.trk_bkt_pdg == 211 || _event_mc.trk_bkt_pdg == -211) && _event_mc.primaryTrackPionlike) hist_sig->Fill(_event_mc.trk_dEdx_trunk_max);
+	    if ((_event_mc.trk_bkt_pdg == 211 || _event_mc.trk_bkt_pdg == -211) && _event_mc.primaryTrackValid) hist_sig->Fill(_event_mc.trk_llr_pid_score);
 	    //if ((_event_mc.trk_bkt_pdg == 211 || _event_mc.trk_bkt_pdg == -211) && _event_mc.primaryTrackValid) hist2D->Fill(_event_mc.trk_avg_deflection_separation_mean, _event_mc.trk_avg_deflection_mean);
 	    
 	    // secondary track
 	    // proton
-	    //if (_event_mc.trk2_bkt_pdg == 2212 && _event_mc.secondaryTrackPionlike) hist_bg->Fill(_event_mc.trk2_dEdx_trunk_max);
+	    //if (_event_mc.trk2_bkt_pdg == 2212 && _event_mc.secondaryTrackValid) hist_bg->Fill(_event_mc.trk2_llr_pid_score);
 	    // pion
-	    //if ((_event_mc.trk2_bkt_pdg == 211 || _event_mc.trk2_bkt_pdg == -211) && _event_mc.secondaryTrackPionlike) hist_sig->Fill(_event_mc.trk2_dEdx_trunk_max);
+	    //if ((_event_mc.trk2_bkt_pdg == 211 || _event_mc.trk2_bkt_pdg == -211) && _event_mc.secondaryTrackValid) hist_sig->Fill(_event_mc.trk2_llr_pid_score);
+
+	    // tertiary track
+	    // proton
+	    //if (_event_mc.trk3_bkt_pdg == 2212 && _event_mc.tertiaryTrackValid) hist_bg->Fill(_event_mc.trk3_llr_pid_score);
+	    // pion
+	    //if ((_event_mc.trk3_bkt_pdg == 211 || _event_mc.trk3_bkt_pdg == -211) && _event_mc.tertiaryTrackValid) hist_sig->Fill(_event_mc.trk3_llr_pid_score);
 	  	
 	    // do not add nues in training, use intrinsic simulation instead [comment out when testing with actual sample]
 	    //if (classification == Utility::kCCNue1pi0p || classification == Utility::kCCNue1piNp || classification == Utility::kCCNueNpi || classification == Utility::kCCNuepizero || 
@@ -337,15 +344,16 @@ int main() {
 		//else if (_event_mc.secondaryTrackValid) _histStack.Fill(classification, _event_mc.trk2_calo_energy, weight_mc);
 		//else if (_event_mc.tertiaryTrackValid) _histStack.Fill(classification, _event_mc.trk3_calo_energy, weight_mc);
 
-	  	//if (_event_mc.primaryTrackPionlike) _histStack.Fill(classification, _event_mc.trk_energy_proton, weight_mc);
-	    //else if (_event_mc.secondaryTrackPionlike) _histStack.Fill(classification, _event_mc.trk2_energy_proton, weight_mc);
-	  	//else _histStack.Fill(classification, _event_mc.trk3_energy_proton, weight_mc);
-
-	  	
+	  	//if (_event_mc.primaryTrackPionlikeLoose) _histStack.Fill(_event_mc.classification, _event_mc.primaryTrackBDTScorePionProton, pot_weight_mc * _event_mc.weight_cv);
+	    //else if (_event_mc.secondaryTrackPionlikeLoose) _histStack.Fill(_event_mc.classification, _event_mc.secondaryTrackBDTScorePionProton, pot_weight_mc * _event_mc.weight_cv);
+	  	//else _histStack.Fill(_event_mc.classification, _event_mc.tertiaryTrackBDTScorePionProton, pot_weight_mc * _event_mc.weight_cv);
 
 	}
-
 	
+	
+	
+
+	/*
 	// --- Beam Off ---
 	// read file
 	TFile *f_beamoff = NULL;
@@ -372,7 +380,7 @@ int main() {
 	    if (!passSelection) continue;
 
 	    // fill histogram
-	    _histStack.Fill(_event_beamoff.classification, _event_beamoff.nu_e, pot_weight_beamoff * _event_beamoff.weight_cv);
+	    _histStack.Fill(_event_beamoff.classification, _event_beamoff.BDTScoreElectronPhoton, pot_weight_beamoff * _event_beamoff.weight_cv);
 
 	}
 
@@ -403,19 +411,19 @@ int main() {
 	    if (!passSelection) continue;
 
 	    // fill histogram
-	    _histStack.Fill(_event_dirt.classification, _event_dirt.nu_e, pot_weight_dirt * _event_dirt.weight_cv);  
+	    _histStack.Fill(_event_dirt.classification, _event_dirt.BDTScoreElectronPhoton, pot_weight_dirt * _event_dirt.weight_cv);  
 
-	}	
+	}
+	*/
 
 
 	// write training tree
-	//_trainingTree.writeOutputFile();
-	
+	_trainingTree.writeOutputFile();
 	
 	_histStack.PrintEventIntegrals();
 
 	TCanvas *canv = new TCanvas("canv", "canv", 1080, 1080);
-  	_histStack.DrawStack(canv, Utility::kNuE);
+  	_histStack.DrawStack(canv, Utility::kPionProtonBDT);
   	//_histStack.PrintEventIntegrals();
 
   	
@@ -424,7 +432,7 @@ int main() {
   	//canv->Print("plot_postHitRatio_LeadingShowerEnergy.root");
   	//canv->Print("plot_postNeutralPionRejection_MoliereAverage.root");
   	//canv->Print("plot_postTrackLength_TrackDistance.root");
-  	canv->Print("plot_neutrinoEnergy.root");
+  	canv->Print("plot_BDTScorePionProton.root");
 
   	
 	/*
@@ -476,16 +484,16 @@ int main() {
 
   	
 	// normalise
-	//hist_bg->Scale(1/hist_bg->GetEntries());
-	//hist_sig->Scale(1/hist_sig->GetEntries());
+	hist_bg->Scale(1/hist_bg->GetEntries());
+	hist_sig->Scale(1/hist_sig->GetEntries());
 
-  	/*
+  	
 	TCanvas *c1 = new TCanvas("c1","",200,10,1080,1080);
   	c1->cd();
   	gStyle->SetOptStat(0);
   	hist_bg->Draw("HIST");
   	
-  	hist_bg->GetXaxis()->SetTitle("Track Trunk dE/dx [MeV/cm]");
+  	hist_bg->GetXaxis()->SetTitle("Track Proton/Muon LLR PID Score");
 	
   	hist_bg->GetXaxis()->SetTitleSize(0.045);
   	hist_bg->GetYaxis()->SetTitleSize(0.045);
@@ -510,8 +518,8 @@ int main() {
 
 	gStyle->SetOptStat(0);
 
-  	c1->Print("ProtonRejection_trackTrunkdEdx.root");
-	*/
+  	c1->Print("ProtonRejection_llrpidscore.root");
+
   	
   	/*
   	TCanvas *c1 = new TCanvas("c1","",200,10,1080,1080);

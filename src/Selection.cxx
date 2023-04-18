@@ -10,6 +10,7 @@ Selection::Selection(const Utility &util): _utility{ util } {
 }
 
 // ------------------------------------------------------------------------------
+
 bool Selection::ApplyCutBasedSelection(EventContainer &_evt, Utility::FileTypeEnums type, Utility::RunPeriodEnums runPeriod) {
 
     // populate derived variables
@@ -62,9 +63,152 @@ bool Selection::ApplyCutBasedSelection(EventContainer &_evt, Utility::FileTypeEn
 
 // ------------------------------------------------------------------------------
 
+bool Selection::ApplyBDTBasedSelection(EventContainer &_evt, const BDTTool &_bdt, Utility::FileTypeEnums type, Utility::RunPeriodEnums runPeriod) {
+
+    // populate derived variables
+    _evt.populateDerivedVariables(type);
+
+    // apply reconstruction recovery algorithms
+    _evt.applyEventRecoveryAlgorithms();
+
+	// trigger [impacts MC only]
+	bool passTrigger = ApplyMCTrigger(_evt, type, runPeriod);
+	if (!passTrigger) return false;
+
+	// pre-selection
+	bool passPreSelection = ApplyPreSelection(_evt);
+	if (!passPreSelection) return false;	  
+
+    // good shower selection
+    bool passGoodShowerIdentification = ApplyGoodShowerSelection(_evt);
+    if (!passGoodShowerIdentification) return false;
+
+    // good track selection
+    bool passGoodTrackSelection = ApplyGoodTrackSelection(_evt);
+    if (!passGoodTrackSelection) return false;
+
+    // reconstruction failure checks
+    bool passReconstructionFailureChecks = ApplyReconstructionFailureChecks(_evt);
+    if (!passReconstructionFailureChecks) return false;
+
+    // cosmic rejection
+    bool passCosmicRejection = ApplyCosmicRejection(_evt);
+    if (!passCosmicRejection) return false;
+
+    // loose neutral pion rejection
+    bool passLooseNeutralPionRejection = ApplyLooseNeutralPionRejection(_evt);
+    if (!passLooseNeutralPionRejection) return false;
+
+    // loose proton rejection
+	bool passLooseProtonPionRejection = ApplyLooseProtonRejection(_evt);
+    if (!passLooseProtonPionRejection) return false;
+
+    // BDT neutral pion rejection
+    bool passBDTNeutralPionRejection = ApplyNeutralPionRejectionBDT(_evt, _bdt);
+    if (!passBDTNeutralPionRejection) return false;
+
+    // BDT proton rejection 
+    bool passBDTProtonRejection = ApplyProtonRejectionBDT(_evt, _bdt);
+    if (!passBDTProtonRejection) return false;
+
+    // determine event classification
+    _evt.EventClassifier(type);
+
+    // determine event weight
+    _evt.calculateCVEventWeight(type, runPeriod); 
+
+    // event passes
+    return true;
+}
+
+// ------------------------------------------------------------------------------
+
+bool Selection::ApplyElectronPhotonBDTTrainingSelection(EventContainer &_evt, Utility::FileTypeEnums type, Utility::RunPeriodEnums runPeriod) {
+
+	// populate derived variables
+    _evt.populateDerivedVariables(type);
+
+    // apply reconstruction recovery algorithms
+    _evt.applyEventRecoveryAlgorithms();
+
+	// trigger [impacts MC only]
+	bool passTrigger = ApplyMCTrigger(_evt, type, runPeriod);
+	if (!passTrigger) return false;
+
+	// pre-selection
+	bool passPreSelection = ApplyPreSelection(_evt);
+	if (!passPreSelection) return false;	  
+
+    // good shower selection
+    bool passGoodShowerIdentification = ApplyGoodShowerSelection(_evt);
+    if (!passGoodShowerIdentification) return false;
+
+    // reconstruction failure checks
+    bool passReconstructionFailureChecks = ApplyReconstructionFailureChecks(_evt);
+    if (!passReconstructionFailureChecks) return false;
+
+    // loose neutral pion rejection
+	bool passLooseNeutralPionRejection = ApplyLooseNeutralPionRejection(_evt);
+    if (!passLooseNeutralPionRejection) return false;
+
+    // determine event classification
+    _evt.EventClassifier(type);
+
+    // determine event weight
+    _evt.calculateCVEventWeight(type, runPeriod);
+
+    // event passes
+    return true;
+}
+
+// ------------------------------------------------------------------------------
+
+bool Selection::ApplyPionProtonBDTTrainingSelection(EventContainer &_evt, Utility::FileTypeEnums type, Utility::RunPeriodEnums runPeriod) {
+
+	// populate derived variables
+    _evt.populateDerivedVariables(type);
+
+    // apply reconstruction recovery algorithms
+    _evt.applyEventRecoveryAlgorithms();
+
+	// trigger [impacts MC only]
+	bool passTrigger = ApplyMCTrigger(_evt, type, runPeriod);
+	if (!passTrigger) return false;
+
+	// pre-selection (modified)
+	if(!ApplySliceIDCut(_evt.nslice)) return false;	// slice ID
+		
+	if(_evt.n_tracks_contained < 1) return false;	// track
+
+	if(!ApplyVertexFVCut(_evt.reco_nu_vtx_sce_x, _evt.reco_nu_vtx_sce_y, _evt.reco_nu_vtx_sce_z)) return false;	// neutrino vertex in fiducial volume
+	
+	if(!ApplyContainedFractionCut(_evt.contained_fraction)) return false; 			// contained fraction
+
+	if(!ApplyAssociatedHitsFractionCut(_evt.associated_hits_fraction)) return false;	// fraction of hits associated with tracks/showers
+
+	// good track selection
+    bool passGoodTrackSelection = ApplyGoodTrackSelection(_evt);
+    if (!passGoodTrackSelection) return false;
+
+    // loose proton rejection
+	bool passLooseProtonPionRejection = ApplyLooseProtonRejection(_evt);
+    if (!passLooseProtonPionRejection) return false;
+
+	// determine event classification
+    _evt.EventClassifier(type);
+
+    // determine event weight
+    _evt.calculateCVEventWeight(type, runPeriod);
+
+    // event passes
+    return true;
+}
+
+// ------------------------------------------------------------------------------
+
 bool Selection::ApplyMCTrigger(const EventContainer &_evt, Utility::FileTypeEnums type, Utility::RunPeriodEnums runPeriod) {
 	// MC only cuts
-	if (type == Utility::kMC || type == Utility::kDirt || type == Utility::kIntrinsic) {
+	if (type == Utility::kMC || type == Utility::kDirt || type == Utility::kIntrinsic || type == Utility::kCCNCPiZero) {
 		
 		// software trigger [MC only], changed during Run 3
 		if (runPeriod == Utility::kRun1) {
@@ -88,7 +232,7 @@ bool Selection::ApplyPreSelection(const EventContainer &_evt) {
 	if(!ApplySliceIDCut(_evt.nslice)) return false;									// slice ID
 	
 	if(!ApplySignalCanidateCut(_evt.n_showers_contained, _evt.n_tracks_contained)) return false;	// electron + pion candidate
-	
+
 	if(!ApplyVertexFVCut(_evt.reco_nu_vtx_sce_x, _evt.reco_nu_vtx_sce_y, _evt.reco_nu_vtx_sce_z)) return false;	// neutrino vertex in fiducial volume
 	
 	if(!ApplyContainedFractionCut(_evt.contained_fraction)) return false; 			// contained fraction
@@ -160,7 +304,7 @@ bool Selection::ApplyReconstructionFailureChecks(const EventContainer &_evt) {
 
 	if (!ApplyTrackShowerOpeningAngleCut(_evt.tksh_angle)) return false;	// primary track-shower opening angle
 
-	if (!ApplyShrTrackFitCut(_evt.trkfit)) return false;				// shower track fit hits fraction
+	if (!ApplyShrTrackFitCut(_evt.trkfit)) return false;				    // shower track fit hits fraction
     
     if (!ApplyShrTrackLengthCut(_evt.shr_trk_len)) return false;			// shower track fit length
 
@@ -184,7 +328,7 @@ bool Selection::ApplyCosmicRejection(const EventContainer &_evt) {
 
 bool Selection::ApplyNeutralPionRejection(const EventContainer &_evt){
 
-	if(!ApplyNumberShowersCut(_evt.n_showers_contained, _evt.shr_energy_second_cali)) return false; 	// number of showers
+	if(!ApplyNumberShowersCut(_evt.n_showers_contained)) return false; 	// number of showers
 
 	if(!ApplyNeutralPionRejectionCut(_evt.shr_trkfit_gap10_dedx_max, _evt.shr_distance)) return false;		// neutral pion rejection: shower dE/dx and vertex separation
 	
@@ -197,12 +341,19 @@ bool Selection::ApplyNeutralPionRejection(const EventContainer &_evt){
 	return true;
 }
 
+bool Selection::ApplyLooseNeutralPionRejection(const EventContainer &_evt){
+
+	if(!ApplyLooseLeadingShowerEnergyFractionCut(_evt.shr_energyFraction)) return false;	// leading shower energy fraction (loose)
+
+	if(!ApplyLooseShowerDistanceCut(_evt.shr_distance)) return false; 	// shower distance from vertex (loose)
+	
+	return true;
+}
+
 bool Selection::ApplyNeutralPionRejectionBDT(EventContainer &_evt, const BDTTool &_bdt){
 
-	if(!ApplyLooseNeutralPionRejection(_evt.n_showers_contained, _evt.shr_energyFraction, _evt.shr_distance)) return false;
-
-	//_evt.BDTScoreElectronPhoton = _bdt.evaluateElectronPhotonBDTScore(_evt);
-	//if(!ApplyElectronPhotonBDTCut(_evt.BDTScoreElectronPhoton)) return false;
+	_evt.BDTScoreElectronPhoton = _bdt.evaluateElectronPhotonBDTScore(_evt);
+	if(!ApplyElectronPhotonBDTCut(_evt.BDTScoreElectronPhoton)) return false;
 
 	return true;
 }
@@ -236,13 +387,11 @@ bool Selection::ApplyLooseProtonRejection(EventContainer &_evt) {
 	_evt.secondaryTrackPionlikeLoose = secondaryTrackPasses;
 	_evt.tertiaryTrackPionlikeLoose = tertiaryTrackPasses;
 
-	// require at least one track passes look cuts
+	// require at least one track passes loose cuts
 	if (primaryTrackPasses || secondaryTrackPasses || tertiaryTrackPasses) return true;
 	else return false;
 	
 }
-
-// ------------------------------------------------------------------------------
 
 bool Selection::ApplyProtonRejection(EventContainer &_evt) {
 
@@ -291,6 +440,55 @@ bool Selection::ApplyProtonRejection(EventContainer &_evt) {
 	if (nPass == 1) return true;
 	else return false;
 	
+}
+
+
+bool Selection::ApplyProtonRejectionBDT(EventContainer &_evt, const BDTTool &_bdt){
+
+	bool primaryTrackPasses = false;
+	bool secondaryTrackPasses = false;
+	bool tertiaryTrackPasses = false;
+
+	// primary track
+	if (_evt.primaryTrackPionlikeLoose) {
+		_evt.primaryTrackBDTScorePionProton = _bdt.evaluatePionProtonBDTScore(_evt, 1);
+		if(ApplyProtonRejectionBDTCut(_evt.primaryTrackBDTScorePionProton)) primaryTrackPasses = true;
+	}
+
+	// secondary track
+	if (_evt.secondaryTrackPionlikeLoose) {
+		_evt.secondaryTrackBDTScorePionProton = _bdt.evaluatePionProtonBDTScore(_evt, 2);
+		if(ApplyProtonRejectionBDTCut(_evt.secondaryTrackBDTScorePionProton)) secondaryTrackPasses = true;
+	}
+
+	// tertiary track
+	if (_evt.tertiaryTrackPionlikeLoose) {
+		_evt.tertiaryTrackBDTScorePionProton = _bdt.evaluatePionProtonBDTScore(_evt, 3);
+		if(ApplyProtonRejectionBDTCut(_evt.tertiaryTrackBDTScorePionProton)) tertiaryTrackPasses = true;
+	}
+
+	// update selection status variables in event for use later
+	_evt.primaryTrackPionlike = primaryTrackPasses;
+	_evt.secondaryTrackPionlike = secondaryTrackPasses;
+	_evt.tertiaryTrackPionlike = tertiaryTrackPasses;
+
+	// count number of tracks that pass
+	int nPass = 0;
+	if (primaryTrackPasses) nPass++;
+	if (secondaryTrackPasses) nPass++;
+	if (tertiaryTrackPasses) nPass++;	
+
+	// require 1 and only 1 charged pion candidate
+	if (nPass == 1) return true;
+	else return false;
+}
+
+bool Selection::ApplyProtonRejectionBDTAlternate(EventContainer &_evt, const BDTTool &_bdt){
+
+	_evt.BDTScorePionProtonAlternate = _bdt.evaluatePionProtonBDTScoreAlternate(_evt);
+	if(!ApplyProtonRejectionBDTCutAlternate(_evt.BDTScorePionProtonAlternate)) return false;
+
+	return true;
 }
 
 // ------------------------------------------------------------------------------
@@ -374,8 +572,7 @@ bool Selection::ApplyCosmicImpactParameterCut(float CosmicIPAll3D) {
 }
 
 // Number of showers
-bool Selection::ApplyNumberShowersCut(int n_showers_contained,  float shr_energy_second_cali) {
-	//if(n_showers_contained == 1 || (n_showers_contained == 2 && shr_energy_second_cali < 0.1)) return true;
+bool Selection::ApplyNumberShowersCut(int n_showers_contained) {
 	if(n_showers_contained <= 2) return true;
 	else return false;
 }
@@ -398,9 +595,16 @@ bool Selection::ApplyLeadingShowerEnergyFractionCut(float shr_energyFraction){
 	else return false;
 }
 
+// Loose leading shower energy fraction
+bool Selection::ApplyLooseLeadingShowerEnergyFractionCut(float shr_energyFraction){
+	if(shr_energyFraction >= 0.7) return true;
+	else return false;
+}
+
 // Leading shower fraction of energy in 1cm cylinder from shower center [see PeLEE]
 bool Selection::ApplyShowerCylFractionCut(float CylFrac2h_1cm) {
-	if(CylFrac2h_1cm > 0.01 && CylFrac2h_1cm < 0.95)  return true;	// default value -1
+	//if(CylFrac2h_1cm > 0.01 && CylFrac2h_1cm < 0.95)  return true;	// default value -1
+	if(CylFrac2h_1cm < 0.95)  return true;	// default value -1
 	else return false;	
 }
 
@@ -436,23 +640,22 @@ bool Selection::ApplyNeutralPionRejectionCut(float dEdxMax, float shr_distance) 
     }
 }
 
+// Loose shower distance from vertex cut
+bool Selection::ApplyLooseShowerDistanceCut(float shr_distance) {
+	if (shr_distance < 15) return true;
+	else return false;
+}
+
 // Neutral pion rejection: second shower tagger
-// To do: optimize
 // Only using Y plane - increased noise etc, causing issues with other planes
 bool Selection::ApplySecondShowerClusterCut(int secondshower_Y_nhit, float secondshower_Y_vtxdist, float secondshower_Y_anglediff) {
 	if (secondshower_Y_nhit > 25 && secondshower_Y_vtxdist < 100 && secondshower_Y_anglediff > 10 && secondshower_Y_anglediff != 9999) return false;
 	return true;
 }
 
-// Neutral pion rejection: loose cuts
-bool Selection::ApplyLooseNeutralPionRejection(int n_showers_contained, float shr_energyFraction, float shr_distance) {
-	if (shr_energyFraction > 0.8 && shr_distance < 10) return true;
-	else return false;
-}
-
 // Neutral pion rejection: BDT
 bool Selection::ApplyElectronPhotonBDTCut(float bdtscore_electronPhoton) {
-	if (bdtscore_electronPhoton > 0.825) return true;
+	if (bdtscore_electronPhoton > 0.75) return true;
 	else return false;
 }
 
@@ -495,6 +698,18 @@ bool Selection::ApplyTrackShowerOpeningAngleCut(float tksh_angle) {
 // LLR PID Score
 bool Selection::ApplyLLRPIDScoreCut(float trk_llr_pid_score) {	
 	if(trk_llr_pid_score > 0 && trk_llr_pid_score < 1.1) return true;
+	else return false;
+}
+
+// Proton rejection: BDT
+bool Selection::ApplyProtonRejectionBDTCut(float bdtscore_pionProton) {
+	if (bdtscore_pionProton > 0.3) return true;
+	else return false;
+}
+
+// Proton rejection: BDT
+bool Selection::ApplyProtonRejectionBDTCutAlternate(float bdtscore_pionProton) {
+	if (bdtscore_pionProton > 0.5) return true;
 	else return false;
 }
 

@@ -44,7 +44,7 @@ private:
 	bool isSignal;
 
 	// --- electron-photon separation tree ---	
-	unsigned int n_showers_contained;
+	float n_showers_contained;
 	
 	float shr_distance;
 	float shr_trkfit_gap10_dedx_max;
@@ -53,6 +53,14 @@ private:
 	float shrmoliereavg;
 	float shr_energyFraction;
 	float shrsubclusters;
+
+	float shr_energy_second_cali;
+	float shr2_distance;
+	float shr12_p1_dstart;
+
+	float shr_energy_third_cali;
+	float shr3_distance;
+	float shr13_p1_dstart;
 
 	float secondshower_Y_nhit;
 	float secondshower_Y_vtxdist;
@@ -72,6 +80,22 @@ private:
     float trk_bragg_pion_max;
     float trk_dEdx_trunk_max;
     float trk_daughters;
+    float trk_end_spacepoints;
+
+	// --- additional variables for alternate pion-proton separation tree -- 
+	float trk2_llr_pid_score;
+    float trk2_bragg_mip_max;
+    float trk2_bragg_pion_max;
+    float trk2_dEdx_trunk_max;
+    float trk2_daughters;
+    float trk2_end_spacepoints;
+    float trk3_llr_pid_score;
+    float trk3_bragg_mip_max;
+    float trk3_bragg_pion_max;
+    float trk3_dEdx_trunk_max;
+    float trk3_daughters;
+    float trk3_end_spacepoints;
+
 }; 
 
 #endif

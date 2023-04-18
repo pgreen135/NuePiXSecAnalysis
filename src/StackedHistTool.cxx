@@ -361,6 +361,9 @@ std::string StackedHistTool::PlotVariableEnum2str(Utility::PlotVariableEnums plo
   case Utility::kShowerEnergyRatio:
     returnString = "Leading Shower Energy / Total Shower Energy";
     break;
+  case Utility::kShowerDistance:
+    returnString = "Shower Distance Vertex [cm]";
+    break;
   case Utility::kShowerdEdxMax:
     returnString = "Leading Shower dE/dx [MeV/cm]";
     break;
@@ -426,12 +429,18 @@ std::string StackedHistTool::PlotVariableEnum2str(Utility::PlotVariableEnums plo
     break;
   case Utility::kElectronETrue:
     returnString = "True Electron Energy [GeV]";
-    break;            		  	  	
+    break;
+  case Utility::kElectronNeutralPionBDT:
+    returnString = "Electron - Neutral Pion BDT Score";
+    break;
+  case Utility::kPionProtonBDT:
+    returnString = "Pion - Proton BDT Score";
+    break;               		  	  	
   default:
     std::cout << "[ERROR: StackedHistTool] Could not find string conversion for enum " << plotvariable << std::endl;
     returnString = "Unknown";
     break;
-  }  
+  }
 
   return returnString;
 }

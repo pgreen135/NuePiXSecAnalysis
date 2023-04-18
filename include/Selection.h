@@ -17,8 +17,13 @@ public:
 	// Destructor
 	~Selection(){};
 
-	// Run Selection
+	// Run Nue Selection
 	bool ApplyCutBasedSelection(EventContainer &_evt, Utility::FileTypeEnums type, Utility::RunPeriodEnums runPeriod);
+	bool ApplyBDTBasedSelection(EventContainer &_evt, const BDTTool &_bdt, Utility::FileTypeEnums type, Utility::RunPeriodEnums runPeriod);
+
+	// Run BDT Training Tree Selection
+	bool ApplyElectronPhotonBDTTrainingSelection(EventContainer &_evt, Utility::FileTypeEnums type, Utility::RunPeriodEnums runPeriod);
+	bool ApplyPionProtonBDTTrainingSelection(EventContainer &_evt, Utility::FileTypeEnums type, Utility::RunPeriodEnums runPeriod);
 
 	// Selection Cuts
 	// Pre-selection
@@ -33,9 +38,12 @@ public:
 	bool ApplyReconstructionFailureChecks(const EventContainer &_evt);
 	bool ApplyCosmicRejection(const EventContainer &_evt);
 	bool ApplyNeutralPionRejection(const EventContainer &_evt);
+	bool ApplyLooseNeutralPionRejection(const EventContainer &_evt);
 	bool ApplyNeutralPionRejectionBDT(EventContainer &_evt, const BDTTool &_bdt);
-	bool ApplyLooseProtonRejection(EventContainer &_evt);
 	bool ApplyProtonRejection(EventContainer &_evt);
+	bool ApplyLooseProtonRejection(EventContainer &_evt);
+	bool ApplyProtonRejectionBDT(EventContainer &_evt, const BDTTool &_bdt);
+	bool ApplyProtonRejectionBDTAlternate(EventContainer &_evt, const BDTTool &_bdt);
 	
 	// ----------------------------------
 
@@ -89,21 +97,22 @@ protected:
 
 	// Leading shower energy fraction
 	bool ApplyLeadingShowerEnergyFractionCut(float shr_energyFraction);
+	bool ApplyLooseLeadingShowerEnergyFractionCut(float shr_energyFraction);
 
 	// Leading shower fraction of energy in 1cm cylinder from shower center [see PeLEE]
 	bool ApplyShowerCylFractionCut(float CylFrac2h_1cm);
 
 	// Number of showers
-    bool ApplyNumberShowersCut(int n_showers_contained, float shr2_energy);
+    bool ApplyNumberShowersCut(int n_showers_contained);
 	
 	// Neutral pion rejection: dE/dx and vertex distance	
 	bool ApplyNeutralPionRejectionCut(float dEdxMax, float shr_distance);
 
+	// Loose shower distance cut
+	bool ApplyLooseShowerDistanceCut(float shr_distance);
+
 	// Neutral pion rejection: second shower tagger
 	bool ApplySecondShowerClusterCut(int secondshower_Y_nhit, float secondshower_Y_vtxdist, float secondshower_Y_anglediff);
-
-	// Neutral pion rejection: loose cuts
-	bool ApplyLooseNeutralPionRejection(int n_showers_contained, float shr_energyFraction, float shr_distance);
 
 	// Neutral pion rejection: BDT
 	bool ApplyElectronPhotonBDTCut(float bdtscore_electronPhoton);
@@ -128,6 +137,12 @@ protected:
 
 	// LLR PID Score
 	bool ApplyLLRPIDScoreCut(float trk_llr_pid_score);
+
+	// Proton rejection BDT
+	bool ApplyProtonRejectionBDTCut(float bdtscore_pionProton);
+
+	// Proton rejection BDT
+	bool ApplyProtonRejectionBDTCutAlternate(float bdtscore_pionProton);
 
 	// Track Trunk dE/dx
 	bool ApplyTrackTrunkdEdxCut(float trk_trunk_dEdx);
