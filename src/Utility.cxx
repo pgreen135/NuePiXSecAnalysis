@@ -44,9 +44,15 @@ bool Utility::inFV(const double x, const double y, const double z) const {
 // Currently same definition as FV, but could be altered
 bool Utility::isExiting(const double x, const double y, const double z) const {
 	// NTuples definition
+	//if ( x   >= 10 && x <= 246
+	//	 && y   >= -101 && y <= 101
+	//  	 && z   >= 10 && z <= 986  ) {
+	//  	return true;
+	//}
+	// Katrina definition
 	if ( x   >= 10 && x <= 246
-		 && y   >= -101 && y <= 101
-	  	 && z   >= 10 && z <= 986  ) {
+		 && y   >= -106 && y <= 106
+	  	 && z   >= 10 && z <= 1026  ) {
 	  	return true;
 	}
 	else return false;

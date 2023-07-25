@@ -43,6 +43,7 @@ EventContainer::EventContainer(TTree *tree, const Utility &utility): _utility{ u
 
     tree->SetBranchAddress("weightSplineTimesTune", &weightSplineTimesTune);
     tree->SetBranchAddress("ppfx_cv", &ppfx_cv);
+    tree->SetBranchAddress("weights", &mc_weights_map_);
 
 	tree->SetBranchAddress("nslice", &nslice);
 	tree->SetBranchAddress("n_tracks", &n_tracks);
@@ -60,6 +61,8 @@ EventContainer::EventContainer(TTree *tree, const Utility &utility): _utility{ u
 	tree->SetBranchAddress("shr_hits_y_tot", &shr_hits_y_tot);
 	tree->SetBranchAddress("trk_hits_y_tot", &trk_hits_y_tot);
 	tree->SetBranchAddress("extra_energy_y", &extra_energy_y);
+
+	tree->SetBranchAddress("crtveto", &crtveto);
 
 	tree->SetBranchAddress("shr_hits_u_tot", &shr_hits_u_tot);
 	tree->SetBranchAddress("trk_hits_u_tot", &trk_hits_u_tot);
@@ -138,6 +141,8 @@ EventContainer::EventContainer(TTree *tree, const Utility &utility): _utility{ u
     tree->SetBranchAddress("shrPCA1CMed_5cm", &shrPCA1CMed_5cm);
     tree->SetBranchAddress("CylFrac1h_1cm", &CylFrac1h_1cm);
     tree->SetBranchAddress("CylFrac2h_1cm", &CylFrac2h_1cm);
+    tree->SetBranchAddress("DeltaRMS2h", &DeltaRMS2h);
+    tree->SetBranchAddress("shrMCSMom", &shrMCSMom);
 
     tree->SetBranchAddress("secondshower_U_nhit", &secondshower_U_nhit);
     tree->SetBranchAddress("secondshower_V_nhit", &secondshower_V_nhit);
@@ -145,6 +150,9 @@ EventContainer::EventContainer(TTree *tree, const Utility &utility): _utility{ u
     tree->SetBranchAddress("secondshower_U_vtxdist", &secondshower_U_vtxdist);
     tree->SetBranchAddress("secondshower_V_vtxdist", &secondshower_V_vtxdist);
     tree->SetBranchAddress("secondshower_Y_vtxdist", &secondshower_Y_vtxdist);
+    tree->SetBranchAddress("secondshower_U_dot", &secondshower_U_dot);
+    tree->SetBranchAddress("secondshower_V_dot", &secondshower_V_dot);
+    tree->SetBranchAddress("secondshower_Y_dot", &secondshower_Y_dot);	
     tree->SetBranchAddress("secondshower_U_dir", &secondshower_U_dir);
     tree->SetBranchAddress("secondshower_V_dir", &secondshower_V_dir);
     tree->SetBranchAddress("secondshower_Y_dir", &secondshower_Y_dir);
@@ -167,10 +175,17 @@ EventContainer::EventContainer(TTree *tree, const Utility &utility): _utility{ u
     tree->SetBranchAddress("tksh_distance", &tksh_distance);
     tree->SetBranchAddress("tksh_angle", &tksh_angle);
 
+    tree->SetBranchAddress("pfnplanehits_U",          &pfnplanehits_U);
+    tree->SetBranchAddress("pfnplanehits_V",          &pfnplanehits_V);
+    tree->SetBranchAddress("pfnplanehits_Y",          &pfnplanehits_Y);
+
     tree->SetBranchAddress("trk_score_v",          &trk_score_v);
     tree->SetBranchAddress("trk_start_x_v",        &trk_start_x_v);
     tree->SetBranchAddress("trk_start_y_v",        &trk_start_y_v);
     tree->SetBranchAddress("trk_start_z_v",        &trk_start_z_v);
+    tree->SetBranchAddress("trk_end_x_v",          &trk_end_x_v);
+    tree->SetBranchAddress("trk_end_y_v",          &trk_end_y_v);
+    tree->SetBranchAddress("trk_end_z_v",          &trk_end_z_v);
     tree->SetBranchAddress("trk_sce_start_x_v",        &trk_sce_start_x_v);
     tree->SetBranchAddress("trk_sce_start_y_v",        &trk_sce_start_y_v);
     tree->SetBranchAddress("trk_sce_start_z_v",        &trk_sce_start_z_v);
@@ -227,8 +242,10 @@ EventContainer::EventContainer(TTree *tree, const Utility &utility): _utility{ u
  	 
  	tree->SetBranchAddress("pfpplanesubclusters_U", &pfpplanesubclusters_U_v);
  	tree->SetBranchAddress("pfpplanesubclusters_V", &pfpplanesubclusters_V_v);
- 	tree->SetBranchAddress("pfpplanesubclusters_Y", &pfpplanesubclusters_Y_v);  
-
+ 	tree->SetBranchAddress("pfpplanesubclusters_Y", &pfpplanesubclusters_Y_v);
+    
+    tree->SetBranchAddress("pfp_generation_v", &pfp_generation_v);
+ 	  
  	tree->SetBranchAddress("backtracked_pdg", &backtracked_pdg_v); 	
     
     tree->SetBranchAddress("pi0_mass_U",         &pi0_mass_U);
@@ -261,6 +278,7 @@ void EventContainer::EventClassifier(Utility::FileTypeEnums type){
 		if (nu_purity_from_pfp <= 0.5) {
 			// low purity, classify as cosmic
 			classification = Utility::kCosmic;
+			category_ = static_cast<int>(classification);
 			return;
 		}
 
@@ -271,6 +289,7 @@ void EventContainer::EventClassifier(Utility::FileTypeEnums type){
 		if (!isInFV) {
 			// classify as outFV
 			classification = Utility::kOutFV;
+			category_ = static_cast<int>(classification);
 			return;
 		}
 		// Inside of FV
@@ -283,11 +302,13 @@ void EventContainer::EventClassifier(Utility::FileTypeEnums type){
 					if (npi0 > 0) {
 						// classify as CC numu pizero
 						classification = Utility::kCCNumupizero;
+						category_ = static_cast<int>(classification);
 						return;
 					}
 					else {
 						// classify as CC numu other
 						classification = Utility::kCCNumuOther;
+						category_ = static_cast<int>(classification);
 						return;
 					}
 				}
@@ -297,6 +318,7 @@ void EventContainer::EventClassifier(Utility::FileTypeEnums type){
 					if (npi0 > 0) {
 						// classify as CC nue pizero
 						classification = Utility::kCCNuepizero;
+						category_ = static_cast<int>(classification);
 						return;
 					}
 					// single pion (signal)
@@ -306,14 +328,16 @@ void EventContainer::EventClassifier(Utility::FileTypeEnums type){
 							// classify as CC nue 1pi Np
 							//if (nu_pdg == 12) 
 							classification = Utility::kCCNue1piNp;
-							//else classification = Utility::kCCNueBar1piNp;
+							category_ = static_cast<int>(classification);
+							mc_is_signal_ = true;
 							return;	
 						}
 						else {
 							// classify as CC nue 1pi 0p
 							//if (nu_pdg == 12) 
 							classification = Utility::kCCNue1pi0p;
-							//else classification = Utility::kCCNueBar1pi0p;
+							category_ = static_cast<int>(classification);
+							mc_is_signal_ = true;
 							return;	
 						}
 						
@@ -322,23 +346,20 @@ void EventContainer::EventClassifier(Utility::FileTypeEnums type){
 					else if (npion > 1) {
 						// classify as CC nue Npi
 						classification = Utility::kCCNueNpi;
+						category_ = static_cast<int>(classification);
 						return;
 					}
-					// single proton, and no pions
-					else if (nproton == 1) {
-						// classify as CC nue 1p
-						classification = Utility::kCCNue1p;
-						return;
-					}
-					// single proton, and no pions
-					else if (nproton > 1) {
+					// proton, and no pions
+					else if (nproton >= 1) {
 						// classify as CC nue Np
 						classification = Utility::kCCNueNp;
+						category_ = static_cast<int>(classification);
 						return;
 					}
 					else {
 						// classify as CC nue other
 						classification = Utility::kCCNueOther;
+						category_ = static_cast<int>(classification);
 						return;
 					}
 				}
@@ -348,11 +369,13 @@ void EventContainer::EventClassifier(Utility::FileTypeEnums type){
 				// check for pi-zero (background)
 				if (npi0 > 0) {
 					// classify as NC pizero
-					classification = Utility::kNCpizero; 
+					classification = Utility::kNCpizero;
+					category_ = static_cast<int>(classification); 
 					return;
 				}
 				else {
 					classification = Utility::kNCOther;
+					category_ = static_cast<int>(classification);
 					return;
 				}
 			}
@@ -361,17 +384,20 @@ void EventContainer::EventClassifier(Utility::FileTypeEnums type){
 	// Beam Off Classification
 	else if (type == Utility::kEXT) {
 		classification = Utility::kBeamOff;
+		category_ = static_cast<int>(classification);
 		return;
 	}
 	// Dirt
 	else if (type == Utility::kDirt) {
 		classification = Utility::kOutOfCryo;
+		category_ = static_cast<int>(classification);
 		return;
 	}
 
 	// Catch any events without classification
 	// Shouldn't be any of these! Will cause issues.
 	classification = Utility::kUnknown;
+	category_ = static_cast<int>(classification);
 	std::cout << "Warning: Unknown Event" << std::endl;
 	return;
 }
@@ -392,6 +418,9 @@ void EventContainer::calculateCVEventWeight(Utility::FileTypeEnums type, Utility
 		
 		// CV weight
 		weight = ppfx_cv * weightSplineTimesTune;
+
+		// STV Tree
+
 		
 		// normalisation scaling of pi0 events performed in LEE analyses, but not included in Krishan's measurement
 		// unclear whether this should be included or not
@@ -416,15 +445,17 @@ void EventContainer::calculateCVEventWeight(Utility::FileTypeEnums type, Utility
 	// dirt events
 	// using scaling factors from Katrina's analysis, DocDb: 39436
 	if (type == Utility::kDirt) {
+
+		weight = ppfx_cv * weightSplineTimesTune;
 		
-		// Run 1
-		if (runPeriod == Utility::kRun1) {
-			weight = 0.65;
+		// FHC
+		if (runPeriod == Utility::kRun1a || runPeriod == Utility::kRun2a || runPeriod == Utility::kRun4c || runPeriod == Utility::kRun4d || runPeriod == Utility::kRun5) {
+			weight = weight*0.65;
 		}
 
-		// Run 3b
-		if (runPeriod == Utility::kRun3b) {
-			weight = 0.45;
+		// RHC
+		if (runPeriod == Utility::kRun1b || runPeriod == Utility::kRun2b || runPeriod == Utility::kRun3b) {
+			weight = weight*0.45;
 		}	
 	}
 
@@ -458,7 +489,7 @@ float EventContainer::checkWeight(float weight) {
 
 	// negative weight
 	else if (weight < 0.0) {
-		//std::cout << "Warning: overly negative event weight" << std::endl;
+		//std::cout << "Warning: negative event weight" << std::endl;
 		weight = 1.0;
 	}
 
@@ -641,6 +672,9 @@ void EventContainer::populateDerivedVariables(Utility::FileTypeEnums type){
 		trk_start_x = trk_start_x_v->at(trk_id-1);				// Track start, without SCE to allow comparison with shower start
 		trk_start_y = trk_start_y_v->at(trk_id-1);				// Track start, without SCE to allow comparison with shower start
 		trk_start_z = trk_start_z_v->at(trk_id-1);				// Track start, without SCE to allow comparison with shower start
+		trk_end_x = trk_end_x_v->at(trk_id-1); 					// Track end, without SCE to allow comparison with shower start
+        trk_end_y = trk_end_y_v->at(trk_id-1); 					// Track end, without SCE to allow comparison with shower start
+        trk_end_z = trk_end_z_v->at(trk_id-1); 					// Track end, without SCE to allow comparison with shower start
 		trk_sce_end_x = trk_sce_end_x_v->at(trk_id-1); 			// Track end
         trk_sce_end_y = trk_sce_end_y_v->at(trk_id-1); 			// Track end
         trk_sce_end_z = trk_sce_end_z_v->at(trk_id-1); 			// Track end
@@ -651,6 +685,10 @@ void EventContainer::populateDerivedVariables(Utility::FileTypeEnums type){
         trk_energy_proton = trk_energy_proton_v->at(trk_id-1);
         trk_energy_muon = trk_energy_muon_v->at(trk_id-1);
         trk_end_spacepoints = trk_end_spacepoints_v->at(trk_id-1);
+        trk_planehits_U = pfnplanehits_U->at(trk_id-1);
+        trk_planehits_V = pfnplanehits_U->at(trk_id-1);
+        trk_planehits_Y = pfnplanehits_U->at(trk_id-1);
+        trk_pfpgeneration = pfp_generation_v->at(trk_id-1);
 	}
 	else {
 		trk_llr_pid_score = 9999;
@@ -658,6 +696,9 @@ void EventContainer::populateDerivedVariables(Utility::FileTypeEnums type){
 		trk_start_x = 9999;
 		trk_start_y = 9999;
 		trk_start_z = 9999;
+		trk_end_x = 9999;
+		trk_end_y = 9999;
+		trk_end_z = 9999;
 		trk_sce_end_x = 9999;
 		trk_sce_end_y = 9999;
 		trk_sce_end_z = 9999;
@@ -668,6 +709,10 @@ void EventContainer::populateDerivedVariables(Utility::FileTypeEnums type){
 		trk_energy_proton = 0;
         trk_energy_muon = 0;
         trk_end_spacepoints = 9999;
+        trk_planehits_U = 0;
+        trk_planehits_V = 0;
+        trk_planehits_Y = 0;
+        trk_pfpgeneration = 0;
 	}
 
 	// Secondary track information
@@ -684,6 +729,9 @@ void EventContainer::populateDerivedVariables(Utility::FileTypeEnums type){
 		trk2_start_x = trk_start_x_v->at(trk2_id-1);				// Track start, without SCE to allow comparison with shower start
 		trk2_start_y = trk_start_y_v->at(trk2_id-1);				// Track start, without SCE to allow comparison with shower start
 		trk2_start_z = trk_start_z_v->at(trk2_id-1);				// Track start, without SCE to allow comparison with shower start
+		trk2_end_x = trk_end_x_v->at(trk2_id-1); 					// Track end, without SCE to allow comparison with shower start
+        trk2_end_y = trk_end_y_v->at(trk2_id-1); 					// Track end, without SCE to allow comparison with shower start
+        trk2_end_z = trk_end_z_v->at(trk2_id-1); 					// Track end, without SCE to allow comparison with shower start
 		trk2_sce_end_x = trk_sce_end_x_v->at(trk2_id-1); 			// Track end
         trk2_sce_end_y = trk_sce_end_y_v->at(trk2_id-1); 			// Track end
         trk2_sce_end_z = trk_sce_end_z_v->at(trk2_id-1); 			// Track end
@@ -706,6 +754,10 @@ void EventContainer::populateDerivedVariables(Utility::FileTypeEnums type){
         trk2_end_spacepoints = trk_end_spacepoints_v->at(trk2_id-1);
 		if (type != Utility::kEXT) trk2_bkt_pdg = backtracked_pdg_v->at(trk2_id-1);			// Backtracked PDG
 		else trk2_bkt_pdg = 9999;
+		trk2_planehits_U = pfnplanehits_U->at(trk2_id-1);
+        trk2_planehits_V = pfnplanehits_U->at(trk2_id-1);
+        trk2_planehits_Y = pfnplanehits_U->at(trk2_id-1);
+        trk2_pfpgeneration = pfp_generation_v->at(trk2_id-1);
 	}
 	else {
 		trk2_len = 0;
@@ -721,6 +773,9 @@ void EventContainer::populateDerivedVariables(Utility::FileTypeEnums type){
 		trk2_start_x = 9999;
 		trk2_start_y = 9999;
 		trk2_start_z = 9999;
+		trk2_end_x = 9999;
+		trk2_end_y = 9999;
+		trk2_end_z = 9999;
 		trk2_sce_end_x = 9999;
 		trk2_sce_end_y = 9999;
 		trk2_sce_end_z = 9999;
@@ -740,6 +795,10 @@ void EventContainer::populateDerivedVariables(Utility::FileTypeEnums type){
 		trk2_energy_proton = 0;
         trk2_energy_muon = 0;
         trk2_end_spacepoints = 9999;
+        trk2_planehits_U = 0;
+        trk2_planehits_V = 0;
+        trk2_planehits_Y = 0;
+        trk2_pfpgeneration = 0;
 	}
 
 	// tertiary track information
@@ -753,6 +812,9 @@ void EventContainer::populateDerivedVariables(Utility::FileTypeEnums type){
 		trk3_score = trk_score_v->at(trk3_id-1); 					// Track score
 		trk3_distance = trk_distance_v->at(trk3_id-1);				// Track distance
 		trk3_daughters = pfp_trk_daughters_v->at(trk3_id-1); 		// Track daughters
+		trk3_end_x = trk_end_x_v->at(trk3_id-1); 					// Track end, without SCE to allow comparison with shower start
+        trk3_end_y = trk_end_y_v->at(trk3_id-1); 					// Track end, without SCE to allow comparison with shower start
+        trk3_end_z = trk_end_z_v->at(trk3_id-1); 					// Track end, without SCE to allow comparison with shower start
 		trk3_sce_end_x = trk_sce_end_x_v->at(trk3_id-1); 			// Track end
         trk3_sce_end_y = trk_sce_end_y_v->at(trk3_id-1); 			// Track end
         trk3_sce_end_z = trk_sce_end_z_v->at(trk3_id-1); 			// Track end
@@ -763,6 +825,10 @@ void EventContainer::populateDerivedVariables(Utility::FileTypeEnums type){
         trk3_end_spacepoints = trk_end_spacepoints_v->at(trk3_id-1);
 		if (type != Utility::kEXT) trk3_bkt_pdg = backtracked_pdg_v->at(trk3_id-1);			// Backtracked PDG
 		else trk3_bkt_pdg = 9999;
+		trk3_planehits_U = pfnplanehits_U->at(trk3_id-1);
+        trk3_planehits_V = pfnplanehits_U->at(trk3_id-1);
+        trk3_planehits_Y = pfnplanehits_U->at(trk3_id-1);
+        trk3_pfpgeneration = pfp_generation_v->at(trk3_id-1);
 	}
 	else {
 		trk3_len = 0;
@@ -775,6 +841,9 @@ void EventContainer::populateDerivedVariables(Utility::FileTypeEnums type){
 		trk3_llr_pid_score = 9999;
 		trk3_daughters = 9999;
 		trk3_bkt_pdg = 9999;
+		trk3_end_x = 9999;
+		trk3_end_y = 9999;
+		trk3_end_z = 9999;
 		trk3_sce_end_x = 9999;
 		trk3_sce_end_y = 9999;
 		trk3_sce_end_z = 9999;
@@ -782,6 +851,10 @@ void EventContainer::populateDerivedVariables(Utility::FileTypeEnums type){
 		trk3_energy_proton = 0;
         trk3_energy_muon = 0;
         trk3_end_spacepoints = 9999;
+        trk3_planehits_U = 0;
+        trk3_planehits_V = 0;
+        trk3_planehits_Y = 0;
+        trk3_pfpgeneration = 0;
 	}
 
 
@@ -833,7 +906,11 @@ void EventContainer::populateDerivedVariables(Utility::FileTypeEnums type){
     	shr_start_z = shr_start_z_v->at(shr_id-1);
     	shr_dir_x = shr_px_v->at(shr_id-1);
     	shr_dir_y = shr_py_v->at(shr_id-1);
-    	shr_dir_z = shr_pz_v->at(shr_id-1);	
+    	shr_dir_z = shr_pz_v->at(shr_id-1);
+    	shr_planehits_U = pfnplanehits_U->at(shr_id-1);
+        shr_planehits_V = pfnplanehits_U->at(shr_id-1);
+        shr_planehits_Y = pfnplanehits_U->at(shr_id-1);
+        shr_pfpgeneration = pfp_generation_v->at(shr_id-1);	
     } 
     else {
     	shr_start_x = 9999;
@@ -842,6 +919,10 @@ void EventContainer::populateDerivedVariables(Utility::FileTypeEnums type){
     	shr_dir_x = 9999;
     	shr_dir_y = 9999;
     	shr_dir_z = 9999;
+    	shr_planehits_U = 0;
+    	shr_planehits_V = 0;
+    	shr_planehits_Y = 0;
+    	shr_pfpgeneration = 0;
     }
 
     // Secondary shower information
@@ -858,6 +939,7 @@ void EventContainer::populateDerivedVariables(Utility::FileTypeEnums type){
     	shr2moliereavg = shr_moliere_avg_v->at(shr2_id-1); 	
     	shr2subclusters = pfpplanesubclusters_U_v->at(shr2_id-1) + pfpplanesubclusters_V_v->at(shr2_id-1) + pfpplanesubclusters_Y_v->at(shr2_id-1);
     	shr2pid = trk_llr_pid_score_v->at(shr2_id-1);
+    	shr2_pfpgeneration = pfp_generation_v->at(shr2_id-1);	
     } 
     else {
     	shr2_energy = 9999;
@@ -872,6 +954,7 @@ void EventContainer::populateDerivedVariables(Utility::FileTypeEnums type){
     	shr2moliereavg = 9999;
     	shr2subclusters = 9999;
     	shr2pid = 9999;
+    	shr2_pfpgeneration = 0;
     }
 
     // Tertiary shower information
@@ -987,6 +1070,10 @@ void EventContainer::populateDerivedVariables(Utility::FileTypeEnums type){
     if (trk3_len > 0) trk3_energy_pion = CalculatePionEnergyRange(trk3_len);
     else trk3_energy_pion = 0;
 
+    // second shower track proximity
+    shr2_trackEndProximity = GetShowerTrackEndProximity(shr2_id);
+    shr3_trackEndProximity = GetShowerTrackEndProximity(shr3_id);
+
     // initialise reconstruction failure condition variables
     hasSplitPrimaryShower = false;
     hasSpuriousLeadingTrack = false;
@@ -1006,6 +1093,19 @@ void EventContainer::populateDerivedVariables(Utility::FileTypeEnums type){
 	secondaryTrackPionlikeLoose = false;
 	tertiaryTrackPionlikeLoose = false;
 
+	// initialise BDT score variables
+	BDTScoreElectronPhoton = -1;
+    primaryTrackBDTScorePionProton = -1;
+    secondaryTrackBDTScorePionProton = -1;
+    tertiaryTrackBDTScorePionProton = -1;
+    BDTScorePionProtonAlternate = -1;
+
+    // initialise STV tree variables
+    if (type == Utility::kMC || type == Utility::kIntrinsic || type == Utility::kDirt) is_mc_ = true;
+    else is_mc_ = false;
+    mc_is_signal_ = false;
+    category_ = 9999;
+    sel_NueCC1piXp_ = false;
 }
 
 // get shower dE/dx on plane with the most hits
@@ -1130,7 +1230,7 @@ void EventContainer::GetSecondShowerClusterAngleDiff() {
 }
 
 void EventContainer::isAlongWire(unsigned int trackID, bool &isAlongWire_u, bool &isAlongWire_v, bool &isAlongWire_y) {
-	float tolerance = 20; 	// degrees
+	float tolerance = 25; 	// degrees
 
 	// calculate theta_yz
 	float delta_y = trk_sce_end_y_v->at(trackID-1) - trk_sce_start_y_v->at(trackID-1);
@@ -1157,16 +1257,16 @@ float EventContainer::GetTrackTrunkdEdxBestPlane(unsigned int trackID) {
 	 
 	// prefer collection plane where available, otherwise take average of u,v planes if available
 	// track trunk dE/dx
-	if (trk_trunk_dEdx_y_v->at(trackID-1) != 9999 && _utility.isNumber(trk_trunk_dEdx_y_v->at(trackID-1)) && trk_trunk_dEdx_y_v->at(trackID-1) > 0 && !isAlongWire_y && Nhits_Y > 0) {
+	if (trk_trunk_dEdx_y_v->at(trackID-1) != 9999 && _utility.isNumber(trk_trunk_dEdx_y_v->at(trackID-1)) && trk_trunk_dEdx_y_v->at(trackID-1) > 0 && !isAlongWire_y && Nhits_Y > 0 && trk_trunk_dEdx_y_v->at(trackID-1) >= 0 && trk_trunk_dEdx_y_v->at(trackID-1) < 100) {
 		return trk_trunk_dEdx_y_v->at(trackID-1);
 	}
-	else if (trk_trunk_dEdx_u_v->at(trackID-1) != 9999 && _utility.isNumber(trk_trunk_dEdx_u_v->at(trackID-1)) && trk_trunk_dEdx_u_v->at(trackID-1) > 0 && !isAlongWire_u && trk_trunk_dEdx_v_v->at(trackID-1) != 9999 && _utility.isNumber(trk_trunk_dEdx_v_v->at(trackID-1)) && trk_trunk_dEdx_v_v->at(trackID-1) > 0 && !isAlongWire_v && Nhits_U > 0 && Nhits_V > 0) {
+	else if (trk_trunk_dEdx_u_v->at(trackID-1) != 9999 && _utility.isNumber(trk_trunk_dEdx_u_v->at(trackID-1)) && trk_trunk_dEdx_u_v->at(trackID-1) > 0 && !isAlongWire_u && trk_trunk_dEdx_v_v->at(trackID-1) != 9999 && _utility.isNumber(trk_trunk_dEdx_v_v->at(trackID-1)) && trk_trunk_dEdx_v_v->at(trackID-1) > 0 && !isAlongWire_v && Nhits_U > 0 && Nhits_V > 0 && trk_trunk_dEdx_u_v->at(trackID-1) >= 0 && trk_trunk_dEdx_v_v->at(trackID-1) >= 0 && trk_trunk_dEdx_u_v->at(trackID-1) < 100 && trk_trunk_dEdx_v_v->at(trackID-1) < 100) {
 		return (Nhits_U * trk_trunk_dEdx_u_v->at(trackID-1) + Nhits_V * trk_trunk_dEdx_v_v->at(trackID-1)) / (Nhits_U + Nhits_V);
 	}
-	else if (trk_trunk_dEdx_v_v->at(trackID-1) != 9999 && _utility.isNumber(trk_trunk_dEdx_v_v->at(trackID-1)) && trk_trunk_dEdx_v_v->at(trackID-1) > 0 && !isAlongWire_v && Nhits_V > 0) {
+	else if (trk_trunk_dEdx_v_v->at(trackID-1) != 9999 && _utility.isNumber(trk_trunk_dEdx_v_v->at(trackID-1)) && trk_trunk_dEdx_v_v->at(trackID-1) > 0 && !isAlongWire_v && Nhits_V > 0 && trk_trunk_dEdx_v_v->at(trackID-1) >= 0 && trk_trunk_dEdx_v_v->at(trackID-1) < 100) {
 		return trk_trunk_dEdx_v_v->at(trackID-1);
 	} 
-	else if (trk_trunk_dEdx_u_v->at(trackID-1) != 9999 && _utility.isNumber(trk_trunk_dEdx_u_v->at(trackID-1)) && trk_trunk_dEdx_u_v->at(trackID-1) > 0 && !isAlongWire_u && Nhits_U > 0) {
+	else if (trk_trunk_dEdx_u_v->at(trackID-1) != 9999 && _utility.isNumber(trk_trunk_dEdx_u_v->at(trackID-1)) && trk_trunk_dEdx_u_v->at(trackID-1) > 0 && !isAlongWire_u && Nhits_U > 0 && trk_trunk_dEdx_u_v->at(trackID-1) >= 0 && trk_trunk_dEdx_u_v->at(trackID-1) < 100) {
 		return trk_trunk_dEdx_u_v->at(trackID-1);
 	}
 	else return 9999;
@@ -1185,16 +1285,16 @@ float EventContainer::GetTrackBraggPionBestPlane(unsigned int trackID) {
 	int Nhits_V = trk_nhits_v_v->at(trackID-1);
 
 	// track bragg peak pion
-	if (trk_bragg_pion_v->at(trackID-1) != 9999 && !isAlongWire_y && Nhits_Y > 0) {
+	if (trk_bragg_pion_v->at(trackID-1) != 9999 && !isAlongWire_y && Nhits_Y > 0 && trk_bragg_pion_v->at(trackID-1) >= 0) {
 		return trk_bragg_pion_v->at(trackID-1);
 	}
-	else if (trk_bragg_pion_u_v->at(trackID-1) != 9999 && !isAlongWire_u && trk_bragg_pion_v_v->at(trackID-1) != 9999 && !isAlongWire_v && Nhits_U > 0 && Nhits_V > 0) {
+	else if (trk_bragg_pion_u_v->at(trackID-1) != 9999 && !isAlongWire_u && trk_bragg_pion_v_v->at(trackID-1) != 9999 && !isAlongWire_v && Nhits_U > 0 && Nhits_V > 0 && trk_bragg_pion_u_v->at(trackID-1) >= 0 && trk_bragg_pion_v_v->at(trackID-1) >= 0) {
 		return (Nhits_U * trk_bragg_pion_u_v->at(trackID-1) + Nhits_V * trk_bragg_pion_v_v->at(trackID-1)) / (Nhits_U + Nhits_V);
 	}
-	else if (trk_bragg_pion_v_v->at(trackID-1) != 9999 && !isAlongWire_v && Nhits_V > 0) {
+	else if (trk_bragg_pion_v_v->at(trackID-1) != 9999 && !isAlongWire_v && Nhits_V > 0 && trk_bragg_pion_v_v->at(trackID-1) >= 0) {
 		return trk_bragg_pion_v_v->at(trackID-1);
 	} 
-	else if (trk_bragg_pion_u_v->at(trackID-1) != 9999 && !isAlongWire_u && Nhits_U > 0) {
+	else if (trk_bragg_pion_u_v->at(trackID-1) != 9999 && !isAlongWire_u && Nhits_U > 0 && trk_bragg_pion_u_v->at(trackID-1) >= 0) {
 		return trk_bragg_pion_u_v->at(trackID-1);
 	}
 	else return 9999;
@@ -1213,16 +1313,16 @@ float EventContainer::GetTrackBraggMIPBestPlane(unsigned int trackID) {
 	int Nhits_V = trk_nhits_v_v->at(trackID-1);
 
 	// track bragg peak pion
-	if (trk_bragg_mip_v->at(trackID-1) != 9999 && !isAlongWire_y && Nhits_Y > 0) {
+	if (trk_bragg_mip_v->at(trackID-1) != 9999 && !isAlongWire_y && Nhits_Y > 0 && trk_bragg_mip_v->at(trackID-1) >= 0) {
 		return trk_bragg_mip_v->at(trackID-1);
 	}
-	else if (trk_bragg_mip_u_v->at(trackID-1) != 9999 && !isAlongWire_u && trk_bragg_mip_v_v->at(trackID-1) != 9999 && !isAlongWire_v && Nhits_U > 0 && Nhits_V > 0) {
+	else if (trk_bragg_mip_u_v->at(trackID-1) != 9999 && !isAlongWire_u && trk_bragg_mip_v_v->at(trackID-1) != 9999 && !isAlongWire_v && Nhits_U > 0 && Nhits_V > 0 && trk_bragg_mip_u_v->at(trackID-1) >= 0 && trk_bragg_mip_v_v->at(trackID-1) >= 0) {
 		return (Nhits_U * trk_bragg_mip_u_v->at(trackID-1) + Nhits_V * trk_bragg_mip_v_v->at(trackID-1)) / (Nhits_U + Nhits_V);
 	}
-	else if (trk_bragg_mip_v_v->at(trackID-1) != 9999 && !isAlongWire_v && Nhits_V > 0) {
+	else if (trk_bragg_mip_v_v->at(trackID-1) != 9999 && !isAlongWire_v && Nhits_V > 0 && trk_bragg_mip_v_v->at(trackID-1) >= 0) {
 		return trk_bragg_mip_v_v->at(trackID-1);
 	} 
-	else if (trk_bragg_mip_u_v->at(trackID-1) != 9999 && !isAlongWire_u && Nhits_U > 0) {
+	else if (trk_bragg_mip_u_v->at(trackID-1) != 9999 && !isAlongWire_u && Nhits_U > 0 && trk_bragg_mip_u_v->at(trackID-1) >= 0) {
 		return trk_bragg_mip_u_v->at(trackID-1);
 	}
 	else return 9999;
@@ -1237,6 +1337,34 @@ float EventContainer::CalculatePionEnergyRange(float R) {
 
 	if (e_range > 0) return e_range;
 	else return 0;
+}
+
+// shower track end proximity
+float EventContainer::GetShowerTrackEndProximity(unsigned int shrID) {
+
+	float shr_trackEndProximity = 9999;
+
+	if (shrID < shr_start_x_v->size() && shrID != 0) {
+
+		// check against each track end to find nearest
+		// primary
+		if (trk_id < trk_end_x_v->size() && trk_id != 0) { 
+			float distance = std::sqrt(	std::pow(shr_start_x_v->at(shrID-1) - trk_end_x, 2) + std::pow(shr_start_y_v->at(shrID-1) - trk_end_y, 2) + std::pow(shr_start_z_v->at(shrID-1) - trk_end_z, 2));
+			if (distance < shr_trackEndProximity) shr_trackEndProximity = distance; 
+		}
+		// secondary
+		if (trk2_id < trk_end_x_v->size() && trk2_id != 0) { 
+			float distance = std::sqrt(	std::pow(shr_start_x_v->at(shrID-1) - trk2_end_x, 2) + std::pow(shr_start_y_v->at(shrID-1) - trk2_end_y, 2) + std::pow(shr_start_z_v->at(shrID-1) - trk2_end_z, 2));
+			if (distance < shr_trackEndProximity) shr_trackEndProximity = distance; 
+		}
+		// tertiary
+		if (trk3_id < trk_end_x_v->size() && trk3_id != 0) { 
+			float distance = std::sqrt(	std::pow(shr_start_x_v->at(shrID-1) - trk3_end_x, 2) + std::pow(shr_start_y_v->at(shrID-1) - trk3_end_y, 2) + std::pow(shr_start_z_v->at(shrID-1) - trk3_end_z, 2));
+			if (distance < shr_trackEndProximity) shr_trackEndProximity = distance; 
+		}
+	}
+
+	return shr_trackEndProximity;
 }
 
 

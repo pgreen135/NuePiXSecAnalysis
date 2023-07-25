@@ -36,14 +36,13 @@ public:
 
 	// Background rejection
 	bool ApplyReconstructionFailureChecks(const EventContainer &_evt);
-	bool ApplyCosmicRejection(const EventContainer &_evt);
+	bool ApplyCosmicRejection(const EventContainer &_evt, Utility::RunPeriodEnums runPeriod);
 	bool ApplyNeutralPionRejection(const EventContainer &_evt);
 	bool ApplyLooseNeutralPionRejection(const EventContainer &_evt);
-	bool ApplyNeutralPionRejectionBDT(EventContainer &_evt, const BDTTool &_bdt);
+	bool ApplyNeutralPionRejectionBDT(EventContainer &_evt, const BDTTool &_bdt, Utility::RunPeriodEnums runPeriod);
 	bool ApplyProtonRejection(EventContainer &_evt);
 	bool ApplyLooseProtonRejection(EventContainer &_evt);
-	bool ApplyProtonRejectionBDT(EventContainer &_evt, const BDTTool &_bdt);
-	bool ApplyProtonRejectionBDTAlternate(EventContainer &_evt, const BDTTool &_bdt);
+	bool ApplyProtonRejectionBDT(EventContainer &_evt, const BDTTool &_bdt, Utility::RunPeriodEnums runPeriod);
 	
 	// ----------------------------------
 
@@ -74,6 +73,9 @@ protected:
 	// Fraction of hits associated with tracks and showers
 	bool ApplyAssociatedHitsFractionCut(float associated_hits_fraction);
 
+	// PFP hits on all planes
+	bool ApplyHitsOnAllPlanesCut(int pfp_planehits_U, int pfp_planehits_V, int pfp_planehits_Y);
+
 	// Leading shower energy
 	bool ApplyShowerEnergyCut(float shr_energy);
 
@@ -89,8 +91,12 @@ protected:
 	// Cosmic impact parameter
 	bool ApplyCosmicImpactParameterCut(float CosmicIPAll3D);
 
+	// CRT Veto
+	bool ApplyCRTVetoCut(float crtveto);
+
 	// Leading shower Moliere average
 	bool ApplyMoliereAverageCut(float shrmoliereavg);
+	bool ApplyLooseMoliereAverageCut(float shrmoliereavg);
 
 	// Leading shower subclusters 
 	bool ApplyShowerSubclustersCut(unsigned int shrsubclusters);
@@ -115,7 +121,8 @@ protected:
 	bool ApplySecondShowerClusterCut(int secondshower_Y_nhit, float secondshower_Y_vtxdist, float secondshower_Y_anglediff);
 
 	// Neutral pion rejection: BDT
-	bool ApplyElectronPhotonBDTCut(float bdtscore_electronPhoton);
+	bool ApplyElectronPhotonBDTCutFHC(float bdtscore_electronPhoton);
+	bool ApplyElectronPhotonBDTCutRHC(float bdtscore_electronPhoton);
 
 	// Track Length
 	bool ApplyTrackLengthCut(float trk_len);
@@ -139,7 +146,8 @@ protected:
 	bool ApplyLLRPIDScoreCut(float trk_llr_pid_score);
 
 	// Proton rejection BDT
-	bool ApplyProtonRejectionBDTCut(float bdtscore_pionProton);
+	bool ApplyProtonRejectionBDTCutFHC(float bdtscore_pionProton);
+	bool ApplyProtonRejectionBDTCutRHC(float bdtscore_pionProton);
 
 	// Proton rejection BDT
 	bool ApplyProtonRejectionBDTCutAlternate(float bdtscore_pionProton);

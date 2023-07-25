@@ -37,8 +37,14 @@ public:
 
 	// Run periods
 	enum RunPeriodEnums {
-		kRun1,
+		kRun1a,
+		kRun1b,
+		kRun2a,
+		kRun2b,
 		kRun3b,
+		kRun4c,
+		kRun4d,
+		kRun5
 	};
 
 	// BDT types
@@ -52,11 +58,8 @@ public:
 	enum ClassificationEnums {
 		kCCNue1pi0p,
 		kCCNue1piNp,
-		//kCCNueBar1pi0p,
-		//kCCNueBar1piNp,
 		kCCNueNpi,
 		kCCNuepizero,
-		kCCNue1p,
 		kCCNueNp,
 		kCCNueOther,
 		kCCNumupizero,
@@ -87,6 +90,7 @@ public:
 		kMoliereAverage,
 		kShowerEnergyRatio,
 		kSecondShowerEnergy,
+		kSecondShowerPFPGeneration,
 		kShowerDistance,
 		kShowerdEdxMax,
 		kNeutralPionInvariantMass,

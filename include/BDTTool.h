@@ -14,21 +14,21 @@ public:
 
 	// ----------------------------------
 	// Constructor
-	BDTTool(bool loadElectronPhotonBDT, bool loadPionProtonBDT, bool loadPionProtonBDTAlternate);
+	BDTTool(bool loadElectronPhotonBDTFHC, bool loadElectronPhotonBDTRHC, bool loadPionProtonBDTFHC, bool loadPionProtonBDTRHC);
 
 	// Destructor
 	~BDTTool();
 
 	// Function to load BDTs
-	void loadBDTs(bool loadElectronPhotonBDT, bool loadPionProtonBDT, bool loadPionProtonBDTAlternate);
+	void loadBDTs(bool loadElectronPhotonBDTFHC, bool loadElectronPhotonBDTRHC, bool loadPionProtonBDTFHC, bool loadPionProtonBDTRHC);
 
 	// Functions to evaluate BDT scores
 	// Electron-photon separation
-    double evaluateElectronPhotonBDTScore(const EventContainer &_evt) const;
+    double evaluateElectronPhotonBDTScoreFHC(EventContainer &_evt) const;
+    double evaluateElectronPhotonBDTScoreRHC(EventContainer &_evt) const;
     // Pion-proton separation
-    double evaluatePionProtonBDTScore(const EventContainer &_evt, int trackID) const;
-    // pion-proton separation alternate
-	double evaluatePionProtonBDTScoreAlternate(const EventContainer &_evt) const;
+    double evaluatePionProtonBDTScoreFHC(const EventContainer &_evt, int trackID) const;
+    double evaluatePionProtonBDTScoreRHC(const EventContainer &_evt, int trackID) const;
 
     // Function to dump BDT models [for testing]
     void dumpBDTModel();
@@ -38,20 +38,21 @@ public:
 private:
 
 	// --- BDTs ---
-	bool loadedElectronPhotonBDT; 
-	std::string BDTFileElectronPhoton = "/Users/patrick/Documents/MicroBooNE/CrossSections/NuePiXSec_Analysis/Selection/bdts/bdt_electronPhoton.json";
-    BoosterHandle boosterElectronPhoton;
-    
-	bool loadedPionProtonBDT; 
-    std::string BDTFilePionProton = "/Users/patrick/Documents/MicroBooNE/CrossSections/NuePiXSec_Analysis/Selection/bdts/bdt_pionProton.model";
-    BoosterHandle boosterPionProton;
+	bool loadedElectronPhotonBDTFHC; 
+	std::string BDTFileElectronPhotonFHC = "/Users/patrick/Documents/MicroBooNE/CrossSections/NuePiXSec_Analysis/Selection/bdts/bdt_electronPhoton_FHC_Jul13.json";
+	BoosterHandle boosterElectronPhotonFHC;
 
-    bool loadedPionProtonBDTAlternate; 
-    std::string BDTFilePionProtonAlternate = "/Users/patrick/Documents/MicroBooNE/CrossSections/NuePiXSec_Analysis/Selection/bdts/bdt_pionProtonAlternate.json";
-    BoosterHandle boosterPionProtonAlternate;
+	bool loadedElectronPhotonBDTRHC; 
+	std::string BDTFileElectronPhotonRHC = "/Users/patrick/Documents/MicroBooNE/CrossSections/NuePiXSec_Analysis/Selection/bdts/bdt_electronPhoton_RHC_Jul13.json";
+	BoosterHandle boosterElectronPhotonRHC;
     
+	bool loadedPionProtonBDTFHC; 
+    std::string BDTFilePionProtonFHC = "/Users/patrick/Documents/MicroBooNE/CrossSections/NuePiXSec_Analysis/Selection/bdts/bdt_pionProton_FHC_Jul13.json";
+    BoosterHandle boosterPionProtonFHC;
+
+    bool loadedPionProtonBDTRHC; 
+    std::string BDTFilePionProtonRHC = "/Users/patrick/Documents/MicroBooNE/CrossSections/NuePiXSec_Analysis/Selection/bdts/bdt_pionProton_RHC_Jul13.json";
+    BoosterHandle boosterPionProtonRHC;    
 };
-
-
 
 #endif

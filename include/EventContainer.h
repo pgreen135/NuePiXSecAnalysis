@@ -6,6 +6,8 @@
 // variables public for ease of access
 
 #include <string>
+#include <vector>
+#include <map>
 
 #include <TTree.h>
 #include <TVector3.h>
@@ -48,6 +50,7 @@ public:
 	float GetTrackBraggPionBestPlane(unsigned int trackID);
 	float GetTrackBraggMIPBestPlane(unsigned int trackID);
     float CalculatePionEnergyRange(float R);
+    float GetShowerTrackEndProximity(unsigned int shrID);
  
     // ----------------------------------
 
@@ -86,6 +89,12 @@ public:
     double secondaryTrackBDTScorePionProton;
     double tertiaryTrackBDTScorePionProton;
     double BDTScorePionProtonAlternate;
+
+    // --- Variables for STV Tree ---
+    bool is_mc_;
+    bool mc_is_signal_;
+    int  category_;
+    float sel_NueCC1piXp_;
 
 	// --- Event information ---
 	int run, sub, evt;			// run, subrun, event numbers
@@ -128,6 +137,9 @@ public:
     // --- Event weight ---
     float weightSplineTimesTune;    // Weight from Genie, spline * tune
     float ppfx_cv;                  // Weight from PPFX CV
+    // systematic universes
+    std::map<std::string, std::vector<double>> *mc_weights_map_ = nullptr;
+    std::map< std::string, std::vector<double>*> mc_weights_ptr_map_;
 
   	// --- Slice information ---
   	// number
@@ -161,6 +173,9 @@ public:
 
     float associated_hits_fraction; // Reco - Slice: fraction of hits on collection plane in neutrino slice associated with tracks and showers (derived variable)
     float extra_energy_y;			// Reco - Slice: deposited energy in neutrino slice not associated with tracks or showers
+
+    // CRT veto
+    int crtveto;
 
   	// --- Neutrino Reconstruction ---
   	// reconstructed neutrino vertex, space charge corrected
@@ -257,6 +272,14 @@ public:
     float shrPCA1CMed_5cm;			// metric of shower linearity
     float CylFrac1h_1cm;            // fraction of shower energy within cyclinder 1cm radius from track direction, first half only - low for showers, high for tracks, very low for misreconstructed pi0
     float CylFrac2h_1cm; 			// fraction of shower energy within cyclinder 1cm radius from track direction, second half only - low for showers, high for tracks, very low for misreconstructed pi0
+    float DeltaRMS2h;
+    float shrMCSMom;
+
+    int shr_planehits_U;
+    int shr_planehits_V;
+    int shr_planehits_Y;
+
+    int shr_pfpgeneration;
 
     // Seconary Shower
     unsigned int shr2_id;		// Reco - shower: Secondary shower ID
@@ -282,6 +305,11 @@ public:
     float tk1tk2_angle;			// Angle between primary and secondary track
     float shr2pid; 				// second shower LLR PID, treating as track-like (mis-reconstructed)
 
+    float shr2_trackEndProximity;   // second shower start proximity to nearest track end
+    
+    int shr2_pfpgeneration;
+
+
     // Tertiary shower
     unsigned int shr3_id;
     float shr3_energy;
@@ -293,7 +321,9 @@ public:
     int shr3subclusters;
    
     float shr13_p1_dstart;
-    float tk1sh3_distance; 
+    float tk1sh3_distance;
+
+    float shr3_trackEndProximity;   // tertiary shower start proximity to nearest track end 
 
     // All showers
     float shr_energy_tot_cali;  // Reco - shower: the energy of the showers (in GeV) (calibrated)
@@ -307,9 +337,13 @@ public:
 	float secondshower_U_vtxdist;	// Reco - shower: distance of second shower cluster from neutrino vertex, U plane
 	float secondshower_V_vtxdist;	// Reco - shower: distance of second shower cluster from neutrino vertex, V plane
 	float secondshower_Y_vtxdist;	// Reco - shower: distance of second shower cluster from neutrino vertex, Y plane
+    float secondshower_U_dot;   // Reco - shower: dot product of second shower cluster from neutrino vertex, U plane
+    float secondshower_V_dot;   // Reco - shower: dot product of second shower cluster from neutrino vertex, V plane
+    float secondshower_Y_dot;   // Reco - shower: dot product of second shower cluster from neutrino vertex, Y plane
 	float secondshower_U_dir;	// Reco - shower: direction of second shower cluster relative to wire direction, U plane
-	float secondshower_V_dir;	// Reco - shower: direction of second shower cluster relative to wire direction, U plane
-	float secondshower_Y_dir;	// Reco - shower: direction of second shower cluster relative to wire direction, U plane
+	float secondshower_V_dir;	// Reco - shower: direction of second shower cluster relative to wire direction, V plane
+	float secondshower_Y_dir;	// Reco - shower: direction of second shower cluster relative to wire direction, Y plane
+
 
 	float secondshower_U_anglediff;	// Reco - shower: opening angle between primary shower and second shower tagged cluster, U plane [derived variable]
 	float secondshower_V_anglediff;	// Reco - shower: opening angle between primary shower and second shower tagged cluster, V plane [derived variable]
@@ -326,6 +360,9 @@ public:
     float trk_start_x;
     float trk_start_y;
     float trk_start_z;
+    float trk_end_x;
+    float trk_end_y;
+    float trk_end_z;
     float trk_sce_end_x;
     float trk_sce_end_y;
     float trk_sce_end_z;
@@ -351,6 +388,12 @@ public:
 
     int trk_end_spacepoints;
 
+    int trk_planehits_U;
+    int trk_planehits_V;
+    int trk_planehits_Y;
+
+    int trk_pfpgeneration;
+
     // Seconary track
     unsigned int trk2_id;	// Reco - track: secondary track ID
     float trk2_len;			// Reco - track: Length of the second longest track
@@ -359,6 +402,9 @@ public:
     float trk2_start_x;
     float trk2_start_y;
     float trk2_start_z;
+    float trk2_end_x;
+    float trk2_end_y;
+    float trk2_end_z;
     float trk2_sce_end_x;
     float trk2_sce_end_y;
     float trk2_sce_end_z;
@@ -388,11 +434,20 @@ public:
 
     int trk2_end_spacepoints;
 
+    int trk2_planehits_U;
+    int trk2_planehits_V;
+    int trk2_planehits_Y;
+
+    int trk2_pfpgeneration;
+
     // tertiary track
     unsigned int trk3_id;	// Reco - track: secondary track ID
     float trk3_len;			// Reco - track: Length of the second longest track
     float trk3_distance;	// Reco - track: Distance between second longest track start and reconstructed neutrino vertex
     float trk3_score;		// Reco - track: Pandora track score for the second longest track
+    float trk3_end_x;
+    float trk3_end_y;
+    float trk3_end_z;
     float trk3_sce_end_x;
     float trk3_sce_end_y;
     float trk3_sce_end_z;
@@ -415,6 +470,12 @@ public:
 
     int trk3_end_spacepoints;
 
+    int trk3_planehits_U;
+    int trk3_planehits_V;
+    int trk3_planehits_Y;
+
+    int trk3_pfpgeneration;
+
     // Angle and distance between primary track and primary shower
     float tksh_distance;        // Reco: Distance between leading shower vertex and longest track vertex
     float tksh_angle;           // Reco: Angle between leading shower vertex and longest track vertex 
@@ -424,11 +485,22 @@ public:
 
     // --- Full PFP vectors ---
 
+    // hits on each plane
+    std::vector<int> *pfnplanehits_U = nullptr; // number of hits in pfp plane U
+    std::vector<int> *pfnplanehits_V = nullptr; // number of hits in pfp plane V
+    std::vector<int> *pfnplanehits_Y = nullptr; // number of hits in pfp plane Y
+
+    // generation
+    std::vector<unsigned int> *pfp_generation_v = nullptr; // generation of pfp
+
     // Full Track vectors 
     std::vector<float> *trk_score_v       = nullptr; // PFP track score
     std::vector<float> *trk_start_x_v = nullptr;
     std::vector<float> *trk_start_y_v = nullptr;
     std::vector<float> *trk_start_z_v = nullptr;
+    std::vector<float> *trk_end_x_v = nullptr;
+    std::vector<float> *trk_end_y_v = nullptr;
+    std::vector<float> *trk_end_z_v = nullptr;
     std::vector<float> *trk_sce_start_x_v = nullptr;
     std::vector<float> *trk_sce_start_y_v = nullptr;
     std::vector<float> *trk_sce_start_z_v = nullptr;

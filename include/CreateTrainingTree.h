@@ -54,27 +54,34 @@ private:
 	float shr_energyFraction;
 	float shrsubclusters;
 
+	float shrPCA1CMed_5cm;
+    float CylFrac2h_1cm;
+    float DeltaRMS2h;
+    float shrMCSMom;
+
 	float shr_energy_second_cali;
 	float shr2_distance;
 	float shr12_p1_dstart;
-
-	float shr_energy_third_cali;
-	float shr3_distance;
-	float shr13_p1_dstart;
+	float shr2_trackEndProximity;
+	float shr2_pfpgeneration;
 
 	float secondshower_Y_nhit;
 	float secondshower_Y_vtxdist;
+	float secondshower_Y_dot;
 	float secondshower_Y_anglediff;
-
+	
 	float secondshower_U_nhit;
 	float secondshower_U_vtxdist;
+	float secondshower_U_dot;
 	float secondshower_U_anglediff;
 
 	float secondshower_V_nhit;
 	float secondshower_V_vtxdist;
+	float secondshower_V_dot;
 	float secondshower_V_anglediff;
 
 	// --- pion-proton separation tree --
+	float trk_score;
     float trk_llr_pid_score;
     float trk_bragg_mip_max;
     float trk_bragg_pion_max;

@@ -28,14 +28,13 @@ void StackedHistTool::InstantiateHistOrder(){
   hist_order.push_back(_utility.kCCNue1pi0p);
   hist_order.push_back(_utility.kCCNue1piNp);
   hist_order.push_back(_utility.kCCNueNpi);
-  hist_order.push_back(_utility.kCCNuepizero);
-  hist_order.push_back(_utility.kCCNue1p);
   hist_order.push_back(_utility.kCCNueNp);
+  hist_order.push_back(_utility.kCCNuepizero);
   hist_order.push_back(_utility.kCCNueOther);
-  hist_order.push_back(_utility.kCCNumuOther);
   hist_order.push_back(_utility.kCCNumupizero);
-  hist_order.push_back(_utility.kNCOther);
+  hist_order.push_back(_utility.kCCNumuOther);
   hist_order.push_back(_utility.kNCpizero);
+  hist_order.push_back(_utility.kNCOther);
   hist_order.push_back(_utility.kCosmic);
   hist_order.push_back(_utility.kOutFV);
   hist_order.push_back(_utility.kOutOfCryo);
@@ -68,15 +67,17 @@ void StackedHistTool::DrawStack(TCanvas *c1, Utility::PlotVariableEnums plotvari
 
 	// Next: add histograms to the stack and make TLegend
 	// Only do this for histograms that have entries
-	TLegend *leg = new TLegend(0.1,0.88,0.65,0.99);
+	TLegend *leg = new TLegend(0.1,0.88,0.9,0.99);
 	// leg->SetTextFont(132);
 	leg->SetLineColor(kWhite);
 	leg->SetTextAlign(12);
 	leg->SetNColumns(6);
 
-	TPaveText *pt = new TPaveText(0.65,0.88,0.9,0.99,"NDC NB");
-	pt->SetLineColor(kWhite);
-	pt->SetFillColor(kWhite);
+	TPaveText *pt = new TPaveText(0.4,0.88,0.90,0.91,"NDC NB");
+	//pt->SetLineColor(kWhite);
+	//pt->SetFillColor(kWhite);
+  pt->SetFillStyle(0);
+  pt->SetBorderSize(0);
 	pt->SetTextAlign(12);
 
 	double underflow_total = 0.;
@@ -94,11 +95,11 @@ void StackedHistTool::DrawStack(TCanvas *c1, Utility::PlotVariableEnums plotvari
 	  overflow_total += hists[i_hist]->GetBinContent(hists[i_hist]->GetXaxis()->GetNbins()+1);
 	}
 
-	pt->AddText(TString::Format("Underflow (Invalid): %.2f (%.2f)",underflow_total,invalid_total_x).Data());
-	pt->AddText(TString::Format("Overflow: %.2f",overflow_total).Data());
+	pt->AddText(TString::Format("Underflow (Invalid): %.2f (%.2f) \t Overflow: %.2f",underflow_total,invalid_total_x, overflow_total).Data());
+	//pt->AddText(TString::Format("Overflow: %.2f",overflow_total).Data());
 
 	c1->cd();
-	c1->SetTopMargin(0.13);
+	c1->SetTopMargin(0.14);
 
 	stack->Draw("hist");
 
@@ -118,46 +119,63 @@ void StackedHistTool::DrawStack(TCanvas *c1, Utility::PlotVariableEnums plotvari
 // Private: only called by DrawStack function in this file
 void StackedHistTool::StyleHistsStack()
 {
+
+  // Topology categories for the histograms  
+  hist_order.push_back(_utility.kCCNue1pi0p);
+  hist_order.push_back(_utility.kCCNue1piNp);
+  hist_order.push_back(_utility.kCCNueNpi);
+  hist_order.push_back(_utility.kCCNueNp);
+  hist_order.push_back(_utility.kCCNuepizero);
+  hist_order.push_back(_utility.kCCNueOther);
+  hist_order.push_back(_utility.kCCNumupizero);
+  hist_order.push_back(_utility.kCCNumuOther);
+  hist_order.push_back(_utility.kNCpizero);
+  hist_order.push_back(_utility.kNCOther);
+  hist_order.push_back(_utility.kCosmic);
+  hist_order.push_back(_utility.kOutFV);
+  hist_order.push_back(_utility.kOutOfCryo);
+  hist_order.push_back(_utility.kBeamOff);
+  hist_order.push_back(_utility.kUnknown);
+
+
   // Set fill color for all histograms
   hists[0] ->SetFillColor(kCyan+2); // CC nue 1pi 0p
   hists[1] ->SetFillColor(kCyan+3); // CC nue 1pi Np
   hists[2] ->SetFillColor(kCyan-3); // CC nue Npi
-  hists[3] ->SetFillColor(kRed+1); // CC nue pizero
-  hists[4] ->SetFillColor(kRed+2); // CC nue 1p
-  hists[5] ->SetFillColor(kRed+3); // CC nue Np
-  hists[6] ->SetFillColor(kRed-7); // CC nue other
+  hists[3] ->SetFillColor(kRed+2); // CC nue Np
+  hists[4] ->SetFillColor(kRed+1); // CC nue pizero
+  hists[5] ->SetFillColor(kRed-7); // CC nue other
+  hists[6] ->SetFillColor(kOrange+4); // CC numu pizero
   hists[7] ->SetFillColor(kOrange+2); // CC numu other
-  hists[8] ->SetFillColor(kOrange+4); // CC numu pizero
+  hists[8] ->SetFillColor(kMagenta+3); // NC pizero
   hists[9] ->SetFillColor(kMagenta+1); // NC other
-  hists[10] ->SetFillColor(kMagenta+3); // NC pizero
-  hists[11] ->SetFillColor(kBlue+1); // Cosmic
-  hists[12] ->SetFillColor(kGray+1); // OutFV
-  hists[13]->SetFillColor(kRed-3); // Out of Cryo
-  hists[14]->SetFillColor(kGray+3); // Beam Off
-  hists[15]->SetFillColor(kBlack); // Unknown
+  hists[10]->SetFillColor(kBlue+1); // Cosmic
+  hists[11]->SetFillColor(kGray+1); // OutFV
+  hists[12]->SetFillColor(kRed-3); // Out of Cryo
+  hists[13]->SetFillColor(kGray+3); // Beam Off
+  hists[14]->SetFillColor(kBlack); // Unknown
 
 
   // Set line color for all histograms
   hists[0] ->SetLineColor(kCyan+2); // CC nue 1pi 0p
   hists[1] ->SetLineColor(kCyan+3); // CC nue 1pi Np
   hists[2] ->SetLineColor(kCyan-3); // CC nue Npi
-  hists[3] ->SetLineColor(kRed+1); // CC nue pizero
-  hists[4] ->SetLineColor(kRed+2); // CC nue 1p
-  hists[5] ->SetLineColor(kRed+3); // CC nue Np
-  hists[6] ->SetLineColor(kRed-7); // CC nue other
+  hists[3] ->SetLineColor(kRed+2); // CC nue Np
+  hists[4] ->SetLineColor(kRed+1); // CC nue pizero
+  hists[5] ->SetLineColor(kRed-7); // CC nue other
+  hists[6] ->SetLineColor(kOrange+4); // CC numu pizero
   hists[7] ->SetLineColor(kOrange+2); // CC numu other
-  hists[8] ->SetLineColor(kOrange+4); // CC numu pizero
+  hists[8] ->SetLineColor(kMagenta+3); // NC pizero
   hists[9] ->SetLineColor(kMagenta+1); // NC other
-  hists[10] ->SetLineColor(kMagenta+3); // NC pizero
-  hists[11] ->SetLineColor(kBlue+1); // Cosmic
-  hists[12] ->SetLineColor(kGray+1); // OutFV
-  hists[13]->SetLineColor(kRed-3); // Out of Cryo
-  hists[14]->SetLineColor(kGray+3); // Beam Off  
-  hists[15]->SetLineColor(kBlack); // Unknown
+  hists[10]->SetLineColor(kBlue+1); // Cosmic
+  hists[11]->SetLineColor(kGray+1); // OutFV
+  hists[12]->SetLineColor(kRed-3); // Out of Cryo
+  hists[13]->SetLineColor(kGray+3); // Beam Off
+  hists[14]->SetLineColor(kBlack); // Unknown
 
   // Set fill style
-  hists[13]->SetFillStyle(3004); // Out of Cryo
-  hists[14]->SetFillStyle(3005); // Beam Off
+  hists[12]->SetFillStyle(3004); // Out of Cryo
+  hists[13]->SetFillStyle(3005); // Beam Off
 
 }
 
@@ -268,9 +286,6 @@ std::string StackedHistTool::topologyenum2str(Utility::ClassificationEnums topol
   case Utility::kCCNuepizero:
     returnString = "#nu_{e} CC #pi^{0}";
     break;
-  case Utility::kCCNue1p:
-    returnString = "#nu_{e} CC 1p";
-    break;
   case Utility::kCCNueNp:
     returnString = "#nu_{e} CC Np";
     break;
@@ -352,8 +367,11 @@ std::string StackedHistTool::PlotVariableEnum2str(Utility::PlotVariableEnums plo
   case Utility::kSecondShowerEnergy:
     returnString = "Second Shower Energy [GeV]";
     break;
+  case Utility::kSecondShowerPFPGeneration:
+    returnString = "Second Shower PFP Generation";
+    break;
   case Utility::kHitRatio:
-  	returnString = "Shower Hit Ratio";
+  	returnString = "Shower Hit Fracton";
   	break;
   case Utility::kMoliereAverage:
     returnString = "Leading Shower Moliere Average [deg]";
