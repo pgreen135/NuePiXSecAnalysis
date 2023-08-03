@@ -25,6 +25,9 @@ public:
 	// Run Selection BDT RHC
 	void runBDTSelectionRHC();
 
+	// Run BDT selection on FHC detector variations
+	void runBDTSelectionDetVarFHC();
+
 	// Create training tree for electron-photon BDT FHC
 	void createElectronPhotonBDTTrainingTreeFHC();
 
@@ -53,18 +56,19 @@ protected:
 	// Run 2b RHC:  1.334e20 POT, 3167451.0 triggers
 	// Run 3b RHC:  5.013e+20 POT, 10371821.0 triggers [8528271.0 pre, 1845438.0 post]
 	// Run 4c RHC:  1.613e+19 POT, 319286.0 triggers
-	// Run 4c FHC:  1.21e+20 POT, 2374195.0 triggers
-	// Run 4d FHC: 	2e20 POT ---- NOT CORRECT!!! just for testing
+	// Run 4c FHC:  1.21e+20 POT, 2374195.0 triggers			/// ISSUES
+	// Run 4d FHC: 	8.374e+19 POT, 1702903.0 triggers
 	// Run 5 FHC:   2e20 POT ---- NOT CORRECT!!! just for testing
 
 	// Beam Off
-	std::string filename_beamoff_run1_fhc = "/Users/patrick/Data/MicroBooNE/CrossSections/customPeLeeNTuples/beam_off/numi_beam_off_pion_ntuples_run1.root"; // Triggers FHC: 4582248.27
-	std::string filename_beamoff_run1_rhc = "/Users/patrick/Data/MicroBooNE/CrossSections/customPeLeeNTuples/beam_off/numi_beam_off_pion_ntuples_run1.root"; // Triggers RHC: 6425820.55
+	std::string filename_beamoff_run1_fhc = "/Users/patrick/Data/MicroBooNE/CrossSections/customPeLeeNTuples/beam_off/numi_beam_off_pion_ntuples_run1_fhc.root"; // Triggers FHC: 4582248.27
+	std::string filename_beamoff_run1_rhc = "/Users/patrick/Data/MicroBooNE/CrossSections/customPeLeeNTuples/beam_off/numi_beam_off_pion_ntuples_run1_rhc.root"; // Triggers RHC: 6425820.55
 	std::string filename_beamoff_run2a_fhc = "/Users/patrick/Data/MicroBooNE/CrossSections/customPeLeeNTuples/beam_off/numi_beam_off_pion_ntuples_run2a_fhc.root"; // Triggers FHC:	18785678.975
 	std::string filename_beamoff_run2b_rhc = "/Users/patrick/Data/MicroBooNE/CrossSections/customPeLeeNTuples/beam_off/numi_beam_off_pion_ntuples_run2b_rhc.root"; // Triggers RHC: 12202588.125
 	std::string filename_beamoff_run3b_rhc = "/Users/patrick/Data/MicroBooNE/CrossSections/customPeLeeNTuples/beam_off/numi_beam_off_pion_ntuples_run3b_rhc.root"; // Triggers RHC: Pre: 18512803.475, Post: 14136286.5 
-	std::string filename_beamoff_run4c_fhc = "/Users/patrick/Data/MicroBooNE/CrossSections/customPeLeeNTuples/beam_off/numi_beam_off_pion_ntuples_run4c.root"; // Triggers FHC:  8060024.70
-	std::string filename_beamoff_run4d_fhc = "/Users/patrick/Data/MicroBooNE/CrossSections/customPeLeeNTuples/beam_off/numi_beam_off_pion_ntuples_run4d.root"; // Triggers FHC: 17057035.80 [warning, missing runs]
+	std::string filename_beamoff_run4c_fhc = "/Users/patrick/Data/MicroBooNE/CrossSections/customPeLeeNTuples/beam_off/numi_beam_off_pion_ntuples_run4c_fhc.root"; // Triggers FHC:  8060024.70
+	std::string filename_beamoff_run4d_fhc = "/Users/patrick/Data/MicroBooNE/CrossSections/customPeLeeNTuples/beam_off/numi_beam_off_pion_ntuples_run4d_fhc.root"; // Triggers FHC:  17432345.70
+	std::string filename_beamoff_run5_fhc = "/Users/patrick/Data/MicroBooNE/CrossSections/customPeLeeNTuples/beam_off/numi_beam_off_pion_ntuples_run5_fhc.root";   // Triggers FHC:  19256341.475
 	
 	// Nu Overlay
 	std::string filename_mc_run1_fhc = "/Users/patrick/Data/MicroBooNE/CrossSections/customPeLeeNTuples/nu_overlay/numi_nu_overlay_pion_ntuples_run1_fhc_slim.root"; // POT: 2.37912e+21
@@ -86,17 +90,34 @@ protected:
 	std::string filename_dirt_run4d_fhc = "/Users/patrick/Data/MicroBooNE/CrossSections/customPeLeeNTuples/dirt_overlay/numi_dirt_overlay_pion_ntuples_run4d_fhc_slim.root"; // POT: 2.44273e+20
 	std::string filename_dirt_run5_fhc = "/Users/patrick/Data/MicroBooNE/CrossSections/customPeLeeNTuples/dirt_overlay/numi_dirt_overlay_pion_ntuples_run5_fhc_slim.root"; // POT: 3.60484e+20
 	
-	// Intrinsic Nue Overlay
-	std::string filename_intrinsic_run1_fhc = "/Users/patrick/Data/MicroBooNE/CrossSections/customPeLeeNTuples/nue_overlay/numi_nue_overlay_pion_ntuples_run1_fhc_slim.root"; // POT: 2.42248e+22
-	std::string filename_intrinsic_run1_rhc = "/Users/patrick/Data/MicroBooNE/CrossSections/customPeLeeNTuples/nue_overlay/numi_nue_overlay_pion_ntuples_run1_rhc_slim.root"; // POT: 4.10999e+22
-	std::string filename_intrinsic_run2a_fhc = "/Users/patrick/Data/MicroBooNE/CrossSections/customPeLeeNTuples/nue_overlay/numi_nue_overlay_pion_ntuples_run2a_fhc_slim.root"; // POT: 8.11203e+22
-	std::string filename_intrinsic_run2b_rhc = "/Users/patrick/Data/MicroBooNE/CrossSections/customPeLeeNTuples/nue_overlay/numi_nue_overlay_pion_ntuples_run2b_rhc_slim.root"; // POT: 8.51696e+22
-	std::string filename_intrinsic_run3b_rhc = "/Users/patrick/Data/MicroBooNE/CrossSections/customPeLeeNTuples/nue_overlay/numi_nue_overlay_pion_ntuples_run3b_rhc_slim.root"; // POT: 2.53921e+22
+	// Intrinsic Nue Overlay -- Testing/Validation/Analysis samples
+	std::string filename_intrinsic_test_run1_fhc = "/Users/patrick/Data/MicroBooNE/CrossSections/customPeLeeNTuples/nue_overlay/numi_nue_overlay_pion_ntuples_run1_fhc_slim_test.root"; // POT: 1.27481e+22
+	std::string filename_intrinsic_test_run1_rhc = "/Users/patrick/Data/MicroBooNE/CrossSections/customPeLeeNTuples/nue_overlay/numi_nue_overlay_pion_ntuples_run1_rhc_slim_test.root"; // POT: 2.26176e+22
+	std::string filename_intrinsic_test_run2a_fhc = "/Users/patrick/Data/MicroBooNE/CrossSections/customPeLeeNTuples/nue_overlay/numi_nue_overlay_pion_ntuples_run2a_fhc_slim_test.root"; // POT: 3.86831e+22
+	std::string filename_intrinsic_test_run2b_rhc = "/Users/patrick/Data/MicroBooNE/CrossSections/customPeLeeNTuples/nue_overlay/numi_nue_overlay_pion_ntuples_run2b_rhc_slim_test.root"; // POT: 4.22611e+22
+	std::string filename_intrinsic_test_run3b_rhc = "/Users/patrick/Data/MicroBooNE/CrossSections/customPeLeeNTuples/nue_overlay/numi_nue_overlay_pion_ntuples_run3b_rhc_slim_test.root"; // POT: 1.22077e+22
+
+	// Intrinsic Nue Overlay -- Training samples
+	std::string filename_intrinsic_train_run1_fhc = "/Users/patrick/Data/MicroBooNE/CrossSections/customPeLeeNTuples/nue_overlay/numi_nue_overlay_pion_ntuples_run1_fhc_slim_train.root"; 
+	std::string filename_intrinsic_train_run1_rhc = "/Users/patrick/Data/MicroBooNE/CrossSections/customPeLeeNTuples/nue_overlay/numi_nue_overlay_pion_ntuples_run1_rhc_slim_train.root"; 
+	std::string filename_intrinsic_train_run2a_fhc = "/Users/patrick/Data/MicroBooNE/CrossSections/customPeLeeNTuples/nue_overlay/numi_nue_overlay_pion_ntuples_run2a_fhc_slim_train.root";
+	std::string filename_intrinsic_train_run2b_rhc = "/Users/patrick/Data/MicroBooNE/CrossSections/customPeLeeNTuples/nue_overlay/numi_nue_overlay_pion_ntuples_run2b_rhc_slim_train.root";
+	std::string filename_intrinsic_train_run3b_rhc = "/Users/patrick/Data/MicroBooNE/CrossSections/customPeLeeNTuples/nue_overlay/numi_nue_overlay_pion_ntuples_run3b_rhc_slim_train.root";
 
 	// CCNCPi0 Overlay
 	std::string filename_ccncpizero_run1_fhc = "/Users/patrick/Data/MicroBooNE/CrossSections/customPeLeeNTuples/ccncpi0_overlay/numi_ccncpi0_overlay_pion_ntuples_run1_fhc_slim.root"; // POT: 1.31412e+22
 	std::string filename_ccncpizero_run3b_rhc = "/Users/patrick/Data/MicroBooNE/CrossSections/customPeLeeNTuples/ccncpi0_overlay/numi_ccncpi0_overlay_pion_ntuples_run3b_rhc_slim.root"; // POT: 2.0829e+22
 	std::string filename_ccncpizero_run5_fhc = "/Users/patrick/Data/MicroBooNE/CrossSections/customPeLeeNTuples/ccncpi0_overlay/numi_ccncpi0_overlay_pion_ntuples_run5_fhc_slim.root"; // POT: 8.84556e+21
+
+    // Detector Variations
+    // Run 1 FHC
+    std::string filename_detvar_CV_run1_fhc = "/Users/patrick/Data/MicroBooNE/CrossSections/customPeLeeNTuples/detvars/numi_detvars_pion_ntuples_run1_fhc_CV_slim.root"; // POT: 7.63091e+20
+    std::string filename_detvar_SCE_run1_fhc = "/Users/patrick/Data/MicroBooNE/CrossSections/customPeLeeNTuples/detvars/numi_detvars_pion_ntuples_run1_fhc_SCE_slim.root"; // POT: 7.53234e+20
+    std::string filename_detvar_Recombination_run1_fhc = "/Users/patrick/Data/MicroBooNE/CrossSections/customPeLeeNTuples/detvars/numi_detvars_pion_ntuples_run1_fhc_Recombination_slim.root"; // POT: 7.53761e+20
+    std::string filename_detvar_WireModX_run1_fhc = "/Users/patrick/Data/MicroBooNE/CrossSections/customPeLeeNTuples/detvars/numi_detvars_pion_ntuples_run1_fhc_WireModX_slim.root"; // POT: 7.60069e+20
+    std::string filename_detvar_WireModYZ_run1_fhc = "/Users/patrick/Data/MicroBooNE/CrossSections/customPeLeeNTuples/detvars/numi_detvars_pion_ntuples_run1_fhc_WireModYZ_slim.root"; // POT: 7.50974e+20
+    std::string filename_detvar_WireModThetaYZ_run1_fhc = "/Users/patrick/Data/MicroBooNE/CrossSections/customPeLeeNTuples/detvars/numi_detvars_pion_ntuples_run1_fhc_WireModThetaYZ_slim.root"; // POT: 7.65315e+20
+
 
 	// --- POT Weights ---
 	// Beam On
@@ -107,8 +128,8 @@ protected:
     double pot_weight_beamoff_run2b_rhc = 0.259572; // 12202588.125
     double pot_weight_beamoff_run3b_rhc_pre = 0.460669; // pre: 18512803.475
     double pot_weight_beamoff_run3b_rhc_post = 0.130546; // post: 14136286.5
-    double pot_weight_beamoff_run4c_fhc = 0.294564; // 8060024.70
-    double pot_weight_beamoff_run4d_fhc = 1; // 17057035.80 [warning, missing runs]
+    double pot_weight_beamoff_run4c_fhc = 0.294564; // 8060024.70   // check
+    double pot_weight_beamoff_run4d_fhc = 0.097686; // 17432345.70
 
 	// Nu Overlay
 	double pot_weight_mc_run1_fhc = 0.084065; // 2.37912e+21
@@ -116,8 +137,8 @@ protected:
 	double pot_weight_mc_run2a_fhc = 0.295797; // 1.1207e+21
 	double pot_weight_mc_run2b_rhc = 0.119101; // 1.12006e+21
 	double pot_weight_mc_run3b_rhc = 0.248625; // 2.01629e+21
-	double pot_weight_mc_run4c_fhc = 0.139829; // 8.65945e+20
-	double pot_weight_mc_run4d_fhc = 0.154653; // 1.2933e+21    // placeholder
+	double pot_weight_mc_run4c_fhc = 0.139829; // 8.65945e+20  // check
+	double pot_weight_mc_run4d_fhc = 0.064749; // 1.2933e+21
 	double pot_weight_mc_run5_fhc = 0.113322; // 1.76489e21    // placeholder
 
 	// Dirt Overlay
@@ -126,22 +147,37 @@ protected:
 	double pot_weight_dirt_run2a_fhc = 2.18831; // 1.51487e+20
 	double pot_weight_dirt_run2b_rhc = 1.06355; // 1.25429e+20
 	double pot_weight_dirt_run3b_rhc = 0.480914; // 1.04239e+21
-	double pot_weight_dirt_run4c_fhc = 0.783562; // 1.54423e+20
-	double pot_weight_dirt_run4d_fhc = 0.818756; // 2.44273e+20
-	double pot_weight_dirt_run5_fhc = 0.554810; // 3.60484e+20
+	double pot_weight_dirt_run4c_fhc = 0.783562; // 1.54423e+20    // check
+	double pot_weight_dirt_run4d_fhc = 0.342813; // 2.44273e+20
+	double pot_weight_dirt_run5_fhc = 0.554810; // 3.60484e+20 // placeholder
 
-	// Intrinsic Nue Overlay
-	double pot_weight_intrinsic_run1_fhc = 0.008256; // 2.42248e+22
-	double pot_weight_intrinsic_run1_rhc = 0.001459; // 4.10999e+22
-	double pot_weight_intrinsic_run2a_fhc = 0.002465; // 8.11203e+22
-	double pot_weight_intrinsic_run2b_rhc = 0.001566; // 8.51696e+22
-	double pot_weight_intrinsic_run3b_rhc = 0.019742; // 2.53921e+22
+	// Intrinsic Nue Overlay -- Testing/Validation/Analysis samples
+	double pot_weight_intrinsic_test_run1_fhc = 0.015689; // 1.27481e+22
+	double pot_weight_intrinsic_test_run1_rhc = 0.002700; // 2.26176e+22
+	double pot_weight_intrinsic_test_run2a_fhc = 0.008570; // 3.86831e+22
+	double pot_weight_intrinsic_test_run2b_rhc = 0.003157; // 4.22611e+22
+	double pot_weight_intrinsic_test_run3b_rhc = 0.041064; // 1.22077e+22
 
-	// CCNCPi0 Overlay
-	double pot_weight_ccncpizero_run1_fhc = 0.015219; // 1.31412e+22
-	double pot_weight_ccncpizero_run3b_rhc = 0.024067; // 2.0829e+22
-	double pot_weight_ccncpizero_run5_fhc = 0.022610; // 8.84556e+21
+	// Intrinsic Nue Overlay -- Training samples
+	double pot_weight_intrinsic_train_run1_fhc = 1;
+	double pot_weight_intrinsic_train_run1_rhc = 1;
+	double pot_weight_intrinsic_train_run2a_fhc = 1;
+	double pot_weight_intrinsic_train_run2b_rhc = 1;
+	double pot_weight_intrinsic_train_run3b_rhc = 1;
 
+	// CCNCPi0 Overlay Training samples
+	double pot_weight_ccncpizero_run1_fhc = 1; // 1.31412e+22
+	double pot_weight_ccncpizero_run3b_rhc = 1; // 2.0829e+22
+	double pot_weight_ccncpizero_run5_fhc = 1; // 8.84556e+21
+
+	// Detector Variations
+    // Run 1 FHC
+    double pot_weight_detvar_CV_run1_fhc = 0.262092; // 7.63091e+20
+    double pot_weight_detvar_SCE_run1_fhc = 0.265522; // 7.53234e+20
+    double pot_weight_detvar_Recombination_run1_fhc = 0.265336; // 7.53761e+20
+    double pot_weight_detvar_WireModX_run1_fhc = 0.263134; // 7.60069e+20
+    double pot_weight_detvar_WireModYZ_run1_fhc = 0.266321; // 7.50974e+20
+    double pot_weight_detvar_WireModThetaYZ_run1_fhc = 0.261330; // 7.65315e+20
 
 };
 

@@ -93,9 +93,9 @@ public:
     // --- Variables for STV Tree ---
     bool is_mc_;
     bool mc_is_signal_;
+    bool sel_NueCC1piXp_;
     int  category_;
-    float sel_NueCC1piXp_;
-
+    
 	// --- Event information ---
 	int run, sub, evt;			// run, subrun, event numbers
 
@@ -135,8 +135,13 @@ public:
     float opfilter_pe_veto; // Common Optical Filter (michel veto)
 
     // --- Event weight ---
+    // CV
     float weightSplineTimesTune;    // Weight from Genie, spline * tune
+    float weightSpline;
+    float weightTune; 
     float ppfx_cv;                  // Weight from PPFX CV
+    float normalisation_weight;     // NuMI normalisation weights (beam off, dirt)
+    
     // systematic universes
     std::map<std::string, std::vector<double>> *mc_weights_map_ = nullptr;
     std::map< std::string, std::vector<double>*> mc_weights_ptr_map_;
@@ -280,6 +285,9 @@ public:
     int shr_planehits_Y;
 
     int shr_pfpgeneration;
+
+    // Primary Shower Truth
+    float shr_bkt_E;            // backtracked energy of the MCParticle matched to the leading shower
 
     // Seconary Shower
     unsigned int shr2_id;		// Reco - shower: Secondary shower ID

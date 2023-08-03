@@ -42,6 +42,8 @@ EventContainer::EventContainer(TTree *tree, const Utility &utility): _utility{ u
     tree->SetBranchAddress("_opfilter_pe_veto", &opfilter_pe_veto);
 
     tree->SetBranchAddress("weightSplineTimesTune", &weightSplineTimesTune);
+    tree->SetBranchAddress("weightSpline", &weightSpline);
+    tree->SetBranchAddress("weightTune", &weightTune);
     tree->SetBranchAddress("ppfx_cv", &ppfx_cv);
     tree->SetBranchAddress("weights", &mc_weights_map_);
 
@@ -143,6 +145,8 @@ EventContainer::EventContainer(TTree *tree, const Utility &utility): _utility{ u
     tree->SetBranchAddress("CylFrac2h_1cm", &CylFrac2h_1cm);
     tree->SetBranchAddress("DeltaRMS2h", &DeltaRMS2h);
     tree->SetBranchAddress("shrMCSMom", &shrMCSMom);
+
+    tree->SetBranchAddress("shr_bkt_E", &shr_bkt_E);
 
     tree->SetBranchAddress("secondshower_U_nhit", &secondshower_U_nhit);
     tree->SetBranchAddress("secondshower_V_nhit", &secondshower_V_nhit);
@@ -413,15 +417,20 @@ void EventContainer::calculateCVEventWeight(Utility::FileTypeEnums type, Utility
 
 	float weight = 1.0;
 
+	// check weights are sensible
+	ppfx_cv = checkWeight(ppfx_cv);
+	weightSpline = checkWeight(weightSpline);
+	weightTune = checkWeight(weightTune);
+
 	// overlay MC events
 	if (type == Utility::kMC || type == Utility::kIntrinsic || type == Utility::kCCNCPiZero) {
 		
 		// CV weight
-		weight = ppfx_cv * weightSplineTimesTune;
+		weight = ppfx_cv * weightSpline * weightTune;
 
-		// STV Tree
+		// set normalisation weight
+		normalisation_weight = 1;
 
-		
 		// normalisation scaling of pi0 events performed in LEE analyses, but not included in Krishan's measurement
 		// unclear whether this should be included or not
 		// further re-scale events containing pi-zeros
@@ -446,22 +455,31 @@ void EventContainer::calculateCVEventWeight(Utility::FileTypeEnums type, Utility
 	// using scaling factors from Katrina's analysis, DocDb: 39436
 	if (type == Utility::kDirt) {
 
-		weight = ppfx_cv * weightSplineTimesTune;
+		weight = ppfx_cv * weightSpline * weightTune;
 		
 		// FHC
 		if (runPeriod == Utility::kRun1a || runPeriod == Utility::kRun2a || runPeriod == Utility::kRun4c || runPeriod == Utility::kRun4d || runPeriod == Utility::kRun5) {
 			weight = weight*0.65;
+			
+			// set normalisation weight
+			normalisation_weight = 0.65;
 		}
 
 		// RHC
 		if (runPeriod == Utility::kRun1b || runPeriod == Utility::kRun2b || runPeriod == Utility::kRun3b) {
 			weight = weight*0.45;
+
+			// set normalisation weight
+			normalisation_weight = 0.45;
 		}	
 	}
 
 	// beam off events
 	if (type == Utility::kEXT) {
 		weight = 0.98;
+
+		// set normalisation weight
+	    normalisation_weight = 0.98;
 	}
 
 	// check weight is sensible
@@ -469,6 +487,7 @@ void EventContainer::calculateCVEventWeight(Utility::FileTypeEnums type, Utility
 
 	// set weight in event
 	weight_cv = weight;
+
 }
 
 // Function to check event weight is sensible
@@ -898,6 +917,9 @@ void EventContainer::populateDerivedVariables(Utility::FileTypeEnums type){
 
     // primary shower subclusters
     shrsubclusters = shrsubclusters0 + shrsubclusters1 + shrsubclusters2;
+
+    // primary shower back-tracked truth, set to zero when not filled
+    if (shr_bkt_E < -1 || shr_bkt_E > 100) shr_bkt_E=0; 
 
     // Primary shower information
     if (shr_id < shr_energy_y_v->size() && shr_id != 0) {

@@ -34,7 +34,7 @@ void SelectionDriver::runBDTSelectionFHC() {
 	StackedHistTool _histStack("", "", 5, 0, 5, _utility);
 	BDTTool _BDTTool(true, true, true, true);
 	Selection _selection(_utility);
-
+	
 	// ----------------- Run 1 FHC ------------------
 	{
 		// --- Nu Overlay MC ---	
@@ -138,7 +138,7 @@ void SelectionDriver::runBDTSelectionFHC() {
 		      std::cout << Form("%i0%% Completed...\n", e / (n_entries_beamoff/10));
 		    }
 
-		    if (_event_beamoff.run > 6748) continue; // FHC era only
+		    //if (_event_beamoff.run > 6748) continue; // FHC era only
 
 		    bool passSelection = _selection.ApplyBDTBasedSelection(_event_beamoff, _BDTTool, Utility::kEXT, Utility::kRun1a);
 		    if (!passSelection) continue;
@@ -153,6 +153,7 @@ void SelectionDriver::runBDTSelectionFHC() {
 
 		delete f_beamoff;
 	}
+	
 	
 	/*
 	// ----------------- Run 2a FHC ------------------
@@ -263,7 +264,8 @@ void SelectionDriver::runBDTSelectionFHC() {
 
 		delete f_beamoff;
 	}
-	
+	*/
+	/*
 	// ----------------- Run 4c FHC ------------------
 	{
 		// --- Nu Overlay MC ---	
@@ -441,6 +443,42 @@ void SelectionDriver::runBDTSelectionFHC() {
 		}
 
 		delete f_dirt;
+
+		// --- Beam Off ---
+		// read file
+		TFile *f_beamoff = NULL;
+	  	TTree *tree_beamoff = NULL;
+	 	f_beamoff = new TFile(filename_beamoff_run4d_fhc.c_str());  
+	  	tree_beamoff = (TTree*)f_beamoff->Get("nuselection/NeutrinoSelectionFilter");
+	  	
+	  	// initialise event container
+	  	EventContainer _event_beamoff(tree_beamoff, _utility); 	
+
+	  	// loop through events
+	  	int n_entries_beamoff = tree_beamoff->GetEntries();
+	  	std::cout << "Initial number events [Run 4d FHC Beam Off]: " << n_entries_beamoff << std::endl;
+
+	  	for (int e = 0; e < n_entries_beamoff; e++) {
+
+	    	tree_beamoff->GetEntry(e);
+
+		    if ( (e != 0) && (n_entries_beamoff >= 10) &&  (e % (n_entries_beamoff/10) == 0) ) {
+		      std::cout << Form("%i0%% Completed...\n", e / (n_entries_beamoff/10));
+		    }
+
+
+		    bool passSelection = _selection.ApplyBDTBasedSelection(_event_beamoff, _BDTTool, Utility::kEXT, Utility::kRun4d);
+		    if (!passSelection) continue;
+
+		    // fill histogram
+		    _histStack.Fill(_event_beamoff.classification, _event_beamoff.BDTScoreElectronPhoton, pot_weight_beamoff_run4d_fhc * _event_beamoff.weight_cv);
+
+		    //if (_event_beamoff.primaryTrackPionlikeLoose) _histStack.Fill(_event_beamoff.classification, _event_beamoff.primaryTrackBDTScorePionProton, pot_weight_beamoff_run4c_fhc * _event_beamoff.weight_cv);
+	        //else if (_event_beamoff.secondaryTrackPionlikeLoose) _histStack.Fill(_event_beamoff.classification, _event_beamoff.secondaryTrackBDTScorePionProton, pot_weight_beamoff_run4c_fhc * _event_beamoff.weight_cv);
+	  	    //else _histStack.Fill(_event_beamoff.classification, _event_beamoff.tertiaryTrackBDTScorePionProton, pot_weight_beamoff_run4c_fhc * _event_beamoff.weight_cv);
+		}
+
+		delete f_beamoff;
 	}
 	*/
 	
@@ -515,7 +553,6 @@ void SelectionDriver::runBDTSelectionFHC() {
 		delete f_dirt;
 	}
 	*/
-	
 
 	// print event integrals
 	_histStack.PrintEventIntegrals();
@@ -899,6 +936,277 @@ void SelectionDriver::runBDTSelectionRHC() {
   	//canv->Print("plot_pionProton_BDTScore_RHC.root");
 }
 
+// ------------------------------------------------------------------------------
+
+
+// Run BDT selection on FHC detector variations
+void SelectionDriver::runBDTSelectionDetVarFHC() {
+
+	StackedHistTool _histStack_CV("", "", 1, 0, 10, _utility);
+	StackedHistTool _histStack_SCE("", "", 1, 0, 10, _utility);
+	StackedHistTool _histStack_Recombination("", "", 1, 0, 10, _utility);
+	StackedHistTool _histStack_WireModX("", "", 1, 0, 10, _utility);
+	StackedHistTool _histStack_WireModYZ("", "", 1, 0, 10, _utility);
+	StackedHistTool _histStack_WireModThetaYZ("", "", 1, 0, 10, _utility);
+	
+	BDTTool _BDTTool(true, true, true, true);
+	Selection _selection(_utility);
+
+
+	// ----------------- Run 1 FHC CV ------------------
+	{
+		// --- CV ---	
+		// read file
+		TFile *f_detvar = NULL;
+	  	TTree *tree_detvar = NULL;
+	 	f_detvar = new TFile(filename_detvar_CV_run1_fhc.c_str());  
+	  	tree_detvar = (TTree*)f_detvar->Get("nuselection/NeutrinoSelectionFilter");
+	  	
+	  	// initialise event container
+	  	EventContainer _event_detvar(tree_detvar, _utility); 	
+
+	  	// loop through events
+	  	int n_entries_detvar = tree_detvar->GetEntries();
+	  	std::cout << "Initial number events [Run 1 FHC DetVar CV]: " << n_entries_detvar << std::endl;
+
+	  	for (int e = 0; e < n_entries_detvar; e++) {
+	  	//for (int e = 0; e < 10000; e++) {
+	  		
+	    	tree_detvar->GetEntry(e);    	
+
+		    if ( (e != 0) && (n_entries_detvar >= 10) &&  (e % (n_entries_detvar/10) == 0) ) {
+		      std::cout << Form("%i0%% Completed...\n", e / (n_entries_detvar/10));
+		    }
+
+		    bool passSelection = _selection.ApplyBDTBasedSelection(_event_detvar, _BDTTool, Utility::kMC, Utility::kRun1a);
+		    if (!passSelection) continue;
+
+		    // fill histogram
+		    _histStack_CV.Fill(_event_detvar.classification, _event_detvar.shr2_pfpgeneration, pot_weight_detvar_CV_run1_fhc * _event_detvar.weight_cv);
+
+		    //if (_event_mc.primaryTrackPionlikeLoose) _histStack.Fill(_event_mc.classification, _event_mc.primaryTrackBDTScorePionProton, pot_weight_mc_run1_fhc * _event_mc.weight_cv);
+	        //else if (_event_mc.secondaryTrackPionlikeLoose) _histStack.Fill(_event_mc.classification, _event_mc.secondaryTrackBDTScorePionProton, pot_weight_mc_run1_fhc * _event_mc.weight_cv);
+	  	    //else if (_event_mc.tertiaryTrackPionlikeLoose) _histStack.Fill(_event_mc.classification, _event_mc.tertiaryTrackBDTScorePionProton, pot_weight_mc_run1_fhc * _event_mc.weight_cv);
+		}
+
+		delete f_detvar;
+	}
+
+	// ----------------- Run 1 FHC SCE ------------------
+	{
+		// --- SCE ---	
+		// read file
+		TFile *f_detvar = NULL;
+	  	TTree *tree_detvar = NULL;
+	 	f_detvar = new TFile(filename_detvar_SCE_run1_fhc.c_str());  
+	  	tree_detvar = (TTree*)f_detvar->Get("nuselection/NeutrinoSelectionFilter");
+	  	
+	  	// initialise event container
+	  	EventContainer _event_detvar(tree_detvar, _utility); 	
+
+	  	// loop through events
+	  	int n_entries_detvar = tree_detvar->GetEntries();
+	  	std::cout << "Initial number events [Run 1 FHC DetVar SCE]: " << n_entries_detvar << std::endl;
+
+	  	for (int e = 0; e < n_entries_detvar; e++) {
+	  	//for (int e = 0; e < 10000; e++) {
+	  		
+	    	tree_detvar->GetEntry(e);    	
+
+		    if ( (e != 0) && (n_entries_detvar >= 10) &&  (e % (n_entries_detvar/10) == 0) ) {
+		      std::cout << Form("%i0%% Completed...\n", e / (n_entries_detvar/10));
+		    }
+
+		    bool passSelection = _selection.ApplyBDTBasedSelection(_event_detvar, _BDTTool, Utility::kMC, Utility::kRun1a);
+		    if (!passSelection) continue;
+
+		    // fill histogram
+		    _histStack_SCE.Fill(_event_detvar.classification, _event_detvar.shr2_pfpgeneration, pot_weight_detvar_SCE_run1_fhc * _event_detvar.weight_cv);
+
+		    //if (_event_mc.primaryTrackPionlikeLoose) _histStack.Fill(_event_mc.classification, _event_mc.primaryTrackBDTScorePionProton, pot_weight_mc_run1_fhc * _event_mc.weight_cv);
+	        //else if (_event_mc.secondaryTrackPionlikeLoose) _histStack.Fill(_event_mc.classification, _event_mc.secondaryTrackBDTScorePionProton, pot_weight_mc_run1_fhc * _event_mc.weight_cv);
+	  	    //else if (_event_mc.tertiaryTrackPionlikeLoose) _histStack.Fill(_event_mc.classification, _event_mc.tertiaryTrackBDTScorePionProton, pot_weight_mc_run1_fhc * _event_mc.weight_cv);
+		}
+
+		delete f_detvar;
+	}
+
+	// ----------------- Run 1 FHC Recombination ------------------
+	{
+		// --- Recombination ---	
+		// read file
+		TFile *f_detvar = NULL;
+	  	TTree *tree_detvar = NULL;
+	 	f_detvar = new TFile(filename_detvar_Recombination_run1_fhc.c_str());  
+	  	tree_detvar = (TTree*)f_detvar->Get("nuselection/NeutrinoSelectionFilter");
+	  	
+	  	// initialise event container
+	  	EventContainer _event_detvar(tree_detvar, _utility); 	
+
+	  	// loop through events
+	  	int n_entries_detvar = tree_detvar->GetEntries();
+	  	std::cout << "Initial number events [Run 1 FHC DetVar Recombination]: " << n_entries_detvar << std::endl;
+
+	  	for (int e = 0; e < n_entries_detvar; e++) {
+	  	//for (int e = 0; e < 10000; e++) {
+	  		
+	    	tree_detvar->GetEntry(e);    	
+
+		    if ( (e != 0) && (n_entries_detvar >= 10) &&  (e % (n_entries_detvar/10) == 0) ) {
+		      std::cout << Form("%i0%% Completed...\n", e / (n_entries_detvar/10));
+		    }
+
+		    bool passSelection = _selection.ApplyBDTBasedSelection(_event_detvar, _BDTTool, Utility::kMC, Utility::kRun1a);
+		    if (!passSelection) continue;
+
+		    // fill histogram
+		    _histStack_Recombination.Fill(_event_detvar.classification, _event_detvar.shr2_pfpgeneration, pot_weight_detvar_Recombination_run1_fhc * _event_detvar.weight_cv);
+
+		    //if (_event_mc.primaryTrackPionlikeLoose) _histStack.Fill(_event_mc.classification, _event_mc.primaryTrackBDTScorePionProton, pot_weight_mc_run1_fhc * _event_mc.weight_cv);
+	        //else if (_event_mc.secondaryTrackPionlikeLoose) _histStack.Fill(_event_mc.classification, _event_mc.secondaryTrackBDTScorePionProton, pot_weight_mc_run1_fhc * _event_mc.weight_cv);
+	  	    //else if (_event_mc.tertiaryTrackPionlikeLoose) _histStack.Fill(_event_mc.classification, _event_mc.tertiaryTrackBDTScorePionProton, pot_weight_mc_run1_fhc * _event_mc.weight_cv);
+		}
+
+		delete f_detvar;
+	}
+
+	// ----------------- Run 1 FHC WireModX ------------------
+	{
+		// --- WireModX ---	
+		// read file
+		TFile *f_detvar = NULL;
+	  	TTree *tree_detvar = NULL;
+	 	f_detvar = new TFile(filename_detvar_WireModX_run1_fhc.c_str());  
+	  	tree_detvar = (TTree*)f_detvar->Get("nuselection/NeutrinoSelectionFilter");
+	  	
+	  	// initialise event container
+	  	EventContainer _event_detvar(tree_detvar, _utility); 	
+
+	  	// loop through events
+	  	int n_entries_detvar = tree_detvar->GetEntries();
+	  	std::cout << "Initial number events [Run 1 FHC DetVar WireModX]: " << n_entries_detvar << std::endl;
+
+	  	for (int e = 0; e < n_entries_detvar; e++) {
+	  	//for (int e = 0; e < 10000; e++) {
+	  		
+	    	tree_detvar->GetEntry(e);    	
+
+		    if ( (e != 0) && (n_entries_detvar >= 10) &&  (e % (n_entries_detvar/10) == 0) ) {
+		      std::cout << Form("%i0%% Completed...\n", e / (n_entries_detvar/10));
+		    }
+
+		    bool passSelection = _selection.ApplyBDTBasedSelection(_event_detvar, _BDTTool, Utility::kMC, Utility::kRun1a);
+		    if (!passSelection) continue;
+
+		    // fill histogram
+		    _histStack_WireModX.Fill(_event_detvar.classification, _event_detvar.shr2_pfpgeneration, pot_weight_detvar_WireModX_run1_fhc * _event_detvar.weight_cv);
+
+		    //if (_event_mc.primaryTrackPionlikeLoose) _histStack.Fill(_event_mc.classification, _event_mc.primaryTrackBDTScorePionProton, pot_weight_mc_run1_fhc * _event_mc.weight_cv);
+	        //else if (_event_mc.secondaryTrackPionlikeLoose) _histStack.Fill(_event_mc.classification, _event_mc.secondaryTrackBDTScorePionProton, pot_weight_mc_run1_fhc * _event_mc.weight_cv);
+	  	    //else if (_event_mc.tertiaryTrackPionlikeLoose) _histStack.Fill(_event_mc.classification, _event_mc.tertiaryTrackBDTScorePionProton, pot_weight_mc_run1_fhc * _event_mc.weight_cv);
+		}
+
+		delete f_detvar;
+	}
+
+	// ----------------- Run 1 FHC WireModYZ ------------------
+	{
+		// --- WireModYZ ---	
+		// read file
+		TFile *f_detvar = NULL;
+	  	TTree *tree_detvar = NULL;
+	 	f_detvar = new TFile(filename_detvar_WireModYZ_run1_fhc.c_str());  
+	  	tree_detvar = (TTree*)f_detvar->Get("nuselection/NeutrinoSelectionFilter");
+	  	
+	  	// initialise event container
+	  	EventContainer _event_detvar(tree_detvar, _utility); 	
+
+	  	// loop through events
+	  	int n_entries_detvar = tree_detvar->GetEntries();
+	  	std::cout << "Initial number events [Run 1 FHC DetVar WireModYZ]: " << n_entries_detvar << std::endl;
+
+	  	for (int e = 0; e < n_entries_detvar; e++) {
+	  	//for (int e = 0; e < 10000; e++) {
+	  		
+	    	tree_detvar->GetEntry(e);    	
+
+		    if ( (e != 0) && (n_entries_detvar >= 10) &&  (e % (n_entries_detvar/10) == 0) ) {
+		      std::cout << Form("%i0%% Completed...\n", e / (n_entries_detvar/10));
+		    }
+
+		    bool passSelection = _selection.ApplyBDTBasedSelection(_event_detvar, _BDTTool, Utility::kMC, Utility::kRun1a);
+		    if (!passSelection) continue;
+
+		    // fill histogram
+		    _histStack_WireModYZ.Fill(_event_detvar.classification, _event_detvar.shr2_pfpgeneration, pot_weight_detvar_WireModYZ_run1_fhc * _event_detvar.weight_cv);
+
+		    //if (_event_mc.primaryTrackPionlikeLoose) _histStack.Fill(_event_mc.classification, _event_mc.primaryTrackBDTScorePionProton, pot_weight_mc_run1_fhc * _event_mc.weight_cv);
+	        //else if (_event_mc.secondaryTrackPionlikeLoose) _histStack.Fill(_event_mc.classification, _event_mc.secondaryTrackBDTScorePionProton, pot_weight_mc_run1_fhc * _event_mc.weight_cv);
+	  	    //else if (_event_mc.tertiaryTrackPionlikeLoose) _histStack.Fill(_event_mc.classification, _event_mc.tertiaryTrackBDTScorePionProton, pot_weight_mc_run1_fhc * _event_mc.weight_cv);
+		}
+
+		delete f_detvar;
+	}
+
+	// ----------------- Run 1 FHC WireModThetaYZ ------------------
+	{
+		// --- WireModThetaYZ ---	
+		// read file
+		TFile *f_detvar = NULL;
+	  	TTree *tree_detvar = NULL;
+	 	f_detvar = new TFile(filename_detvar_WireModThetaYZ_run1_fhc.c_str());  
+	  	tree_detvar = (TTree*)f_detvar->Get("nuselection/NeutrinoSelectionFilter");
+	  	
+	  	// initialise event container
+	  	EventContainer _event_detvar(tree_detvar, _utility); 	
+
+	  	// loop through events
+	  	int n_entries_detvar = tree_detvar->GetEntries();
+	  	std::cout << "Initial number events [Run 1 FHC DetVar WireModThetaYZ]: " << n_entries_detvar << std::endl;
+
+	  	for (int e = 0; e < n_entries_detvar; e++) {
+	  	//for (int e = 0; e < 10000; e++) {
+	  		
+	    	tree_detvar->GetEntry(e);    	
+
+		    if ( (e != 0) && (n_entries_detvar >= 10) &&  (e % (n_entries_detvar/10) == 0) ) {
+		      std::cout << Form("%i0%% Completed...\n", e / (n_entries_detvar/10));
+		    }
+
+		    bool passSelection = _selection.ApplyBDTBasedSelection(_event_detvar, _BDTTool, Utility::kMC, Utility::kRun1a);
+		    if (!passSelection) continue;
+
+		    // fill histogram
+		    _histStack_WireModThetaYZ.Fill(_event_detvar.classification, _event_detvar.shr2_pfpgeneration, pot_weight_detvar_WireModThetaYZ_run1_fhc * _event_detvar.weight_cv);
+
+		    //if (_event_mc.primaryTrackPionlikeLoose) _histStack.Fill(_event_mc.classification, _event_mc.primaryTrackBDTScorePionProton, pot_weight_mc_run1_fhc * _event_mc.weight_cv);
+	        //else if (_event_mc.secondaryTrackPionlikeLoose) _histStack.Fill(_event_mc.classification, _event_mc.secondaryTrackBDTScorePionProton, pot_weight_mc_run1_fhc * _event_mc.weight_cv);
+	  	    //else if (_event_mc.tertiaryTrackPionlikeLoose) _histStack.Fill(_event_mc.classification, _event_mc.tertiaryTrackBDTScorePionProton, pot_weight_mc_run1_fhc * _event_mc.weight_cv);
+		}
+
+		delete f_detvar;
+	}
+
+	// print event integrals
+	std::cout << "DetVar CV:" << std::endl;
+	_histStack_CV.PrintEventIntegrals();
+
+	std::cout << "DetVar SCE:" << std::endl;
+	_histStack_SCE.PrintEventIntegrals();
+
+	std::cout << "DetVar Recombination:" << std::endl;
+	_histStack_Recombination.PrintEventIntegrals();
+
+	std::cout << "DetVar WireModX:" << std::endl;
+	_histStack_WireModX.PrintEventIntegrals();
+
+	std::cout << "DetVar WireModYZ:" << std::endl;
+	_histStack_WireModYZ.PrintEventIntegrals();
+
+	std::cout << "DetVar WireModThetaYZ:" << std::endl;
+	_histStack_WireModThetaYZ.PrintEventIntegrals();
+
+}
 
 // ------------------------------------------------------------------------------
 
@@ -917,7 +1225,7 @@ void SelectionDriver::createElectronPhotonBDTTrainingTreeFHC() {
 	  	// read file
 		TFile *f_intrinsic = NULL;
 	  	TTree *tree_intrinsic = NULL;
-	 	f_intrinsic = new TFile(filename_intrinsic_run1_fhc.c_str());  
+	 	f_intrinsic = new TFile(filename_intrinsic_train_run1_fhc.c_str());  
 	  	tree_intrinsic = (TTree*)f_intrinsic->Get("NeutrinoSelectionFilter");
 	  	
 	  	// initialise event container
@@ -925,7 +1233,7 @@ void SelectionDriver::createElectronPhotonBDTTrainingTreeFHC() {
 
 	  	// loop through events
 	  	int n_entries_intrinsic = tree_intrinsic->GetEntries();
-	  	std::cout << "Initial number events [Run 1 FHC Intrinsic Nue Overlay]: " << n_entries_intrinsic << std::endl;
+	  	std::cout << "Initial number events [Run 1 FHC Intrinsic Nue Overlay Train]: " << n_entries_intrinsic << std::endl;
 
 	  	for (int e = 0; e < n_entries_intrinsic; e++) {
 	  		
@@ -938,7 +1246,7 @@ void SelectionDriver::createElectronPhotonBDTTrainingTreeFHC() {
 		    bool passSelection = _selection.ApplyElectronPhotonBDTTrainingSelection(_event_intrinsic, Utility::kIntrinsic, Utility::kRun1a);
 		    if (!passSelection) continue;
 
-		    _histStack.Fill(_event_intrinsic.classification, _event_intrinsic.contained_fraction, pot_weight_intrinsic_run1_fhc * _event_intrinsic.weight_cv);
+		    _histStack.Fill(_event_intrinsic.classification, _event_intrinsic.contained_fraction, pot_weight_intrinsic_train_run1_fhc * _event_intrinsic.weight_cv);
 		    
 		    // add event to training tree
 		    // electron-photon
@@ -963,7 +1271,7 @@ void SelectionDriver::createElectronPhotonBDTTrainingTreeFHC() {
 
 	  	// loop through events
 	  	int n_entries_ccncpizero = tree_ccncpizero->GetEntries();
-	  	std::cout << "Initial number events [Run 1 FHC CC/NC Pi0 Overlay]: " << n_entries_ccncpizero << std::endl;
+	  	std::cout << "Initial number events [Run 1 FHC CC/NC Pi0 Overlay Train]: " << n_entries_ccncpizero << std::endl;
 	  	
 	  	for (int e = 0; e < n_entries_ccncpizero; e++) {
 
@@ -995,7 +1303,7 @@ void SelectionDriver::createElectronPhotonBDTTrainingTreeFHC() {
 	  	// read file
 		TFile *f_intrinsic = NULL;
 	  	TTree *tree_intrinsic = NULL;
-	 	f_intrinsic = new TFile(filename_intrinsic_run2a_fhc.c_str());  
+	 	f_intrinsic = new TFile(filename_intrinsic_train_run2a_fhc.c_str());  
 	  	tree_intrinsic = (TTree*)f_intrinsic->Get("NeutrinoSelectionFilter");
 	  	
 	  	// initialise event container
@@ -1003,7 +1311,7 @@ void SelectionDriver::createElectronPhotonBDTTrainingTreeFHC() {
 
 	  	// loop through events
 	  	int n_entries_intrinsic = tree_intrinsic->GetEntries();
-	  	std::cout << "Initial number events [Run 2a FHC Intrinsic Nue Overlay]: " << n_entries_intrinsic << std::endl;
+	  	std::cout << "Initial number events [Run 2a FHC Intrinsic Nue Overlay Train]: " << n_entries_intrinsic << std::endl;
 
 	  	for (int e = 0; e < n_entries_intrinsic; e++) {
 	  		
@@ -1016,7 +1324,7 @@ void SelectionDriver::createElectronPhotonBDTTrainingTreeFHC() {
 		    bool passSelection = _selection.ApplyElectronPhotonBDTTrainingSelection(_event_intrinsic, Utility::kIntrinsic, Utility::kRun2a);
 		    if (!passSelection) continue;
 		    
-		    _histStack.Fill(_event_intrinsic.classification, _event_intrinsic.contained_fraction, pot_weight_intrinsic_run2a_fhc * _event_intrinsic.weight_cv);
+		    _histStack.Fill(_event_intrinsic.classification, _event_intrinsic.contained_fraction, pot_weight_intrinsic_train_run2a_fhc * _event_intrinsic.weight_cv);
 		    
 		    // add event to training tree
 		    // electron-photon
@@ -1026,6 +1334,48 @@ void SelectionDriver::createElectronPhotonBDTTrainingTreeFHC() {
 		}
 
 		delete f_intrinsic;
+	}
+
+	// ----------------- Run 4 FHC ------------------
+
+	// ----------------- Run 5 RHC ------------------
+	{
+		// --- CC/NC Pi Zero Overlay ---
+
+		// read file
+		TFile *f_ccncpizero = NULL;
+	  	TTree *tree_ccncpizero = NULL;
+	 	f_ccncpizero = new TFile(filename_ccncpizero_run5_fhc.c_str());  
+	  	tree_ccncpizero = (TTree*)f_ccncpizero->Get("NeutrinoSelectionFilter");
+	  	
+	  	// initialise event container
+	  	EventContainer _event_ccncpizero(tree_ccncpizero, _utility); 	
+
+	  	// loop through events
+	  	int n_entries_ccncpizero = tree_ccncpizero->GetEntries();
+	  	std::cout << "Initial number events [Run 5 FHC CC/NC Pi0 Overlay Train]: " << n_entries_ccncpizero << std::endl;
+	  	
+	  	for (int e = 0; e < n_entries_ccncpizero; e++) {
+
+	    	tree_ccncpizero->GetEntry(e);    	
+
+		    if ( (e != 0) && (n_entries_ccncpizero >= 10) &&  (e % (n_entries_ccncpizero/10) == 0) ) {
+		      std::cout << Form("%i0%% Completed...\n", e / (n_entries_ccncpizero/10));
+		    }
+
+		    bool passSelection = _selection.ApplyElectronPhotonBDTTrainingSelection(_event_ccncpizero, Utility::kCCNCPiZero, Utility::kRun5);
+		    if (!passSelection) continue;
+		     
+		     // fill histogram
+		    _histStack.Fill(_event_ccncpizero.classification, _event_ccncpizero.shr_energyFraction, pot_weight_ccncpizero_run5_fhc * _event_ccncpizero.weight_cv);	 
+			
+		    // add event to training tree
+		    if (_event_ccncpizero.classification == Utility::kCCNuepizero || _event_ccncpizero.classification == Utility::kCCNumupizero || _event_ccncpizero.classification == Utility::kNCpizero ) {
+				_trainingTree.addEvent(_event_ccncpizero, _event_ccncpizero.classification);
+			}
+		}
+
+		delete f_ccncpizero;
 	}
 
 	// print event integrals
@@ -1054,7 +1404,7 @@ void SelectionDriver::createElectronPhotonBDTTrainingTreeRHC() {
 	  	// read file
 		TFile *f_intrinsic = NULL;
 	  	TTree *tree_intrinsic = NULL;
-	 	f_intrinsic = new TFile(filename_intrinsic_run1_rhc.c_str());  
+	 	f_intrinsic = new TFile(filename_intrinsic_train_run1_rhc.c_str());  
 	  	tree_intrinsic = (TTree*)f_intrinsic->Get("NeutrinoSelectionFilter");
 	  	
 	  	// initialise event container
@@ -1062,7 +1412,7 @@ void SelectionDriver::createElectronPhotonBDTTrainingTreeRHC() {
 
 	  	// loop through events
 	  	int n_entries_intrinsic = tree_intrinsic->GetEntries();
-	  	std::cout << "Initial number events [Run 1 RHC Intrinsic Nue Overlay]: " << n_entries_intrinsic << std::endl;
+	  	std::cout << "Initial number events [Run 1 RHC Intrinsic Nue Overlay Train]: " << n_entries_intrinsic << std::endl;
 
 	  	for (int e = 0; e < n_entries_intrinsic; e++) {
 	  		
@@ -1075,7 +1425,7 @@ void SelectionDriver::createElectronPhotonBDTTrainingTreeRHC() {
 		    bool passSelection = _selection.ApplyElectronPhotonBDTTrainingSelection(_event_intrinsic, Utility::kIntrinsic, Utility::kRun1b);
 		    if (!passSelection) continue;
 
-		    _histStack.Fill(_event_intrinsic.classification, _event_intrinsic.contained_fraction, pot_weight_intrinsic_run1_rhc * _event_intrinsic.weight_cv);
+		    _histStack.Fill(_event_intrinsic.classification, _event_intrinsic.contained_fraction, pot_weight_intrinsic_train_run1_rhc * _event_intrinsic.weight_cv);
 		    
 		    // add event to training tree
 		    // electron-photon
@@ -1093,7 +1443,7 @@ void SelectionDriver::createElectronPhotonBDTTrainingTreeRHC() {
 	  	// read file
 		TFile *f_intrinsic = NULL;
 	  	TTree *tree_intrinsic = NULL;
-	 	f_intrinsic = new TFile(filename_intrinsic_run2b_rhc.c_str());  
+	 	f_intrinsic = new TFile(filename_intrinsic_train_run2b_rhc.c_str());  
 	  	tree_intrinsic = (TTree*)f_intrinsic->Get("NeutrinoSelectionFilter");
 	  	
 	  	// initialise event container
@@ -1101,7 +1451,7 @@ void SelectionDriver::createElectronPhotonBDTTrainingTreeRHC() {
 
 	  	// loop through events
 	  	int n_entries_intrinsic = tree_intrinsic->GetEntries();
-	  	std::cout << "Initial number events [Run 2b RHC Intrinsic Nue Overlay]: " << n_entries_intrinsic << std::endl;
+	  	std::cout << "Initial number events [Run 2b RHC Intrinsic Nue Overlay Train]: " << n_entries_intrinsic << std::endl;
 
 	  	for (int e = 0; e < n_entries_intrinsic; e++) {
 	  		
@@ -1114,7 +1464,7 @@ void SelectionDriver::createElectronPhotonBDTTrainingTreeRHC() {
 		    bool passSelection = _selection.ApplyElectronPhotonBDTTrainingSelection(_event_intrinsic, Utility::kIntrinsic, Utility::kRun2b);
 		    if (!passSelection) continue;
 		    
-		    _histStack.Fill(_event_intrinsic.classification, _event_intrinsic.contained_fraction, pot_weight_intrinsic_run2b_rhc * _event_intrinsic.weight_cv);
+		    _histStack.Fill(_event_intrinsic.classification, _event_intrinsic.contained_fraction, pot_weight_intrinsic_train_run2b_rhc * _event_intrinsic.weight_cv);
 		    
 		    // add event to training tree
 		    // electron-photon
@@ -1132,7 +1482,7 @@ void SelectionDriver::createElectronPhotonBDTTrainingTreeRHC() {
 	  	// read file
 		TFile *f_intrinsic = NULL;
 	  	TTree *tree_intrinsic = NULL;
-	 	f_intrinsic = new TFile(filename_intrinsic_run3b_rhc.c_str());  
+	 	f_intrinsic = new TFile(filename_intrinsic_train_run3b_rhc.c_str());  
 	  	tree_intrinsic = (TTree*)f_intrinsic->Get("NeutrinoSelectionFilter");
 	  	
 	  	// initialise event container
@@ -1140,7 +1490,7 @@ void SelectionDriver::createElectronPhotonBDTTrainingTreeRHC() {
 
 	  	// loop through events
 	  	int n_entries_intrinsic = tree_intrinsic->GetEntries();
-	  	std::cout << "Initial number events [Run 3b RHC Intrinsic Nue Overlay]: " << n_entries_intrinsic << std::endl;
+	  	std::cout << "Initial number events [Run 3b RHC Intrinsic Nue Overlay Train]: " << n_entries_intrinsic << std::endl;
 
 	  	for (int e = 0; e < n_entries_intrinsic; e++) {
 	  		
@@ -1153,7 +1503,7 @@ void SelectionDriver::createElectronPhotonBDTTrainingTreeRHC() {
 		    bool passSelection = _selection.ApplyElectronPhotonBDTTrainingSelection(_event_intrinsic, Utility::kIntrinsic, Utility::kRun3b);
 		    if (!passSelection) continue;
 		    
-		    _histStack.Fill(_event_intrinsic.classification, _event_intrinsic.contained_fraction, pot_weight_intrinsic_run3b_rhc * _event_intrinsic.weight_cv);
+		    _histStack.Fill(_event_intrinsic.classification, _event_intrinsic.contained_fraction, pot_weight_intrinsic_train_run3b_rhc * _event_intrinsic.weight_cv);
 		    
 		    // add event to training tree
 		    // electron-photon
@@ -1177,7 +1527,7 @@ void SelectionDriver::createElectronPhotonBDTTrainingTreeRHC() {
 
 	  	// loop through events
 	  	int n_entries_ccncpizero = tree_ccncpizero->GetEntries();
-	  	std::cout << "Initial number events [Run 3b RHC CC/NC Pi0 Overlay]: " << n_entries_ccncpizero << std::endl;
+	  	std::cout << "Initial number events [Run 3b RHC CC/NC Pi0 Overlay Train]: " << n_entries_ccncpizero << std::endl;
 	  	
 	  	for (int e = 0; e < n_entries_ccncpizero; e++) {
 
@@ -1200,6 +1550,8 @@ void SelectionDriver::createElectronPhotonBDTTrainingTreeRHC() {
 
 		delete f_ccncpizero;
 	}
+
+	// ----------------- Run 4 RHC ------------------
 
 	// print event integrals
 	_histStack.PrintEventIntegrals();
@@ -1224,7 +1576,7 @@ void SelectionDriver::createPionProtonBDTTrainingTreeFHC() {
 	  	// read file
 		TFile *f_intrinsic = NULL;
 	  	TTree *tree_intrinsic = NULL;
-	 	f_intrinsic = new TFile(filename_intrinsic_run1_fhc.c_str());  
+	 	f_intrinsic = new TFile(filename_intrinsic_train_run1_fhc.c_str());  
 	  	tree_intrinsic = (TTree*)f_intrinsic->Get("NeutrinoSelectionFilter");
 	  	
 	  	// initialise event container
@@ -1232,7 +1584,7 @@ void SelectionDriver::createPionProtonBDTTrainingTreeFHC() {
 
 	  	// loop through events
 	  	int n_entries_intrinsic = tree_intrinsic->GetEntries();
-	  	std::cout << "Initial number events [Run 1 FHC Intrinsic Nue Overlay]: " << n_entries_intrinsic << std::endl;
+	  	std::cout << "Initial number events [Run 1 FHC Intrinsic Nue Overlay Train]: " << n_entries_intrinsic << std::endl;
 
 	  	for (int e = 0; e < n_entries_intrinsic; e++) {
 	  		
@@ -1245,50 +1597,13 @@ void SelectionDriver::createPionProtonBDTTrainingTreeFHC() {
 		    bool passSelection = _selection.ApplyPionProtonBDTTrainingSelection(_event_intrinsic, Utility::kIntrinsic, Utility::kRun1a);
 		    if (!passSelection) continue;
 		    
-		    _histStack.Fill(_event_intrinsic.classification, _event_intrinsic.contained_fraction, pot_weight_intrinsic_run1_fhc * _event_intrinsic.weight_cv);
+		    _histStack.Fill(_event_intrinsic.classification, _event_intrinsic.contained_fraction, pot_weight_intrinsic_train_run1_fhc * _event_intrinsic.weight_cv);
 		    
 		    // add event to training tree
 			_trainingTree.addEvent(_event_intrinsic, _event_intrinsic.classification);
 		}
 
 		delete f_intrinsic;
-
-		/*
-		// --- Nu Overlay MC --
-		// read file
-		TFile *f_mc = NULL;
-	  	TTree *tree_mc = NULL;
-	 	f_mc = new TFile(filename_mc_run1_fhc.c_str());  
-	  	tree_mc = (TTree*)f_mc->Get("NeutrinoSelectionFilter");
-	  	
-	  	// initialise event container
-	  	EventContainer _event_mc(tree_mc, _utility); 	
-
-	  	// loop through events
-	  	int n_entries_mc = tree_mc->GetEntries();
-	  	std::cout << "Initial number events [Run 1 FHC Nu Overlay]: " << n_entries_mc << std::endl;
-
-	  	for (int e = 0; e < n_entries_mc; e++) {
-	  		
-	    	tree_mc->GetEntry(e);    	
-
-		    if ( (e != 0) && (n_entries_mc >= 10) &&  (e % (n_entries_mc/10) == 0) ) {
-		      std::cout << Form("%i0%% Completed...\n", e / (n_entries_mc/10));
-		    }
-
-		    bool passSelection = _selection.ApplyPionProtonBDTTrainingSelection(_event_mc, Utility::kMC, Utility::kRun1a);
-		    if (!passSelection) continue;
-
-		    // fill histogram
-		    _histStack.Fill(_event_mc.classification, _event_mc.contained_fraction, pot_weight_mc_run1_fhc * _event_mc.weight_cv);
-
-	    	// muon neutrinos without pi0 only to avoid bias 
-	    	if ((_event_mc.nu_pdg == 14 || _event_mc.nu_pdg == -14) && _event_mc.npi0 == 0) _trainingTree.addEvent(_event_mc, _event_mc.classification);
-		}
-
-		delete f_mc;
-		*/
-
 	}
 
 	// ----------------- Run 2a FHC ------------------
@@ -1297,7 +1612,7 @@ void SelectionDriver::createPionProtonBDTTrainingTreeFHC() {
 	  	// read file
 		TFile *f_intrinsic = NULL;
 	  	TTree *tree_intrinsic = NULL;
-	 	f_intrinsic = new TFile(filename_intrinsic_run2a_fhc.c_str());  
+	 	f_intrinsic = new TFile(filename_intrinsic_train_run2a_fhc.c_str());  
 	  	tree_intrinsic = (TTree*)f_intrinsic->Get("NeutrinoSelectionFilter");
 	  	
 	  	// initialise event container
@@ -1305,7 +1620,7 @@ void SelectionDriver::createPionProtonBDTTrainingTreeFHC() {
 
 	  	// loop through events
 	  	int n_entries_intrinsic = tree_intrinsic->GetEntries();
-	  	std::cout << "Initial number events [Run 2a FHC Intrinsic Nue Overlay]: " << n_entries_intrinsic << std::endl;
+	  	std::cout << "Initial number events [Run 2a FHC Intrinsic Nue Overlay Train]: " << n_entries_intrinsic << std::endl;
 
 	  	for (int e = 0; e < n_entries_intrinsic; e++) {
 	  		
@@ -1318,51 +1633,18 @@ void SelectionDriver::createPionProtonBDTTrainingTreeFHC() {
 		    bool passSelection = _selection.ApplyPionProtonBDTTrainingSelection(_event_intrinsic, Utility::kIntrinsic, Utility::kRun2a);
 		    if (!passSelection) continue;
 		    
-		    _histStack.Fill(_event_intrinsic.classification, _event_intrinsic.contained_fraction, pot_weight_intrinsic_run2a_fhc * _event_intrinsic.weight_cv);
+		    _histStack.Fill(_event_intrinsic.classification, _event_intrinsic.contained_fraction, pot_weight_intrinsic_train_run2a_fhc * _event_intrinsic.weight_cv);
 		    
 		    // add event to training tree
 			_trainingTree.addEvent(_event_intrinsic, _event_intrinsic.classification);
 		}
 
 		delete f_intrinsic;
-
-		/*
-		// --- Nu Overlay MC --
-		// read file
-		TFile *f_mc = NULL;
-	  	TTree *tree_mc = NULL;
-	 	f_mc = new TFile(filename_mc_run2a_fhc.c_str());  
-	  	tree_mc = (TTree*)f_mc->Get("NeutrinoSelectionFilter");
-	  	
-	  	// initialise event container
-	  	EventContainer _event_mc(tree_mc, _utility); 	
-
-	  	// loop through events
-	  	int n_entries_mc = tree_mc->GetEntries();
-	  	std::cout << "Initial number events [Run 2a FHC Nu Overlay]: " << n_entries_mc << std::endl;
-
-	  	for (int e = 0; e < n_entries_mc; e++) {
-	  		
-	    	tree_mc->GetEntry(e);    	
-
-		    if ( (e != 0) && (n_entries_mc >= 10) &&  (e % (n_entries_mc/10) == 0) ) {
-		      std::cout << Form("%i0%% Completed...\n", e / (n_entries_mc/10));
-		    }
-
-		    bool passSelection = _selection.ApplyPionProtonBDTTrainingSelection(_event_mc, Utility::kMC, Utility::kRun2a);
-		    if (!passSelection) continue;
-
-		    // fill histogram
-		    _histStack.Fill(_event_mc.classification, _event_mc.contained_fraction, pot_weight_mc_run2a_fhc * _event_mc.weight_cv);
-
-	    	// muon neutrinos without pi0 only to avoid bias 
-	    	if ((_event_mc.nu_pdg == 14 || _event_mc.nu_pdg == -14) && _event_mc.npi0 == 0) _trainingTree.addEvent(_event_mc, _event_mc.classification);
-		}
-
-		delete f_mc;
-		*/
-
 	}
+
+	// ----------------- Run 4 FHC ------------------
+
+	// ----------------- Run 5 RHC ------------------
 
 	// print event integrals
 	_histStack.PrintEventIntegrals();
@@ -1387,7 +1669,7 @@ void SelectionDriver::createPionProtonBDTTrainingTreeRHC() {
 	  	// read file
 		TFile *f_intrinsic = NULL;
 	  	TTree *tree_intrinsic = NULL;
-	 	f_intrinsic = new TFile(filename_intrinsic_run1_rhc.c_str());  
+	 	f_intrinsic = new TFile(filename_intrinsic_train_run1_rhc.c_str());  
 	  	tree_intrinsic = (TTree*)f_intrinsic->Get("NeutrinoSelectionFilter");
 	  	
 	  	// initialise event container
@@ -1395,7 +1677,7 @@ void SelectionDriver::createPionProtonBDTTrainingTreeRHC() {
 
 	  	// loop through events
 	  	int n_entries_intrinsic = tree_intrinsic->GetEntries();
-	  	std::cout << "Initial number events [Run 1 RHC Intrinsic Nue Overlay]: " << n_entries_intrinsic << std::endl;
+	  	std::cout << "Initial number events [Run 1 RHC Intrinsic Nue Overlay Train]: " << n_entries_intrinsic << std::endl;
 
 	  	for (int e = 0; e < n_entries_intrinsic; e++) {
 	  		
@@ -1408,49 +1690,13 @@ void SelectionDriver::createPionProtonBDTTrainingTreeRHC() {
 		    bool passSelection = _selection.ApplyPionProtonBDTTrainingSelection(_event_intrinsic, Utility::kIntrinsic, Utility::kRun1b);
 		    if (!passSelection) continue;
 		    
-		    _histStack.Fill(_event_intrinsic.classification, _event_intrinsic.contained_fraction, pot_weight_intrinsic_run1_rhc * _event_intrinsic.weight_cv);
+		    _histStack.Fill(_event_intrinsic.classification, _event_intrinsic.contained_fraction, pot_weight_intrinsic_train_run1_rhc * _event_intrinsic.weight_cv);
 		    
 		    // add event to training tree
 			_trainingTree.addEvent(_event_intrinsic, _event_intrinsic.classification);
 		}
 
 		delete f_intrinsic;
-
-		/*
-		// --- Nu Overlay MC --
-		// read file
-		TFile *f_mc = NULL;
-	  	TTree *tree_mc = NULL;
-	 	f_mc = new TFile(filename_mc_run1_rhc.c_str());  
-	  	tree_mc = (TTree*)f_mc->Get("NeutrinoSelectionFilter");
-	  	
-	  	// initialise event container
-	  	EventContainer _event_mc(tree_mc, _utility); 	
-
-	  	// loop through events
-	  	int n_entries_mc = tree_mc->GetEntries();
-	  	std::cout << "Initial number events [Run 1 RHC Nu Overlay]: " << n_entries_mc << std::endl;
-
-	  	for (int e = 0; e < n_entries_mc; e++) {
-	  		
-	    	tree_mc->GetEntry(e);    	
-
-		    if ( (e != 0) && (n_entries_mc >= 10) &&  (e % (n_entries_mc/10) == 0) ) {
-		      std::cout << Form("%i0%% Completed...\n", e / (n_entries_mc/10));
-		    }
-
-		    bool passSelection = _selection.ApplyPionProtonBDTTrainingSelection(_event_mc, Utility::kMC, Utility::kRun1b);
-		    if (!passSelection) continue;
-
-		    // fill histogram
-		    _histStack.Fill(_event_mc.classification, _event_mc.contained_fraction, pot_weight_mc_run1_rhc * _event_mc.weight_cv);
-
-	    	// muon neutrinos without pi0 only to avoid bias 
-	    	if ((_event_mc.nu_pdg == 14 || _event_mc.nu_pdg == -14) && _event_mc.npi0 == 0) _trainingTree.addEvent(_event_mc, _event_mc.classification);
-		}
-
-		delete f_mc;
-		*/
 	}
 
 	// ----------------- Run 2b RHC ------------------
@@ -1459,7 +1705,7 @@ void SelectionDriver::createPionProtonBDTTrainingTreeRHC() {
 	  	// read file
 		TFile *f_intrinsic = NULL;
 	  	TTree *tree_intrinsic = NULL;
-	 	f_intrinsic = new TFile(filename_intrinsic_run2b_rhc.c_str());  
+	 	f_intrinsic = new TFile(filename_intrinsic_train_run2b_rhc.c_str());  
 	  	tree_intrinsic = (TTree*)f_intrinsic->Get("NeutrinoSelectionFilter");
 	  	
 	  	// initialise event container
@@ -1467,7 +1713,7 @@ void SelectionDriver::createPionProtonBDTTrainingTreeRHC() {
 
 	  	// loop through events
 	  	int n_entries_intrinsic = tree_intrinsic->GetEntries();
-	  	std::cout << "Initial number events [Run 2b RHC Intrinsic Nue Overlay]: " << n_entries_intrinsic << std::endl;
+	  	std::cout << "Initial number events [Run 2b RHC Intrinsic Nue Overlay Train]: " << n_entries_intrinsic << std::endl;
 
 	  	for (int e = 0; e < n_entries_intrinsic; e++) {
 	  		
@@ -1480,49 +1726,13 @@ void SelectionDriver::createPionProtonBDTTrainingTreeRHC() {
 		    bool passSelection = _selection.ApplyPionProtonBDTTrainingSelection(_event_intrinsic, Utility::kIntrinsic, Utility::kRun2b);
 		    if (!passSelection) continue;
 		    
-		    _histStack.Fill(_event_intrinsic.classification, _event_intrinsic.contained_fraction, pot_weight_intrinsic_run2b_rhc * _event_intrinsic.weight_cv);
+		    _histStack.Fill(_event_intrinsic.classification, _event_intrinsic.contained_fraction, pot_weight_intrinsic_train_run2b_rhc * _event_intrinsic.weight_cv);
 		    
 		    // add event to training tree
 			_trainingTree.addEvent(_event_intrinsic, _event_intrinsic.classification);
 		}
 
 		delete f_intrinsic;
-
-		/*
-		// --- Nu Overlay MC --
-		// read file
-		TFile *f_mc = NULL;
-	  	TTree *tree_mc = NULL;
-	 	f_mc = new TFile(filename_mc_run2b_rhc.c_str());  
-	  	tree_mc = (TTree*)f_mc->Get("NeutrinoSelectionFilter");
-	  	
-	  	// initialise event container
-	  	EventContainer _event_mc(tree_mc, _utility); 	
-
-	  	// loop through events
-	  	int n_entries_mc = tree_mc->GetEntries();
-	  	std::cout << "Initial number events [Run 2b RHC Nu Overlay]: " << n_entries_mc << std::endl;
-
-	  	for (int e = 0; e < n_entries_mc; e++) {
-	  		
-	    	tree_mc->GetEntry(e);    	
-
-		    if ( (e != 0) && (n_entries_mc >= 10) &&  (e % (n_entries_mc/10) == 0) ) {
-		      std::cout << Form("%i0%% Completed...\n", e / (n_entries_mc/10));
-		    }
-
-		    bool passSelection = _selection.ApplyPionProtonBDTTrainingSelection(_event_mc, Utility::kMC, Utility::kRun2b);
-		    if (!passSelection) continue;
-
-		    // fill histogram
-		    _histStack.Fill(_event_mc.classification, _event_mc.contained_fraction, pot_weight_mc_run2b_rhc * _event_mc.weight_cv);
-
-	    	// muon neutrinos without pi0 only to avoid bias 
-	    	if ((_event_mc.nu_pdg == 14 || _event_mc.nu_pdg == -14) && _event_mc.npi0 == 0) _trainingTree.addEvent(_event_mc, _event_mc.classification);
-		}
-
-		delete f_mc;
-		*/
 	}
 
 	// ----------------- Run 3b RHC ------------------
@@ -1531,7 +1741,7 @@ void SelectionDriver::createPionProtonBDTTrainingTreeRHC() {
 	  	// read file
 		TFile *f_intrinsic = NULL;
 	  	TTree *tree_intrinsic = NULL;
-	 	f_intrinsic = new TFile(filename_intrinsic_run3b_rhc.c_str());  
+	 	f_intrinsic = new TFile(filename_intrinsic_train_run3b_rhc.c_str());  
 	  	tree_intrinsic = (TTree*)f_intrinsic->Get("NeutrinoSelectionFilter");
 	  	
 	  	// initialise event container
@@ -1539,7 +1749,7 @@ void SelectionDriver::createPionProtonBDTTrainingTreeRHC() {
 
 	  	// loop through events
 	  	int n_entries_intrinsic = tree_intrinsic->GetEntries();
-	  	std::cout << "Initial number events [Run 3b RHC Intrinsic Nue Overlay]: " << n_entries_intrinsic << std::endl;
+	  	std::cout << "Initial number events [Run 3b RHC Intrinsic Nue Overlay Train]: " << n_entries_intrinsic << std::endl;
 
 	  	for (int e = 0; e < n_entries_intrinsic; e++) {
 	  		
@@ -1552,50 +1762,16 @@ void SelectionDriver::createPionProtonBDTTrainingTreeRHC() {
 		    bool passSelection = _selection.ApplyPionProtonBDTTrainingSelection(_event_intrinsic, Utility::kIntrinsic, Utility::kRun3b);
 		    if (!passSelection) continue;
 		    
-		    _histStack.Fill(_event_intrinsic.classification, _event_intrinsic.contained_fraction, pot_weight_intrinsic_run3b_rhc * _event_intrinsic.weight_cv);
+		    _histStack.Fill(_event_intrinsic.classification, _event_intrinsic.contained_fraction, pot_weight_intrinsic_train_run3b_rhc * _event_intrinsic.weight_cv);
 		    
 		    // add event to training tree
 			_trainingTree.addEvent(_event_intrinsic, _event_intrinsic.classification);
 		}
 
 		delete f_intrinsic;
-
-		/*
-		// --- Nu Overlay MC --
-		// read file
-		TFile *f_mc = NULL;
-	  	TTree *tree_mc = NULL;
-	 	f_mc = new TFile(filename_mc_run3b_rhc.c_str());  
-	  	tree_mc = (TTree*)f_mc->Get("NeutrinoSelectionFilter");
-	  	
-	  	// initialise event container
-	  	EventContainer _event_mc(tree_mc, _utility); 	
-
-	  	// loop through events
-	  	int n_entries_mc = tree_mc->GetEntries();
-	  	std::cout << "Initial number events [Run 3b RHC Nu Overlay]: " << n_entries_mc << std::endl;
-
-	  	for (int e = 0; e < n_entries_mc; e++) {
-	  		
-	    	tree_mc->GetEntry(e);    	
-
-		    if ( (e != 0) && (n_entries_mc >= 10) &&  (e % (n_entries_mc/10) == 0) ) {
-		      std::cout << Form("%i0%% Completed...\n", e / (n_entries_mc/10));
-		    }
-
-		    bool passSelection = _selection.ApplyPionProtonBDTTrainingSelection(_event_mc, Utility::kMC, Utility::kRun3b);
-		    if (!passSelection) continue;
-
-		    // fill histogram
-		    _histStack.Fill(_event_mc.classification, _event_mc.contained_fraction, pot_weight_mc_run3b_rhc * _event_mc.weight_cv);
-
-	    	// muon neutrinos without pi0 only to avoid bias 
-	    	if ((_event_mc.nu_pdg == 14 || _event_mc.nu_pdg == -14) && _event_mc.npi0 == 0) _trainingTree.addEvent(_event_mc, _event_mc.classification);
-		}
-
-		delete f_mc;
-		*/
 	}
+
+	// ----------------- Run 4 RHC ------------------
 
 	// print event integrals
 	_histStack.PrintEventIntegrals();

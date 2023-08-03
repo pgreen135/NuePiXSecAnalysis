@@ -27,15 +27,19 @@ template <typename T> void set_object_output_branch_address( TTree& out_tree, co
 int main(int argc, char *argv[]) {
 
 	// parse arguments
-	if ( argc != 3 ) {
-    	std::cout << "Usage: ProcessNTuple INPUT_PELEE_NTUPLE_FILE OUTPUT_FILE\n";
+	if ( argc != 5 ) {
+    	std::cout << "Usage: ProcessNTuple INPUT_PELEE_NTUPLE_FILE OUTPUT_FILE TYPE_ENUM RUN_ENUM" << std::endl;
     	return 1;
   	}
 
   	std::string input_filename( argv[1] );
   	std::string output_filename( argv[2] );
+  	std::string type_str ( argv[3] );
+  	std::string runPeriod_str ( argv[4] );
+  	Utility::FileTypeEnums type = static_cast<Utility::FileTypeEnums>(stoi(type_str));
+  	Utility::RunPeriodEnums runPeriod = static_cast<Utility::RunPeriodEnums>(stoi(runPeriod_str));
 
-  	std::cout << "Processing file: " << input_filename << std::endl;
+  	std::cout << "Processing file: " << input_filename << ", type enum: " << type << ", run period enum: " << runPeriod << std::endl;
 
 	// Get the TTrees containing the event ntuples and subrun POT information
 	// read file
@@ -81,7 +85,7 @@ int main(int argc, char *argv[]) {
   	std::cout << "Number events: " << n_entries << std::endl;
 
   	for (int e = 0; e < n_entries; e++) {
-  	//for (int e = 0; e < 10000; e++) {
+  	//for (int e = 0; e < 50000; e++) {
   		
   		// get current entry
     	eventsTree->GetEntry(e);    	
@@ -92,7 +96,7 @@ int main(int argc, char *argv[]) {
 
 	    // apply selection
 	    // populates necessary variables to pass to stv tree
-	    bool passSelection = _selection.ApplyBDTBasedSelection(_event, _BDTTool, Utility::kMC, Utility::kRun1a);	// need to figure out how to set file type and run
+	    bool passSelection = _selection.ApplyBDTBasedSelection(_event, _BDTTool, type, runPeriod);
 
 	    // set the output TTree branch addresses, creating the branches if needed
     	// (during the first event loop iteration)
@@ -127,14 +131,19 @@ void set_event_output_branch_addresses(TTree& out_tree, EventContainer& ev, bool
   	set_output_branch_address( out_tree, "category", &ev.category_, create, "category/I");
 
   	// CV Event weights
-  	set_output_branch_address( out_tree, "weight_cv", &ev.weight_cv, create, "weight_cv/F");
-  	
+  	set_output_branch_address( out_tree, "spline_weight", &ev.weightSpline, create, "spline_weight/F");
+  	set_output_branch_address( out_tree, "tuned_cv_weight", &ev.weightTune, create, "tuned_cv_weight/F");
+  	set_output_branch_address( out_tree, "ppfx_cv_weight", &ev.ppfx_cv, create, "ppfx_cv_weight/F");
+  	set_output_branch_address( out_tree, "normalisation_weight", &ev.normalisation_weight, create, "normalisation_weight/F");
+
   	// If MC weights are available, store them in the output TTree
   	if ( ev.mc_weights_map_ ) {
 
 	    // Make separate branches for the various sets of systematic variation
 	    // weights in the map
 	    for ( auto& pair : *ev.mc_weights_map_ ) {
+
+	    	if (pair.first == "flux_all") continue; 	// skip empty BNB flux weights, PFFX used instead
 
 			// Prepend "weight_" to the name of the vector of weights in the map
 			std::string weight_branch_name = "weight_" + pair.first;
@@ -151,6 +160,11 @@ void set_event_output_branch_addresses(TTree& out_tree, EventContainer& ev, bool
   	// NueCC1piXp selection criteria
   	set_output_branch_address( out_tree, "sel_NueCC1piXp", &ev.sel_NueCC1piXp_, create, "sel_NueCC1piXp/O");
 
+  	// Observables
+  	// Shower energy
+  	set_output_branch_address( out_tree, "sel_shr_energy_cali", &ev.shr_energy_cali, create, "sel_shr_energy_cali/F");	// Reco
+  	set_output_branch_address( out_tree, "mc_shr_bkt_E", &ev.shr_bkt_E, create, "mc_shr_bkt_E/F");						// Truth
+  	
 }
 
 // Helper function that creates a branch (or just sets a new address) for a
