@@ -302,7 +302,7 @@ std::string StackedHistTool::topologyenum2str(Utility::ClassificationEnums topol
     returnString = "NC #pi^{0}";
     break;
   case Utility::kCosmic:
-    returnString = "Cosmic-Cont.";
+    returnString = "Cosmic";
     break;
   case Utility::kOutFV:
     returnString = "Out of FV";
@@ -453,7 +453,13 @@ std::string StackedHistTool::PlotVariableEnum2str(Utility::PlotVariableEnums plo
     break;
   case Utility::kPionProtonBDT:
     returnString = "Pion - Proton BDT Score";
-    break;               		  	  	
+    break;
+  case Utility::kFHC:
+    returnString = "Forward Horn Current";
+    break;
+  case Utility::kRHC:
+    returnString = "Reverse Horn Current";
+    break;                 		  	  	
   default:
     std::cout << "[ERROR: StackedHistTool] Could not find string conversion for enum " << plotvariable << std::endl;
     returnString = "Unknown";

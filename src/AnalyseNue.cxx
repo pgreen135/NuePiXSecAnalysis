@@ -27,10 +27,10 @@ int main() {
 	
 	SelectionDriver _selectionDriver;
 	
-    //_selectionDriver.runBDTSelectionFHC();
+    _selectionDriver.runBDTSelectionFHC();
 	//_selectionDriver.runBDTSelectionRHC();
 
-	_selectionDriver.runBDTSelectionDetVarFHC();
+	//_selectionDriver.runBDTSelectionDetVarFHC();
 	
 	//_selectionDriver.createElectronPhotonBDTTrainingTreeFHC();
 	//_selectionDriver.createElectronPhotonBDTTrainingTreeRHC();

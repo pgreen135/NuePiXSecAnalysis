@@ -42,8 +42,8 @@ public:
 		kRun2a,
 		kRun2b,
 		kRun3b,
-		kRun4c,
-		kRun4d,
+		kRun4ab,
+		kRun4cd,
 		kRun5
 	};
 
@@ -115,7 +115,9 @@ public:
 		kNeutrinoETrue,
 		kElectronETrue,
 		kElectronNeutralPionBDT,
-		kPionProtonBDT		
+		kPionProtonBDT,
+		kFHC,
+		kRHC		
 	};
 
 }; 

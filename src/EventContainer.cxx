@@ -279,7 +279,7 @@ void EventContainer::EventClassifier(Utility::FileTypeEnums type){
 	if (type == Utility::kMC || type == Utility::kIntrinsic || type == Utility::kCCNCPiZero) {
 		// identify cosmic / cosmic contaminated events
 		// check fraction of hits that are not matched to neutrino
-		if (nu_purity_from_pfp <= 0.5) {
+		if (nu_purity_from_pfp < 0.2) {
 			// low purity, classify as cosmic
 			classification = Utility::kCosmic;
 			category_ = static_cast<int>(classification);
@@ -458,7 +458,7 @@ void EventContainer::calculateCVEventWeight(Utility::FileTypeEnums type, Utility
 		weight = ppfx_cv * weightSpline * weightTune;
 		
 		// FHC
-		if (runPeriod == Utility::kRun1a || runPeriod == Utility::kRun2a || runPeriod == Utility::kRun4c || runPeriod == Utility::kRun4d || runPeriod == Utility::kRun5) {
+		if (runPeriod == Utility::kRun1a || runPeriod == Utility::kRun2a || runPeriod == Utility::kRun4cd || runPeriod == Utility::kRun5) {
 			weight = weight*0.65;
 			
 			// set normalisation weight
@@ -466,7 +466,7 @@ void EventContainer::calculateCVEventWeight(Utility::FileTypeEnums type, Utility
 		}
 
 		// RHC
-		if (runPeriod == Utility::kRun1b || runPeriod == Utility::kRun2b || runPeriod == Utility::kRun3b) {
+		if (runPeriod == Utility::kRun1b || runPeriod == Utility::kRun2b || runPeriod == Utility::kRun3b || runPeriod == Utility::kRun4ab) {
 			weight = weight*0.45;
 
 			// set normalisation weight

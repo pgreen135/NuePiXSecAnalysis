@@ -6,4 +6,17 @@
 /Users/patrick/Data/MicroBooNE/CrossSections/customPeLeeNTuples/nu_overlay/numi_nu_overlay_pion_ntuples_run1_fhc_full.root 2 0
 /Users/patrick/Data/MicroBooNE/CrossSections/customPeLeeNTuples/dirt_overlay/numi_dirt_overlay_pion_ntuples_run1_fhc_slim.root 4 0
 #
+# Run 1 DetVars
+/Users/patrick/Data/MicroBooNE/CrossSections/customPeLeeNTuples/detvars/numi_detvars_pion_ntuples_run1_fhc_CV_slim.root 2 0
+/Users/patrick/Data/MicroBooNE/CrossSections/customPeLeeNTuples/detvars/numi_detvars_pion_ntuples_run1_fhc_LYRayleigh_slim.root 2 0
+/Users/patrick/Data/MicroBooNE/CrossSections/customPeLeeNTuples/detvars/numi_detvars_pion_ntuples_run1_fhc_LYDown_slim.root 2 0
+/Users/patrick/Data/MicroBooNE/CrossSections/customPeLeeNTuples/detvars/numi_detvars_pion_ntuples_run1_fhc_SCE_slim.root 2 0
+/Users/patrick/Data/MicroBooNE/CrossSections/customPeLeeNTuples/detvars/numi_detvars_pion_ntuples_run1_fhc_Recombination_slim.root 2 0
+/Users/patrick/Data/MicroBooNE/CrossSections/customPeLeeNTuples/detvars/numi_detvars_pion_ntuples_run1_fhc_WireModX_slim.root 2 0
+/Users/patrick/Data/MicroBooNE/CrossSections/customPeLeeNTuples/detvars/numi_detvars_pion_ntuples_run1_fhc_WireModYZ_slim.root 2 0
+/Users/patrick/Data/MicroBooNE/CrossSections/customPeLeeNTuples/detvars/numi_detvars_pion_ntuples_run1_fhc_WireModThetaXZ_slim.root 2 0
+/Users/patrick/Data/MicroBooNE/CrossSections/customPeLeeNTuples/detvars/numi_detvars_pion_ntuples_run1_fhc_WireModThetaYZ_slim.root 2 0
 #
+#
+
+

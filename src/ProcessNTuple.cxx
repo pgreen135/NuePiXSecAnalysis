@@ -143,7 +143,9 @@ void set_event_output_branch_addresses(TTree& out_tree, EventContainer& ev, bool
 	    // weights in the map
 	    for ( auto& pair : *ev.mc_weights_map_ ) {
 
-	    	if (pair.first == "flux_all") continue; 	// skip empty BNB flux weights, PFFX used instead
+	    	//std::cout << pair.first << std::endl;
+
+	    	//if (pair.first == "flux_all") continue; 	// skip empty BNB flux weights, PFFX used instead
 
 			// Prepend "weight_" to the name of the vector of weights in the map
 			std::string weight_branch_name = "weight_" + pair.first;
