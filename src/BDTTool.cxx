@@ -118,35 +118,6 @@ double BDTTool::evaluateElectronPhotonBDTScoreFHC(EventContainer &_evt) const {
 	// --- electron-photon separation BDT ---
 	int xgreturn = -1;
 
-	// Apr21 model
-	//["DeltaRMS2h",
-	//"shr_energyFraction",
-	//"shr_trkfit_2cm_dedx_max",
-	//"shr12_p1_dstart",
-	//"shrsubclusters",
-	//"secondshower_U_vtxdist",
-	//"secondshower_U_nhit",
-	//"secondshower_U_dot",
-	//"shr_trkfit_gap10_dedx_max",
-	//"secondshower_V_nhit",
-	//"shr_energy_second_cali",
-	//"shrMCSMom",
-	//"secondshower_Y_anglediff",
-	//"secondshower_V_vtxdist",
-	//"secondshower_Y_dot",
-	//"secondshower_Y_nhit",
-	//"shr2_distance",
-	//"n_showers_contained",
-	//"secondshower_U_anglediff",
-	//"shrPCA1CMed_5cm",
-	//"secondshower_V_anglediff",
-	//"shrmoliereavg",
-	//"CylFrac2h_1cm",
-	//"shr2_trackEndProximity",
-	//"shr_distance",
-	//"secondshower_V_dot",
-	//"secondshower_Y_vtxdist"
-
 	// sanitize input
 	if (_evt.shr_trkfit_gap10_dedx_max  < 0) _evt.shr_trkfit_gap10_dedx_max = 9999;
 	if (_evt.shr_trkfit_2cm_dedx_max < 0) _evt.shr_trkfit_2cm_dedx_max = 9999;
@@ -177,13 +148,7 @@ double BDTTool::evaluateElectronPhotonBDTScoreFHC(EventContainer &_evt) const {
 	if (_evt.secondshower_V_nhit < 0) _evt.secondshower_V_nhit = 9999;
 	if (_evt.secondshower_V_vtxdist < 0) _evt.secondshower_V_vtxdist = 9999;
 	if (_evt.secondshower_V_dot < 0) _evt.secondshower_V_dot = 9999;
-	if (_evt.secondshower_V_anglediff < 0) _evt.secondshower_V_anglediff = 9999;
-
-	//std::vector<float> data {_evt.DeltaRMS2h, _evt.shr_energyFraction, _evt.shr_trkfit_2cm_dedx_max, _evt.shr12_p1_dstart, static_cast<float>(_evt.shrsubclusters), _evt.secondshower_U_vtxdist,
-	//						  static_cast<float>(_evt.secondshower_U_nhit), _evt.secondshower_U_dot, _evt.shr_trkfit_gap10_dedx_max, static_cast<float>(_evt.secondshower_V_nhit),
-	//						  _evt.shr_energy_second_cali, _evt.shrMCSMom, _evt.secondshower_Y_anglediff, _evt.secondshower_V_vtxdist, _evt.secondshower_Y_dot, static_cast<float>(_evt.secondshower_Y_nhit), 
-	//						  _evt.shr2_distance, static_cast<float>(_evt.n_showers_contained), _evt.secondshower_U_anglediff, _evt.shrPCA1CMed_5cm, _evt.secondshower_V_anglediff, _evt.shrmoliereavg, 
-	//						  _evt.CylFrac2h_1cm, _evt.shr2_trackEndProximity, _evt.shr_distance, _evt.secondshower_V_dot, _evt.secondshower_Y_vtxdist }; 
+	if (_evt.secondshower_V_anglediff < 0) _evt.secondshower_V_anglediff = 9999; 
 
 	/*
 	// Jul 13 model
@@ -322,41 +287,6 @@ double BDTTool::evaluateElectronPhotonBDTScoreRHC(EventContainer &_evt) const {
 	if (_evt.secondshower_V_dot < 0) _evt.secondshower_V_dot = 9999;
 	if (_evt.secondshower_V_anglediff < 0) _evt.secondshower_V_anglediff = 9999;
 
-
-	// Jul11 model
-	//["secondshower_V_anglediff",
-	//"secondshower_V_nhit",
-	//"CylFrac2h_1cm",
-	//"shrPCA1CMed_5cm",
-	//"secondshower_U_vtxdist",
-	//"shrsubclusters",
-	//"secondshower_V_vtxdist",
-	//"secondshower_V_dot",
-	//"shr2_distance",
-	//"shr12_p1_dstart",
-	//"secondshower_U_anglediff",
-	//"shrMCSMom",
-	//"shrmoliereavg",
-	//"n_showers_contained",
-	//"shr_energy_second_cali",
-	//"secondshower_U_nhit",
-	//"secondshower_Y_dot",
-	//"shr_trkfit_2cm_dedx_max",
-	//"secondshower_U_dot",
-	//"secondshower_Y_vtxdist",
-	//"secondshower_Y_nhit",
-	//"secondshower_Y_anglediff",
-	//"shr2_trackEndProximity",
-	//"shr_energyFraction",
-	//"shr_distance",
-	//"DeltaRMS2h",
-	//"shr_trkfit_gap10_dedx_max"]
-
-	//std::vector<float> data {_evt.secondshower_V_anglediff, static_cast<float>(_evt.secondshower_V_nhit), _evt.CylFrac2h_1cm, _evt.shrPCA1CMed_5cm, _evt.secondshower_U_vtxdist, static_cast<float>(_evt.shrsubclusters), _evt.secondshower_V_vtxdist, _evt.secondshower_V_dot,
-	//						 _evt.shr2_distance, _evt.shr12_p1_dstart, _evt.secondshower_U_anglediff, _evt.shrMCSMom, _evt.shrmoliereavg, static_cast<float>(_evt.n_showers_contained), _evt.shr_energy_second_cali, static_cast<float>(_evt.secondshower_U_nhit), _evt.secondshower_Y_dot,
-	//						 _evt.shr_trkfit_2cm_dedx_max, _evt.secondshower_U_dot, _evt.secondshower_Y_vtxdist, static_cast<float>(_evt.secondshower_Y_nhit), _evt.secondshower_Y_anglediff, _evt.shr2_trackEndProximity, _evt.shr_energyFraction, _evt.shr_distance, _evt.DeltaRMS2h,
-	//						 _evt.shr_trkfit_gap10_dedx_max };
-
     // Jul 13 model (pions training)
     //"shr_trkfit_2cm_dedx_max",
     //"secondshower_Y_dot",
@@ -387,11 +317,49 @@ double BDTTool::evaluateElectronPhotonBDTScoreRHC(EventContainer &_evt) const {
     //"shr_distance",
     //"shr2_pfpgeneration"
 	
+	/*
 	std::vector<float> data {_evt.shr_trkfit_2cm_dedx_max, _evt.secondshower_Y_dot, _evt.secondshower_U_anglediff, _evt.secondshower_Y_anglediff, _evt.secondshower_V_anglediff, static_cast<float>(_evt.secondshower_V_nhit),
 							 _evt.secondshower_U_dot, static_cast<float>(_evt.n_showers_contained), _evt.DeltaRMS2h, _evt.shrMCSMom, _evt.shr2_trackEndProximity, _evt.shr2_distance, static_cast<float>(_evt.secondshower_Y_nhit),
 							 _evt.secondshower_V_vtxdist, _evt.shr_trkfit_gap10_dedx_max, _evt.shr12_p1_dstart, _evt.secondshower_Y_vtxdist, _evt.secondshower_U_vtxdist, _evt.shr_energyFraction, _evt.shrPCA1CMed_5cm,
 							 _evt.shr_energy_second_cali, _evt.CylFrac2h_1cm, _evt.shrmoliereavg, static_cast<float>(_evt.shrsubclusters), static_cast<float>(_evt.secondshower_U_nhit), _evt.secondshower_V_dot,
-							 _evt.shr_distance, static_cast<float>(_evt.shr2_pfpgeneration) };	
+							 _evt.shr_distance, static_cast<float>(_evt.shr2_pfpgeneration) };
+	*/
+
+	// Aug 17, pions, split training sample
+    //"secondshower_Y_anglediff",
+    //"secondshower_U_dot",
+    //"n_showers_contained",
+    //"shr_distance",
+    //"CylFrac2h_1cm",
+    //"secondshower_V_anglediff",
+    //"secondshower_Y_dot",
+    //"shr2_distance",
+    //"shr2_trackEndProximity",
+    //"shr2_pfpgeneration",
+    //"secondshower_V_vtxdist",
+    //"DeltaRMS2h",
+    //"secondshower_Y_nhit",
+    //"shrMCSMom",
+    //"shrsubclusters",
+    //"secondshower_Y_vtxdist",
+    //"secondshower_V_nhit",
+    //"shr_trkfit_2cm_dedx_max",
+    //"shr_energyFraction",
+    //"shr_energy_second_cali",
+    //"shrmoliereavg",
+    //"secondshower_U_vtxdist",
+    //"secondshower_U_nhit",
+    //"secondshower_V_dot",
+    //"shrPCA1CMed_5cm",
+    //"secondshower_U_anglediff",
+    //"shr12_p1_dstart",
+    //"shr_trkfit_gap10_dedx_max"
+
+	std::vector<float> data {_evt.secondshower_Y_anglediff, _evt.secondshower_U_dot, static_cast<float>(_evt.n_showers_contained), _evt.shr_distance, _evt.CylFrac2h_1cm, _evt.secondshower_V_anglediff, _evt.secondshower_Y_dot, _evt.shr2_distance,
+							 _evt.shr2_trackEndProximity, static_cast<float>(_evt.shr2_pfpgeneration), _evt.secondshower_V_vtxdist, _evt.DeltaRMS2h, static_cast<float>(_evt.secondshower_Y_nhit), _evt.shrMCSMom, static_cast<float>(_evt.shrsubclusters),
+							 _evt.secondshower_Y_vtxdist, static_cast<float>(_evt.secondshower_V_nhit), _evt.shr_trkfit_2cm_dedx_max, _evt.shr_energyFraction, _evt.shr_energy_second_cali, _evt.shrmoliereavg, _evt.secondshower_U_vtxdist,
+							 static_cast<float>(_evt.secondshower_U_nhit), _evt.secondshower_V_dot, _evt.shrPCA1CMed_5cm, _evt.secondshower_U_anglediff, _evt.shr12_p1_dstart, _evt.shr_trkfit_gap10_dedx_max };					 
+
 	
     DMatrixHandle matrix_electronPhoton;
     xgreturn = XGDMatrixCreateFromMat(data.data(), 1, data.size(), 9999, &matrix_electronPhoton);
@@ -424,36 +392,6 @@ double BDTTool::evaluatePionProtonBDTScoreFHC(const EventContainer &_evt, int tr
 	int xgreturn = -1;
 	
 	// create DMatrix, note: order is not the same as in training -- order in .json
-	
-	// Apr 19, with track score
-
-	//["trk_score",
-	//	"trk_llr_pid_score",
-	//	"trk_daughters",
-	//	"trk_end_spacepoints",
-	//	"trk_bragg_pion_max",
-	//	"trk_bragg_mip_max",
-	//	"trk_dEdx_trunk_max"]
-	
-	/*
-	std::vector<float> data;
-	if (trackID == 1) {
-		std::vector<float> data_init {_evt.trk_score, _evt.trk_llr_pid_score, static_cast<float>(_evt.trk_daughters), static_cast<float>(_evt.trk_end_spacepoints), _evt.trk_bragg_pion_max, _evt.trk_bragg_mip_max, _evt.trk_dEdx_trunk_max};
-		data = data_init;
-	}
-	else if (trackID == 2) {
-		std::vector<float> data_init {_evt.trk2_score, _evt.trk2_llr_pid_score, static_cast<float>(_evt.trk2_daughters), static_cast<float>(_evt.trk2_end_spacepoints), _evt.trk2_bragg_pion_max, _evt.trk2_bragg_mip_max, _evt.trk2_dEdx_trunk_max};
-		data = data_init;
-	}
-	else if (trackID == 3) {
-		std::vector<float> data_init {_evt.trk3_score, _evt.trk3_llr_pid_score, static_cast<float>(_evt.trk3_daughters), static_cast<float>(_evt.trk3_end_spacepoints), _evt.trk3_bragg_pion_max, _evt.trk3_bragg_mip_max, _evt.trk3_dEdx_trunk_max};
-		data = data_init;
-	}
-	else {
-		std::cout << "BDT Tool: invalid trackID provided." << std::endl;
-		exit(1);
-	}
-	*/
 
 	/*
 	// Jul 13, pions
@@ -543,16 +481,16 @@ double BDTTool::evaluatePionProtonBDTScoreRHC(const EventContainer &_evt, int tr
 	int xgreturn = -1;
 	
 	// create DMatrix, note: order is not the same as in training -- order in .json
-	
-	// Jul 11
 
-	//["trk_bragg_pion_max",
+	// Jul 13
+	//"trk_bragg_pion_max",
 	//"trk_bragg_mip_max",
 	//"trk_end_spacepoints",
 	//"trk_score",
 	//"trk_daughters",
-	//"trk_llr_pid_score",
-	//"trk_dEdx_trunk_max"]
+	//"trk_llr_pid_score"
+	//"trk_dEdx_trunk_max"
+
 	/*
 	std::vector<float> data;
 	if (trackID == 1) {
@@ -573,26 +511,26 @@ double BDTTool::evaluatePionProtonBDTScoreRHC(const EventContainer &_evt, int tr
 	}
 	*/
 
-	// Jul 13
-	//"trk_bragg_pion_max",
+	// Aug 17, pions, split training sample
+	//["trk_score",
+	//"trk_dEdx_trunk_max",
 	//"trk_bragg_mip_max",
-	//"trk_end_spacepoints",
-	//"trk_score",
 	//"trk_daughters",
-	//"trk_llr_pid_score"
-	//"trk_dEdx_trunk_max"
+	//"trk_llr_pid_score",
+	//"trk_end_spacepoints",
+	//"trk_bragg_pion_max"]
 
 	std::vector<float> data;
 	if (trackID == 1) {
-		std::vector<float> data_init {_evt.trk_bragg_pion_max, _evt.trk_bragg_mip_max, static_cast<float>(_evt.trk_end_spacepoints), _evt.trk_score, static_cast<float>(_evt.trk_daughters),  _evt.trk_llr_pid_score, _evt.trk_dEdx_trunk_max};
+		std::vector<float> data_init { _evt.trk_score, _evt.trk_dEdx_trunk_max, _evt.trk_bragg_mip_max, static_cast<float>(_evt.trk_daughters), _evt.trk_llr_pid_score, static_cast<float>(_evt.trk_end_spacepoints), _evt.trk_bragg_pion_max};
 		data = data_init;
 	}
 	else if (trackID == 2) {
-		std::vector<float> data_init {_evt.trk2_bragg_pion_max, _evt.trk2_bragg_mip_max, static_cast<float>(_evt.trk2_end_spacepoints), _evt.trk2_score, static_cast<float>(_evt.trk2_daughters),  _evt.trk2_llr_pid_score, _evt.trk2_dEdx_trunk_max};
+		std::vector<float> data_init { _evt.trk2_score, _evt.trk2_dEdx_trunk_max, _evt.trk2_bragg_mip_max, static_cast<float>(_evt.trk2_daughters), _evt.trk2_llr_pid_score, static_cast<float>(_evt.trk2_end_spacepoints), _evt.trk2_bragg_pion_max};
 		data = data_init;
 	}
 	else if (trackID == 3) {
-		std::vector<float> data_init {_evt.trk3_bragg_pion_max, _evt.trk3_bragg_mip_max, static_cast<float>(_evt.trk3_end_spacepoints), _evt.trk3_score, static_cast<float>(_evt.trk3_daughters),  _evt.trk3_llr_pid_score, _evt.trk3_dEdx_trunk_max};
+		std::vector<float> data_init { _evt.trk3_score, _evt.trk3_dEdx_trunk_max, _evt.trk3_bragg_mip_max, static_cast<float>(_evt.trk3_daughters), _evt.trk3_llr_pid_score, static_cast<float>(_evt.trk3_end_spacepoints), _evt.trk3_bragg_pion_max};
 		data = data_init;
 	}
 	else {

@@ -210,7 +210,7 @@ bool Selection::ApplyPionProtonBDTTrainingSelection(EventContainer &_evt, Utilit
 
 bool Selection::ApplyMCTrigger(const EventContainer &_evt, Utility::FileTypeEnums type, Utility::RunPeriodEnums runPeriod) {
 	// MC only cuts
-	if (type == Utility::kMC || type == Utility::kDirt || type == Utility::kIntrinsic || type == Utility::kCCNCPiZero) {
+	if (type == Utility::kMC || type == Utility::kDetVar || type == Utility::kDirt || type == Utility::kIntrinsic || type == Utility::kCCNCPiZero) {
 		
 		// software trigger [MC only], changed during Run 3
 		if (runPeriod == Utility::kRun1a || runPeriod == Utility::kRun1b || runPeriod == Utility::kRun2a || runPeriod == Utility::kRun2b) {
@@ -727,7 +727,7 @@ bool Selection::ApplyElectronPhotonBDTCutFHC(float bdtscore_electronPhoton) {
 	else return false;
 }
 bool Selection::ApplyElectronPhotonBDTCutRHC(float bdtscore_electronPhoton) {
-	if (bdtscore_electronPhoton > 0.85) return true;
+	if (bdtscore_electronPhoton > 0.80) return true;
 	else return false;
 }
 
@@ -780,7 +780,7 @@ bool Selection::ApplyProtonRejectionBDTCutFHC(float bdtscore_pionProton) {
 	else return false;
 }
 bool Selection::ApplyProtonRejectionBDTCutRHC(float bdtscore_pionProton) {
-	if (bdtscore_pionProton > 0.55) return true;
+	if (bdtscore_pionProton > 0.5) return true;
 	else return false;
 }
 

@@ -1,0 +1,3 @@
+# Run 1 DetVars
+/Users/patrick/Data/MicroBooNE/CrossSections/customPeLeeNTuples/detvars/numi_detvars_pion_ntuples_run1_fhc_CV_slim.root 5 0
+#

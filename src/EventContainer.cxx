@@ -4,6 +4,8 @@
 #include <algorithm>
 #include <numeric>
 
+#include "TVector3.h"
+#include "TRotation.h"
 
 // Constructor
 EventContainer::EventContainer(TTree *tree, const Utility &utility): _utility{ utility } {
@@ -33,6 +35,9 @@ EventContainer::EventContainer(TTree *tree, const Utility &utility): _utility{ u
 	tree->SetBranchAddress("true_nu_vtx_sce_x", &true_nu_vtx_sce_x);
 	tree->SetBranchAddress("true_nu_vtx_sce_y", &true_nu_vtx_sce_y);
 	tree->SetBranchAddress("true_nu_vtx_sce_z", &true_nu_vtx_sce_z);
+	tree->SetBranchAddress("true_nu_px", &true_nu_px);
+    tree->SetBranchAddress("true_nu_py", &true_nu_py);
+    tree->SetBranchAddress("true_nu_pz", &true_nu_pz);
 
 	tree->SetBranchAddress("swtrig", &swtrig);
     tree->SetBranchAddress("swtrig_pre", &swtrig_pre);
@@ -52,6 +57,7 @@ EventContainer::EventContainer(TTree *tree, const Utility &utility): _utility{ u
     tree->SetBranchAddress("n_showers", &n_showers);
     tree->SetBranchAddress("n_showers_contained", &n_showers_contained);
     tree->SetBranchAddress("n_tracks_contained", &n_tracks_contained);
+    tree->SetBranchAddress("slpdg", &slpdg);
 	tree->SetBranchAddress("nu_purity_from_pfp", &nu_purity_from_pfp);
 
 	tree->SetBranchAddress("shr_hits_tot", &shr_hits_tot);
@@ -276,7 +282,7 @@ EventContainer::~EventContainer(){
 void EventContainer::EventClassifier(Utility::FileTypeEnums type){
 
 	// --- MC classification --
-	if (type == Utility::kMC || type == Utility::kIntrinsic || type == Utility::kCCNCPiZero) {
+	if (type == Utility::kMC || type == Utility::kDetVar || type == Utility::kIntrinsic || type == Utility::kCCNCPiZero) {
 		// identify cosmic / cosmic contaminated events
 		// check fraction of hits that are not matched to neutrino
 		if (nu_purity_from_pfp < 0.2) {
@@ -423,7 +429,7 @@ void EventContainer::calculateCVEventWeight(Utility::FileTypeEnums type, Utility
 	weightTune = checkWeight(weightTune);
 
 	// overlay MC events
-	if (type == Utility::kMC || type == Utility::kIntrinsic || type == Utility::kCCNCPiZero) {
+	if (type == Utility::kMC || type == Utility::kDetVar || type == Utility::kIntrinsic || type == Utility::kCCNCPiZero) {
 		
 		// CV weight
 		weight = ppfx_cv * weightSpline * weightTune;
@@ -489,6 +495,54 @@ void EventContainer::calculateCVEventWeight(Utility::FileTypeEnums type, Utility
 	weight_cv = weight;
 
 }
+
+// Function to calculate beamline variation weights
+void EventContainer::calculateBeamlineVariationWeights() {
+
+	// true nu angle from numi beamline 
+    nu_angle = GetNuMIAngle(true_nu_px, true_nu_py, true_nu_pz, "beam");
+
+    // get weights vector
+    std::vector<double> weights;
+    if (nu_pdg == 12) weights = _utility.getWeightsNue(nu_e, nu_angle);
+    else if (nu_pdg == -12) weights = _utility.getWeightsNuebar(nu_e, nu_angle);
+    else if (nu_pdg == 14) weights = _utility.getWeightsNumu(nu_e, nu_angle);
+    else if (nu_pdg == -14) weights = _utility.getWeightsNumubar(nu_e, nu_angle);
+    else {
+    	std::cout << "Error: cannot get beamline variation weights" << std::endl;
+    	exit(1);
+    }
+
+    // sanity check
+    if (weights.size() != 20) {
+    	std::cout << "Error: missing expected beamline variation weights" << std::endl;
+    	exit(1);
+    }
+
+    // populate weights appropriately
+	Horn_2kA.push_back(checkWeight(weights[0]));
+	Horn_2kA.push_back(checkWeight(weights[1]));
+	Horn1_x_3mm.push_back(checkWeight(weights[2]));
+	Horn1_x_3mm.push_back(checkWeight(weights[3]));
+	Horn1_y_3mm.push_back(checkWeight(weights[4]));
+	Horn1_y_3mm.push_back(checkWeight(weights[5]));
+	Beam_spot_1_1mm.push_back(checkWeight(weights[6]));
+	Beam_spot_1_5mm.push_back(checkWeight(weights[7]));
+	Horn2_x_3mm.push_back(checkWeight(weights[8]));
+	Horn2_x_3mm.push_back(checkWeight(weights[9]));
+	Horn2_y_3mm.push_back(checkWeight(weights[10]));
+	Horn2_y_3mm.push_back(checkWeight(weights[11]));
+	Horns_0mm_water.push_back(checkWeight(weights[12]));
+	Horns_2mm_water.push_back(checkWeight(weights[13]));
+	Beam_shift_x_1mm.push_back(checkWeight(weights[14]));
+	Beam_shift_x_1mm.push_back(checkWeight(weights[15]));
+	Beam_shift_y_1mm.push_back(checkWeight(weights[16]));
+	Beam_shift_y_1mm.push_back(checkWeight(weights[17]));
+	Target_z_7mm.push_back(checkWeight(weights[18]));
+	Target_z_7mm.push_back(checkWeight(weights[19]));
+
+	beamlineVarWeightsPresent = true;
+} 
 
 // Function to check event weight is sensible
 float EventContainer::checkWeight(float weight) {
@@ -1123,11 +1177,26 @@ void EventContainer::populateDerivedVariables(Utility::FileTypeEnums type){
     BDTScorePionProtonAlternate = -1;
 
     // initialise STV tree variables
-    if (type == Utility::kMC || type == Utility::kIntrinsic || type == Utility::kDirt) is_mc_ = true;
+    if (type == Utility::kMC || type == Utility::kDetVar || type == Utility::kIntrinsic || type == Utility::kDirt) is_mc_ = true;
     else is_mc_ = false;
     mc_is_signal_ = false;
     category_ = 9999;
     sel_NueCC1piXp_ = false;
+
+    // clear weights
+    beamlineVarWeightsPresent = false;
+    Horn_2kA.clear();
+    Horn1_x_3mm.clear();
+    Horn1_y_3mm.clear();
+    Beam_spot_1_1mm.clear();
+    Beam_spot_1_5mm.clear();
+    Horn2_x_3mm.clear();
+    Horn2_y_3mm.clear();
+    Horns_0mm_water.clear();
+    Horns_2mm_water.clear();
+    Beam_shift_x_1mm.clear();
+    Beam_shift_y_1mm.clear();
+    Target_z_7mm.clear();
 }
 
 // get shower dE/dx on plane with the most hits
@@ -1389,7 +1458,58 @@ float EventContainer::GetShowerTrackEndProximity(unsigned int shrID) {
 	return shr_trackEndProximity;
 }
 
+// -----------------------------------------------------------------------------
+// NuMI angle calculate, from Krishan
+double EventContainer::GetNuMIAngle(double px, double py, double pz, std::string direction){
 
+    // Variables
+    TRotation RotDet2Beam;             // Rotations
+    TVector3  detxyz, BeamCoords;      // Translations
+    std::vector<double> rotmatrix;     // Inputs
+
+    // input detector coordinates to translate
+    detxyz = {px, py, pz};     
+
+    // From beam to detector rotation matrix
+    rotmatrix = {
+        0.92103853804025681562, 0.022713504803924120662, 0.38880857519374290021,
+        4.6254001262154668408e-05, 0.99829162468141474651, -0.058427989452906302359,
+        -0.38947144863934973769, 0.053832413938664107345, 0.91946400794392302291 };
+
+    // Return the TRotation
+    TVector3 newX, newY, newZ;
+    newX = TVector3(rotmatrix[0], rotmatrix[1], rotmatrix[2]);
+    newY = TVector3(rotmatrix[3], rotmatrix[4], rotmatrix[5]);
+    newZ = TVector3(rotmatrix[6], rotmatrix[7], rotmatrix[8]);
+
+    RotDet2Beam.RotateAxes(newX, newY, newZ); // Return the TRotation now det to beam
+    // RotDet2Beam.Invert(); // Invert back to the beam to det
+
+    // Rotate to beam coords
+    BeamCoords = RotDet2Beam * detxyz;
+
+    TVector3 beamdir = {0 , 0 , 1};;
+    
+    // Get the angle wrt to the beam
+    if (direction == "beam") beamdir = {0 , 0 , 1};
+    
+    // Get the angle wrt to the target to detector direction
+    else if (direction == "target") {
+        beamdir = {5502, 7259, 67270};
+        beamdir = beamdir.Unit(); // Get the direction
+    }
+    else {
+        std::cout << "Warning unknown angle type specified, you should check this" << std::endl;
+    }
+    
+    double angle = BeamCoords.Angle(beamdir) * 180 / 3.1415926;
+
+    // Create vectors to get the angle in the yz and xz planes
+    TVector3 BeamCoords_yz = { 0, BeamCoords.Y(), BeamCoords.Z() }; // Angle upwards
+    TVector3 BeamCoords_xz = { BeamCoords.X(), 0, BeamCoords.Z() }; // Angle across
+
+    return angle;
+}
 
 
 

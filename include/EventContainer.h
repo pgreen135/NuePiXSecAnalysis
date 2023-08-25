@@ -32,6 +32,7 @@ public:
 
     // Functions to calculation event weight
     void calculateCVEventWeight(Utility::FileTypeEnums type, Utility::RunPeriodEnums runPeriod);
+    void calculateBeamlineVariationWeights();
     float checkWeight(float weight);
 
 	// Functions to recover reconstruction failures
@@ -51,6 +52,8 @@ public:
 	float GetTrackBraggMIPBestPlane(unsigned int trackID);
     float CalculatePionEnergyRange(float R);
     float GetShowerTrackEndProximity(unsigned int shrID);
+    double GetNuMIAngle(double px, double py, double pz, std::string direction);
+
  
     // ----------------------------------
 
@@ -120,10 +123,15 @@ public:
   	int nproton; 				// Truth: number of protons
   	float proton_e;				// Truth: proton energy
 
-  	// truth interaction vertex
+  	// truth neutrino interaction vertex
   	float true_nu_vtx_sce_x;     // True Neutrino Vtx Space Charge x
   	float true_nu_vtx_sce_y;     // True Neutrino Vtx Space Charge y
   	float true_nu_vtx_sce_z;     // True Neutrino Vtx Space Charge z
+
+    // truth neutrino momentum
+    float true_nu_px;            // True Neutrino Px
+    float true_nu_py;            // True Neutrino Py
+    float true_nu_pz;            // True Neutrino Pz
 
   	// --- Software trigger [MC only] ---
   	int swtrig;     			// Software Trigger
@@ -144,7 +152,25 @@ public:
     
     // systematic universes
     std::map<std::string, std::vector<double>> *mc_weights_map_ = nullptr;
-    std::map< std::string, std::vector<double>*> mc_weights_ptr_map_;
+    std::map<std::string, std::vector<double>*> mc_weights_ptr_map_;
+
+    // beamline variations
+    bool beamlineVarWeightsPresent;
+    // true nu angle from numi beamline 
+    float nu_angle;
+    // variations
+    std::vector<double> Horn_2kA;
+    std::vector<double> Horn1_x_3mm;
+    std::vector<double> Horn1_y_3mm;
+    std::vector<double> Beam_spot_1_1mm;
+    std::vector<double> Beam_spot_1_5mm;
+    std::vector<double> Horn2_x_3mm;
+    std::vector<double> Horn2_y_3mm;
+    std::vector<double> Horns_0mm_water;
+    std::vector<double> Horns_2mm_water;
+    std::vector<double> Beam_shift_x_1mm;
+    std::vector<double> Beam_shift_y_1mm;
+    std::vector<double> Target_z_7mm;
 
   	// --- Slice information ---
   	// number
@@ -155,6 +181,9 @@ public:
     unsigned int n_tracks_contained;  // Reco - Slice: number of tracks contained
     int n_showers_alt;
     int n_showers_above_threshold; 
+
+    // neutrino PID
+    int slpdg; // Reco? -- Pandora people say don't use, crude variable
 
   	// slice quality
   	float nu_purity_from_pfp;   // Truth: Neutrino Purity from PFP (how many out of all the hits are the neutrino)

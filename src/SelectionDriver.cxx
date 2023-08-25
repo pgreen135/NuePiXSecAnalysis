@@ -36,7 +36,6 @@ void SelectionDriver::runBDTSelectionFHC() {
 	BDTTool _BDTTool(true, true, true, true);
 	Selection _selection(_utility);
 	
-	/*
 	// ----------------- Run 1 FHC ------------------
 	{
 		
@@ -124,6 +123,7 @@ void SelectionDriver::runBDTSelectionFHC() {
 		delete f_mc;
 		
 		
+		
 		// --- Dirt Overlay MC ---
 		// read file
 		TFile *f_dirt = NULL;
@@ -197,7 +197,7 @@ void SelectionDriver::runBDTSelectionFHC() {
 		delete f_beamoff;
 		
 	}
-	*/
+	
 
 	/*
 	// ----------------- Run 2a FHC ------------------
@@ -353,7 +353,7 @@ void SelectionDriver::runBDTSelectionFHC() {
 	}
     */
 	
-	
+	/*
 	// ----------------- Run 4 FHC ------------------
 	{
 		// --- Nue Overlay MC ---
@@ -505,6 +505,7 @@ void SelectionDriver::runBDTSelectionFHC() {
 
 		delete f_beamoff;
 	}
+	*/
 	
 	/*
 	// ----------------- Run 5 FHC ------------------
@@ -676,13 +677,13 @@ void SelectionDriver::runBDTSelectionFHC() {
 // Run BDT selection on RHC samples
 void SelectionDriver::runBDTSelectionRHC() {
 
-	StackedHistTool _histStack("", "", 10, 0, 1.001, _utility);
-	//StackedHistTool _histStack("", "", 2, 0, 2, _utility);
+	//StackedHistTool _histStack("", "", 40, 0, 1.001, _utility);
+	StackedHistTool _histStack("", "", 20, 0, 20, _utility);
 	//StackedHistTool _histStack("", "", 20, 0, 100, _utility);
 	BDTTool _BDTTool(true, true, true, true);
 	Selection _selection(_utility);
 
-	/*	
+	/*
 	// ----------------- Run 1 RHC ------------------
 	{
 		// --- Nue Overlay MC ---
@@ -714,7 +715,11 @@ void SelectionDriver::runBDTSelectionRHC() {
 		    if (!((_event_intrinsic.nu_pdg == 12 || _event_intrinsic.nu_pdg == -12) && _event_intrinsic.classification != Utility::kOutFV)) continue;
 
 		    // fill histogram
-		    _histStack.Fill(_event_intrinsic.classification, _event_intrinsic.nslice, pot_weight_intrinsic_test_run1_rhc * _event_intrinsic.weight_cv);	
+		    _histStack.Fill(_event_intrinsic.classification, _event_intrinsic.BDTScoreElectronPhoton, pot_weight_intrinsic_test_run1_rhc * _event_intrinsic.weight_cv);
+
+		    //if (_event_intrinsic.primaryTrackPionlikeLoose) _histStack.Fill(_event_intrinsic.classification, _event_intrinsic.primaryTrackBDTScorePionProton, pot_weight_intrinsic_test_run1_rhc * _event_intrinsic.weight_cv);
+	        //else if (_event_intrinsic.secondaryTrackPionlikeLoose) _histStack.Fill(_event_intrinsic.classification, _event_intrinsic.secondaryTrackBDTScorePionProton, pot_weight_intrinsic_test_run1_rhc * _event_intrinsic.weight_cv);
+	  	    //else _histStack.Fill(_event_intrinsic.classification, _event_intrinsic.tertiaryTrackBDTScorePionProton, pot_weight_intrinsic_test_run1_rhc * _event_intrinsic.weight_cv);	
 		
 		}
 
@@ -834,7 +839,6 @@ void SelectionDriver::runBDTSelectionRHC() {
 
 		delete f_beamoff;
 		
-
 	}
 	*/
 
@@ -870,7 +874,11 @@ void SelectionDriver::runBDTSelectionRHC() {
 		    if (!((_event_intrinsic.nu_pdg == 12 || _event_intrinsic.nu_pdg == -12) && _event_intrinsic.classification != Utility::kOutFV)) continue;
 
 		    // fill histogram
-		    _histStack.Fill(_event_intrinsic.classification, _event_intrinsic.nslice, pot_weight_intrinsic_test_run2b_rhc * _event_intrinsic.weight_cv);	
+		    _histStack.Fill(_event_intrinsic.classification, _event_intrinsic.BDTScoreElectronPhoton, pot_weight_intrinsic_test_run2b_rhc * _event_intrinsic.weight_cv);
+
+		    //if (_event_intrinsic.primaryTrackPionlikeLoose) _histStack.Fill(_event_intrinsic.classification, _event_intrinsic.primaryTrackBDTScorePionProton, pot_weight_intrinsic_test_run2b_rhc * _event_intrinsic.weight_cv);
+	        //else if (_event_intrinsic.secondaryTrackPionlikeLoose) _histStack.Fill(_event_intrinsic.classification, _event_intrinsic.secondaryTrackBDTScorePionProton, pot_weight_intrinsic_test_run2b_rhc * _event_intrinsic.weight_cv);
+	  	    //else _histStack.Fill(_event_intrinsic.classification, _event_intrinsic.tertiaryTrackBDTScorePionProton, pot_weight_intrinsic_test_run2b_rhc * _event_intrinsic.weight_cv);	
 		
 		}
 
@@ -988,7 +996,7 @@ void SelectionDriver::runBDTSelectionRHC() {
 		
 	}
 	*/
-	
+
 	
 	// ----------------- Run 3b RHC ------------------
 	{
@@ -1021,7 +1029,11 @@ void SelectionDriver::runBDTSelectionRHC() {
 		    if (!((_event_intrinsic.nu_pdg == 12 || _event_intrinsic.nu_pdg == -12) && _event_intrinsic.classification != Utility::kOutFV)) continue;
 
 		    // fill histogram
-		    _histStack.Fill(_event_intrinsic.classification, _event_intrinsic.BDTScoreElectronPhoton, pot_weight_intrinsic_test_run3b_rhc * _event_intrinsic.weight_cv);	
+		    _histStack.Fill(_event_intrinsic.classification, _event_intrinsic.slpdg, pot_weight_intrinsic_test_run3b_rhc * _event_intrinsic.weight_cv);
+
+		    //if (_event_intrinsic.primaryTrackPionlikeLoose) _histStack.Fill(_event_intrinsic.classification, _event_intrinsic.primaryTrackBDTScorePionProton, pot_weight_intrinsic_test_run3b_rhc * _event_intrinsic.weight_cv);
+	        //else if (_event_intrinsic.secondaryTrackPionlikeLoose) _histStack.Fill(_event_intrinsic.classification, _event_intrinsic.secondaryTrackBDTScorePionProton, pot_weight_intrinsic_test_run3b_rhc * _event_intrinsic.weight_cv);
+	  	    //else _histStack.Fill(_event_intrinsic.classification, _event_intrinsic.tertiaryTrackBDTScorePionProton, pot_weight_intrinsic_test_run3b_rhc * _event_intrinsic.weight_cv);
 		
 		}
 
@@ -1056,7 +1068,7 @@ void SelectionDriver::runBDTSelectionRHC() {
 		    if (((_event_mc.nu_pdg == 12 || _event_mc.nu_pdg == -12) && _event_mc.classification != Utility::kOutFV)) continue;	    	
 
 		    // fill histogram
-		    _histStack.Fill(_event_mc.classification, _event_mc.BDTScoreElectronPhoton, pot_weight_mc_run3b_rhc * _event_mc.weight_cv);
+		    _histStack.Fill(_event_mc.classification, _event_mc.slpdg, pot_weight_mc_run3b_rhc * _event_mc.weight_cv);
 
 		    //if (_event_mc.primaryTrackPionlikeLoose) _histStack.Fill(_event_mc.classification, _event_mc.primaryTrackBDTScorePionProton, pot_weight_mc_run3b_rhc * _event_mc.weight_cv);
 	        //else if (_event_mc.secondaryTrackPionlikeLoose) _histStack.Fill(_event_mc.classification, _event_mc.secondaryTrackBDTScorePionProton, pot_weight_mc_run3b_rhc * _event_mc.weight_cv);
@@ -1092,7 +1104,7 @@ void SelectionDriver::runBDTSelectionRHC() {
 		    if (!passSelection) continue;
 
 		    // fill histogram
-		    _histStack.Fill(_event_dirt.classification, _event_dirt.BDTScoreElectronPhoton, pot_weight_dirt_run3b_rhc * _event_dirt.weight_cv);
+		    _histStack.Fill(_event_dirt.classification, _event_dirt.slpdg, pot_weight_dirt_run3b_rhc * _event_dirt.weight_cv);
 
 		    //if (_event_dirt.primaryTrackPionlikeLoose) _histStack.Fill(_event_dirt.classification, _event_dirt.primaryTrackBDTScorePionProton, pot_weight_dirt_run3b_rhc * _event_dirt.weight_cv);
 	        //else if (_event_dirt.secondaryTrackPionlikeLoose) _histStack.Fill(_event_dirt.classification, _event_dirt.secondaryTrackBDTScorePionProton, pot_weight_dirt_run3b_rhc * _event_dirt.weight_cv);
@@ -1132,7 +1144,7 @@ void SelectionDriver::runBDTSelectionRHC() {
 		    else pot_weight_beamoff_run3b_rhc = pot_weight_beamoff_run3b_rhc_post;
 		    
 		    // fill histogram
-		    _histStack.Fill(_event_beamoff.classification, _event_beamoff.BDTScoreElectronPhoton, pot_weight_beamoff_run3b_rhc * _event_beamoff.weight_cv);
+		    _histStack.Fill(_event_beamoff.classification, _event_beamoff.slpdg, pot_weight_beamoff_run3b_rhc * _event_beamoff.weight_cv);
 
 		    //if (_event_beamoff.primaryTrackPionlikeLoose) _histStack.Fill(_event_beamoff.classification, _event_beamoff.primaryTrackBDTScorePionProton, pot_weight_beamoff_run3b_rhc * _event_beamoff.weight_cv);
 	        //else if (_event_beamoff.secondaryTrackPionlikeLoose) _histStack.Fill(_event_beamoff.classification, _event_beamoff.secondaryTrackBDTScorePionProton, pot_weight_beamoff_run3b_rhc * _event_beamoff.weight_cv);
@@ -1194,7 +1206,7 @@ void SelectionDriver::runBDTSelectionDetVarFHC() {
 		      std::cout << Form("%i0%% Completed...\n", e / (n_entries_detvar/10));
 		    }
 
-		    bool passSelection = _selection.ApplyBDTBasedSelection(_event_detvar, _BDTTool, Utility::kMC, Utility::kRun1a);
+		    bool passSelection = _selection.ApplyBDTBasedSelection(_event_detvar, _BDTTool, Utility::kDetVar, Utility::kRun1a);
 		    if (!passSelection) continue;
 
 		    // fill histogram
@@ -1208,6 +1220,7 @@ void SelectionDriver::runBDTSelectionDetVarFHC() {
 		delete f_detvar;
 	}
 
+	/*
 	// ----------------- Run 1 FHC SCE ------------------
 	{
 		// --- SCE ---	
@@ -1402,6 +1415,7 @@ void SelectionDriver::runBDTSelectionDetVarFHC() {
 
 		delete f_detvar;
 	}
+	*/
 
 	// print event integrals
 	std::cout << "DetVar CV:" << std::endl;
@@ -1838,6 +1852,43 @@ void SelectionDriver::createElectronPhotonBDTTrainingTreeRHC() {
 	}
 
 	// ----------------- Run 4 RHC ------------------
+	{
+		// --- Intrinsic Nue Overlay MC -- 
+	  	// read file
+		TFile *f_intrinsic = NULL;
+	  	TTree *tree_intrinsic = NULL;
+	 	f_intrinsic = new TFile(filename_intrinsic_train_run4_rhc.c_str());  
+	  	tree_intrinsic = (TTree*)f_intrinsic->Get("NeutrinoSelectionFilter");
+	  	
+	  	// initialise event container
+	  	EventContainer _event_intrinsic(tree_intrinsic, _utility); 	
+
+	  	// loop through events
+	  	int n_entries_intrinsic = tree_intrinsic->GetEntries();
+	  	std::cout << "Initial number events [Run 4 RHC Intrinsic Nue Overlay Train]: " << n_entries_intrinsic << std::endl;
+
+	  	for (int e = 0; e < n_entries_intrinsic; e++) {
+	  		
+	    	tree_intrinsic->GetEntry(e);    	
+
+		    if ( (e != 0) && (n_entries_intrinsic >= 10) &&  (e % (n_entries_intrinsic/10) == 0) ) {
+		      std::cout << Form("%i0%% Completed...\n", e / (n_entries_intrinsic/10));
+		    }
+
+		    bool passSelection = _selection.ApplyElectronPhotonBDTTrainingSelection(_event_intrinsic, Utility::kIntrinsic, Utility::kRun4ab);
+		    if (!passSelection) continue;
+		    
+		    _histStack.Fill(_event_intrinsic.classification, _event_intrinsic.contained_fraction, pot_weight_intrinsic_train_run4_rhc * _event_intrinsic.weight_cv);
+		    
+		    // add event to training tree
+		    // electron-photon
+		    if (_event_intrinsic.classification == Utility::kCCNue1pi0p || _event_intrinsic.classification == Utility::kCCNue1piNp 
+		    	//|| _event_intrinsic.classification == Utility::kCCNueNpi || _event_intrinsic.classification == Utility::kCCNueNp
+		    	) _trainingTree.addEvent(_event_intrinsic, _event_intrinsic.classification);
+		}
+
+		delete f_intrinsic;
+	}
 
 	// print event integrals
 	_histStack.PrintEventIntegrals();
@@ -2126,6 +2177,40 @@ void SelectionDriver::createPionProtonBDTTrainingTreeRHC() {
 	}
 
 	// ----------------- Run 4 RHC ------------------
+	{
+		// --- Intrinsic Nue Overlay MC -- 
+	  	// read file
+		TFile *f_intrinsic = NULL;
+	  	TTree *tree_intrinsic = NULL;
+	 	f_intrinsic = new TFile(filename_intrinsic_train_run4_rhc.c_str());  
+	  	tree_intrinsic = (TTree*)f_intrinsic->Get("NeutrinoSelectionFilter");
+	  	
+	  	// initialise event container
+	  	EventContainer _event_intrinsic(tree_intrinsic, _utility); 	
+
+	  	// loop through events
+	  	int n_entries_intrinsic = tree_intrinsic->GetEntries();
+	  	std::cout << "Initial number events [Run 4 RHC Intrinsic Nue Overlay Train]: " << n_entries_intrinsic << std::endl;
+
+	  	for (int e = 0; e < n_entries_intrinsic; e++) {
+	  		
+	    	tree_intrinsic->GetEntry(e);    	
+
+		    if ( (e != 0) && (n_entries_intrinsic >= 10) &&  (e % (n_entries_intrinsic/10) == 0) ) {
+		      std::cout << Form("%i0%% Completed...\n", e / (n_entries_intrinsic/10));
+		    }
+
+		    bool passSelection = _selection.ApplyPionProtonBDTTrainingSelection(_event_intrinsic, Utility::kIntrinsic, Utility::kRun4ab);
+		    if (!passSelection) continue;
+		    
+		    _histStack.Fill(_event_intrinsic.classification, _event_intrinsic.contained_fraction, pot_weight_intrinsic_train_run4_rhc * _event_intrinsic.weight_cv);
+		    
+		    // add event to training tree
+			_trainingTree.addEvent(_event_intrinsic, _event_intrinsic.classification);
+		}
+
+		delete f_intrinsic;
+	}
 
 	// print event integrals
 	_histStack.PrintEventIntegrals();

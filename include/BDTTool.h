@@ -44,7 +44,8 @@ private:
 	BoosterHandle boosterElectronPhotonFHC;
 
 	bool loadedElectronPhotonBDTRHC; 
-	std::string BDTFileElectronPhotonRHC = "/Users/patrick/Documents/MicroBooNE/CrossSections/NuePiXSec_Analysis/Selection/bdts/bdt_electronPhoton_RHC_Jul13.json";
+	//std::string BDTFileElectronPhotonRHC = "/Users/patrick/Documents/MicroBooNE/CrossSections/NuePiXSec_Analysis/Selection/bdts/bdt_electronPhoton_RHC_Jul13.json";
+	std::string BDTFileElectronPhotonRHC = "/Users/patrick/Documents/MicroBooNE/CrossSections/NuePiXSec_Analysis/Selection/bdts/bdt_electronPhoton_RHC_Aug17.json";
 	BoosterHandle boosterElectronPhotonRHC;
     
 	bool loadedPionProtonBDTFHC; 
@@ -53,7 +54,8 @@ private:
     BoosterHandle boosterPionProtonFHC;
 
     bool loadedPionProtonBDTRHC; 
-    std::string BDTFilePionProtonRHC = "/Users/patrick/Documents/MicroBooNE/CrossSections/NuePiXSec_Analysis/Selection/bdts/bdt_pionProton_RHC_Jul13.json";
+    //std::string BDTFilePionProtonRHC = "/Users/patrick/Documents/MicroBooNE/CrossSections/NuePiXSec_Analysis/Selection/bdts/bdt_pionProton_RHC_Jul13.json";
+    std::string BDTFilePionProtonRHC = "/Users/patrick/Documents/MicroBooNE/CrossSections/NuePiXSec_Analysis/Selection/bdts/bdt_pionProton_RHC_Aug17.json";
     BoosterHandle boosterPionProtonRHC;    
 };
 

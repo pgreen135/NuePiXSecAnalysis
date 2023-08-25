@@ -4,6 +4,10 @@
 // class containing utility functions and enum definitions
 // allows suite of utilities to be included where required
 
+#include <vector>
+
+#include <TH2F.h>
+
 class Utility {
 
 public:	
@@ -23,6 +27,13 @@ public:
 
 	// Function to check whether number is valid
 	bool isNumber(float input);
+
+	// Function to get beamline variation weights
+	void loadBeamLineVariationHistograms();
+	std::vector<double> getWeightsNue(float energy, float angle);
+	std::vector<double> getWeightsNuebar(float energy, float angle);
+	std::vector<double> getWeightsNumu(float energy, float angle);
+	std::vector<double> getWeightsNumubar(float energy, float angle);
 	
 	// ----------------------------------
 
@@ -32,7 +43,8 @@ public:
 		kCCNCPiZero,
 		kMC,
 		kEXT,
-		kDirt
+		kDirt,
+		kDetVar
 	};
 
 	// Run periods
@@ -120,6 +132,13 @@ public:
 		kRHC		
 	};
 
+private:
+
+	// beamline variation weight histograms
+	std::vector<TH2F> h_nue_fhc;
+	std::vector<TH2F> h_nuebar_fhc;
+	std::vector<TH2F> h_numu_fhc;
+	std::vector<TH2F> h_numubar_fhc;
 }; 
 
 #endif
