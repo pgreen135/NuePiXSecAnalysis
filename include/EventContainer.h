@@ -32,7 +32,7 @@ public:
 
     // Functions to calculation event weight
     void calculateCVEventWeight(Utility::FileTypeEnums type, Utility::RunPeriodEnums runPeriod);
-    void calculateBeamlineVariationWeights();
+    void calculateBeamlineVariationWeights(Utility::RunPeriodEnums runPeriod);
     float checkWeight(float weight);
 
 	// Functions to recover reconstruction failures

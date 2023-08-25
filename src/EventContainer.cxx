@@ -497,17 +497,17 @@ void EventContainer::calculateCVEventWeight(Utility::FileTypeEnums type, Utility
 }
 
 // Function to calculate beamline variation weights
-void EventContainer::calculateBeamlineVariationWeights() {
+void EventContainer::calculateBeamlineVariationWeights(Utility::RunPeriodEnums runPeriod) {
 
 	// true nu angle from numi beamline 
     nu_angle = GetNuMIAngle(true_nu_px, true_nu_py, true_nu_pz, "beam");
 
     // get weights vector
     std::vector<double> weights;
-    if (nu_pdg == 12) weights = _utility.getWeightsNue(nu_e, nu_angle);
-    else if (nu_pdg == -12) weights = _utility.getWeightsNuebar(nu_e, nu_angle);
-    else if (nu_pdg == 14) weights = _utility.getWeightsNumu(nu_e, nu_angle);
-    else if (nu_pdg == -14) weights = _utility.getWeightsNumubar(nu_e, nu_angle);
+    if (nu_pdg == 12) weights = _utility.getWeightsNue(nu_e, nu_angle, runPeriod);
+    else if (nu_pdg == -12) weights = _utility.getWeightsNuebar(nu_e, nu_angle, runPeriod);
+    else if (nu_pdg == 14) weights = _utility.getWeightsNumu(nu_e, nu_angle, runPeriod);
+    else if (nu_pdg == -14) weights = _utility.getWeightsNumubar(nu_e, nu_angle, runPeriod);
     else {
     	std::cout << "Error: cannot get beamline variation weights" << std::endl;
     	exit(1);

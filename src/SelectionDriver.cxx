@@ -14,7 +14,7 @@
 
 
 // Constructor
-SelectionDriver::SelectionDriver(): _utility() {
+SelectionDriver::SelectionDriver(): _utility(false) {
 	
 	std::cout << "Initialising Selection Driver Class" << std::endl;
 

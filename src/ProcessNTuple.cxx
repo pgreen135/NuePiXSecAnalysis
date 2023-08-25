@@ -53,7 +53,7 @@ int main(int argc, char *argv[]) {
 	subrunsTree = (TTree*)inputFile->Get("nuselection/SubRun");
 
 	// initialise classes
-	Utility _utility;
+	Utility _utility(true);
 	Selection _selection(_utility);
 	BDTTool _BDTTool(true, true, true, true);
 	EventContainer _event(eventsTree, _utility);
@@ -110,8 +110,8 @@ int main(int argc, char *argv[]) {
 	    }
 
 	    // populate beamline variations if required
-	    if (type == 0 || type == 2) {	// nue or nu overlay
-				_event.calculateBeamlineVariationWeights();
+	    if (type == 0 || type == 2) {	// only for nue or nu overlay
+				_event.calculateBeamlineVariationWeights(runPeriod);
 	    }
 
 	    // set the output TTree branch addresses, creating the branches if needed
