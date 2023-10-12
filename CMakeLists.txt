@@ -18,3 +18,11 @@ target_link_libraries(ProcessNTuple PUBLIC xgboost::xgboost ROOT::Core ROOT::Phy
 target_include_directories(ProcessNTuple PRIVATE include)
 
 ROOT_GENERATE_DICTIONARY(map_processntuple_dict MODULE ProcessNTuple LINKDEF include/LinkDef.h)
+
+project(FakeWeight LANGUAGES CXX)
+
+add_executable(FakeWeight src/FakeWeight.cxx)
+target_link_libraries(FakeWeight PUBLIC ROOT::Core ROOT::Physics ROOT::Hist ROOT::Tree ROOT::Gpad)
+target_include_directories(FakeWeight PRIVATE include)
+
+ROOT_GENERATE_DICTIONARY(map_fakeweight_dict MODULE FakeWeight LINKDEF include/LinkDef.h)

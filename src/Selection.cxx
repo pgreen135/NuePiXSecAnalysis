@@ -109,12 +109,20 @@ bool Selection::ApplyBDTBasedSelection(EventContainer &_evt, const BDTTool &_bdt
     bool passLooseProtonPionRejection = ApplyLooseProtonRejection(_evt);
     if (!passLooseProtonPionRejection) return false;
 
-    // BDT neutral pion rejection
+    // event passes loose background rejection
+    _evt.sel_passLooseRejection_ = true;
+
+    // Evaluate BDTs
     bool passBDTNeutralPionRejection = ApplyNeutralPionRejectionBDT(_evt, _bdt, runPeriod);
+    bool passBDTProtonRejection = ApplyProtonRejectionBDT(_evt, _bdt, runPeriod);
+    
+    // BDT neutral pion rejection
     if (!passBDTNeutralPionRejection) return false;
 
+    // event passes loose background rejection
+    _evt.sel_passBDTPi0Rejection_ = true;    
+
     // BDT proton rejection 
-    bool passBDTProtonRejection = ApplyProtonRejectionBDT(_evt, _bdt, runPeriod);
     if (!passBDTProtonRejection) return false;
 
     // event passes
@@ -223,10 +231,6 @@ bool Selection::ApplyMCTrigger(const EventContainer &_evt, Utility::FileTypeEnum
 		else  {
 			if(!ApplySWTriggerCut(_evt.swtrig_post)) return false;
 		}
-		
-		// Possibly BNB only?						
-		//if(!ApplyCommonOpticalFilterPECut(_evt.opfilter_pe_beam)) return false;		    // common optical filter (beam) [MC only]	(should this be applied?)
-		//if(!ApplyCommonOpticalFilterMichelCut(_evt.opfilter_pe_veto)) return false;	    // common optical filter (michel veto) [MC only]  (should this be applied?)
 	}
 
 	return true;
@@ -280,7 +284,6 @@ bool Selection::ApplyGoodTrackSelection(EventContainer &_evt) {
 	if (!_evt.hasSpuriousLeadingTrack &&
 		_evt.trk_pfpgeneration == 2 &&
 		ApplyHitsOnAllPlanesCut(_evt.trk_planehits_U, _evt.trk_planehits_V, _evt.trk_planehits_Y) &&
-		ApplyTrackEnergyCut(_evt.trk_energy_muon) &&
 		ApplyTrackLengthCut(_evt.trk_len) && 
 		ApplyTrackScoreCut(_evt.trk_score) &&
 		ApplyTrackContainmentCut(_evt.trk_sce_end_x, _evt.trk_sce_end_y, _evt.trk_sce_end_z) &&
@@ -290,7 +293,6 @@ bool Selection::ApplyGoodTrackSelection(EventContainer &_evt) {
 	// secondary track	
 	if (_evt.trk2_pfpgeneration == 2 &&
 	    ApplyHitsOnAllPlanesCut(_evt.trk2_planehits_U, _evt.trk2_planehits_V, _evt.trk2_planehits_Y) &&
-		ApplyTrackEnergyCut(_evt.trk2_energy_muon) &&
 		ApplyTrackLengthCut(_evt.trk2_len) && 
 		ApplyTrackScoreCut(_evt.trk2_score) &&
 		ApplyTrackContainmentCut(_evt.trk2_sce_end_x, _evt.trk2_sce_end_y, _evt.trk2_sce_end_z) &&
@@ -300,7 +302,6 @@ bool Selection::ApplyGoodTrackSelection(EventContainer &_evt) {
 	// tertiary track
 	if (_evt.trk3_pfpgeneration == 2 &&
 	    ApplyHitsOnAllPlanesCut(_evt.trk3_planehits_U, _evt.trk3_planehits_V, _evt.trk3_planehits_Y) &&
-		ApplyTrackEnergyCut(_evt.trk3_energy_muon) &&
 		ApplyTrackLengthCut(_evt.trk3_len) && 
 		ApplyTrackScoreCut(_evt.trk3_score) &&
 		ApplyTrackContainmentCut(_evt.trk3_sce_end_x, _evt.trk3_sce_end_y, _evt.trk3_sce_end_z) &&
@@ -610,13 +611,13 @@ bool Selection::ApplyShowerScoreCut(float shr_score){
 
 // Shower hit ratio
 bool Selection::ApplyShowerHitRatioCut(float hits_ratio){
-	if (hits_ratio >= 0.45) return true;
+	if (hits_ratio >= 0.4) return true; // 0.45
 	else return false;
 }
 
 // Pandora topological score
 bool Selection::ApplyTopologicalScoreCut(float topological_score){
-	if(topological_score > 0.4) return true;
+	if(topological_score > 0.25) return true; // 0.4
 	else return false;
 }
 
@@ -728,12 +729,13 @@ bool Selection::ApplyElectronPhotonBDTCutFHC(float bdtscore_electronPhoton) {
 }
 bool Selection::ApplyElectronPhotonBDTCutRHC(float bdtscore_electronPhoton) {
 	if (bdtscore_electronPhoton > 0.80) return true;
+	//if (bdtscore_electronPhoton > 0.2) return true;		// Loose cut for detvars
 	else return false;
 }
 
 // Track Length
 bool Selection::ApplyTrackLengthCut(float trk_len) {
-	if (trk_len >= 5) return true;
+	if (trk_len >= 5 && trk_len <= 200) return true; // 5
 	else return false;
 }
 
@@ -781,6 +783,7 @@ bool Selection::ApplyProtonRejectionBDTCutFHC(float bdtscore_pionProton) {
 }
 bool Selection::ApplyProtonRejectionBDTCutRHC(float bdtscore_pionProton) {
 	if (bdtscore_pionProton > 0.5) return true;
+	//if (bdtscore_pionProton > 0.2) return true;	// loose cut for detvars
 	else return false;
 }
 
@@ -804,7 +807,7 @@ bool Selection::ApplyShrTrackFitCut(float trkfit) {
 
 // Shower Track Fit Length
 bool Selection::ApplyShrTrackLengthCut(float shr_trk_len) {
-	if (shr_trk_len <= 300) return true;
+	if (shr_trk_len <= 250) return true;
 	else return false;
 }
 

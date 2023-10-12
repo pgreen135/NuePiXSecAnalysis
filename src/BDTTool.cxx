@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-BDTTool::BDTTool(bool loadElectronPhotonBDTFHC, bool loadElectronPhotonBDTRHC, bool loadPionProtonBDTFHC, bool loadPionProtonBDTRHC) {
+BDTTool::BDTTool(bool loadElectronPhotonBDTFHC, bool loadElectronPhotonBDTRHC, bool loadPionProtonBDTFHC, bool loadPionProtonBDTRHC, const Utility &utility): _utility{ utility } {
 
 	std::cout << "Initialising BDT Tool Class" << std::endl;
 
@@ -119,36 +119,37 @@ double BDTTool::evaluateElectronPhotonBDTScoreFHC(EventContainer &_evt) const {
 	int xgreturn = -1;
 
 	// sanitize input
-	if (_evt.shr_trkfit_gap10_dedx_max  < 0) _evt.shr_trkfit_gap10_dedx_max = 9999;
-	if (_evt.shr_trkfit_2cm_dedx_max < 0) _evt.shr_trkfit_2cm_dedx_max = 9999;
-	if (_evt.shrmoliereavg < 0) _evt.shrmoliereavg = 9999;
+	if (_evt.shr_trkfit_gap10_dedx_max  < 0 || !_utility.isNumber(_evt.shr_trkfit_gap10_dedx_max)) _evt.shr_trkfit_gap10_dedx_max = 9999;
+	if (_evt.shr_trkfit_2cm_dedx_max < 0 || !_utility.isNumber(_evt.shr_trkfit_2cm_dedx_max)) _evt.shr_trkfit_2cm_dedx_max = 9999;
+	if (_evt.shrmoliereavg < 0 || !_utility.isNumber(_evt.shrmoliereavg) ) _evt.shrmoliereavg = 9999;
 	
-	if (_evt.shrPCA1CMed_5cm < 0) _evt.shrPCA1CMed_5cm = 9999;
-	if (_evt.CylFrac2h_1cm < 0) _evt.CylFrac2h_1cm = 9999;
-	if (_evt.DeltaRMS2h < 0) _evt.DeltaRMS2h = 9999;
-	if (_evt.shrMCSMom < 0) _evt.shrMCSMom = 9999;
+	if (_evt.shrPCA1CMed_5cm < 0 || !_utility.isNumber(_evt.shrPCA1CMed_5cm)) _evt.shrPCA1CMed_5cm = 9999;
+	if (_evt.CylFrac2h_1cm < 0 || !_utility.isNumber(_evt.CylFrac2h_1cm)) _evt.CylFrac2h_1cm = 9999;
+	if (_evt.DeltaRMS2h < 0 || !_utility.isNumber(_evt.DeltaRMS2h)) _evt.DeltaRMS2h = 9999;
+	if (_evt.shrMCSMom < 0 || !_utility.isNumber(_evt.shrMCSMom)) _evt.shrMCSMom = 9999;
 
-	if (_evt.shr_energy_second_cali <= 0) {
+	if (_evt.shr_energy_second_cali <= 0 || !_utility.isNumber(_evt.shr_energy_second_cali)) {
 		_evt.shr_energy_second_cali = 9999;
 		_evt.shr2_distance = 9999;
 		_evt.shr12_p1_dstart = 9999;
 		_evt.shr2_trackEndProximity = 9999;
 		_evt.shr2_pfpgeneration = 9999;
 	}
-	if (_evt.shr2_pfpgeneration == 0) _evt.shr2_pfpgeneration = 9999;
+	if (_evt.shr2_pfpgeneration == 0 || !_utility.isNumber(_evt.shr2_pfpgeneration)) _evt.shr2_pfpgeneration = 9999;
 
-	if (_evt.secondshower_Y_nhit < 0) _evt.secondshower_Y_nhit = 9999;
-	if (_evt.secondshower_Y_vtxdist < 0) _evt.secondshower_Y_vtxdist = 9999;
-	if (_evt.secondshower_Y_dot < 0) _evt.secondshower_Y_dot = 9999;
-	if (_evt.secondshower_Y_anglediff < 0) _evt.secondshower_Y_anglediff = 9999;
-	if (_evt.secondshower_U_nhit < 0) _evt.secondshower_U_nhit = 9999;
-	if (_evt.secondshower_U_vtxdist < 0) _evt.secondshower_U_vtxdist = 9999;
-	if (_evt.secondshower_U_dot < 0) _evt.secondshower_U_dot = 9999;
-	if (_evt.secondshower_U_anglediff < 0) _evt.secondshower_U_anglediff = 9999;
-	if (_evt.secondshower_V_nhit < 0) _evt.secondshower_V_nhit = 9999;
-	if (_evt.secondshower_V_vtxdist < 0) _evt.secondshower_V_vtxdist = 9999;
-	if (_evt.secondshower_V_dot < 0) _evt.secondshower_V_dot = 9999;
-	if (_evt.secondshower_V_anglediff < 0) _evt.secondshower_V_anglediff = 9999; 
+	if (_evt.secondshower_Y_nhit < 0 || !_utility.isNumber(_evt.secondshower_Y_nhit)) _evt.secondshower_Y_nhit = 9999;
+	if (_evt.secondshower_Y_vtxdist < 0 || !_utility.isNumber(_evt.secondshower_Y_vtxdist)) _evt.secondshower_Y_vtxdist = 9999;
+	if (_evt.secondshower_Y_dot < 0 || !_utility.isNumber(_evt.secondshower_Y_dot)) _evt.secondshower_Y_dot = 9999;
+	if (_evt.secondshower_Y_anglediff < 0 || !_utility.isNumber(_evt.secondshower_Y_anglediff)) _evt.secondshower_Y_anglediff = 9999;
+	if (_evt.secondshower_U_nhit < 0 || !_utility.isNumber(_evt.secondshower_U_nhit)) _evt.secondshower_U_nhit = 9999;
+	if (_evt.secondshower_U_vtxdist < 0 || !_utility.isNumber(_evt.secondshower_U_vtxdist)) _evt.secondshower_U_vtxdist = 9999;
+	if (_evt.secondshower_U_dot < 0 || !_utility.isNumber(_evt.secondshower_U_dot)) _evt.secondshower_U_dot = 9999;
+	if (_evt.secondshower_U_anglediff < 0 || !_utility.isNumber(_evt.secondshower_U_anglediff)) _evt.secondshower_U_anglediff = 9999;
+	if (_evt.secondshower_V_nhit < 0 || !_utility.isNumber(_evt.secondshower_V_nhit)) _evt.secondshower_V_nhit = 9999;
+	if (_evt.secondshower_V_vtxdist < 0 || !_utility.isNumber(_evt.secondshower_V_vtxdist)) _evt.secondshower_V_vtxdist = 9999;
+	if (_evt.secondshower_V_dot < 0 || !_utility.isNumber(_evt.secondshower_V_dot)) _evt.secondshower_V_dot = 9999;
+	if (_evt.secondshower_V_anglediff < 0 || !_utility.isNumber(_evt.secondshower_V_anglediff)) _evt.secondshower_V_anglediff = 9999;
+
 
 	/*
 	// Jul 13 model
@@ -256,36 +257,37 @@ double BDTTool::evaluateElectronPhotonBDTScoreRHC(EventContainer &_evt) const {
 	int xgreturn = -1;
 	
 	// sanitize input
-	if (_evt.shr_trkfit_gap10_dedx_max  < 0) _evt.shr_trkfit_gap10_dedx_max = 9999;
-	if (_evt.shr_trkfit_2cm_dedx_max < 0) _evt.shr_trkfit_2cm_dedx_max = 9999;
-	if (_evt.shrmoliereavg < 0) _evt.shrmoliereavg = 9999;
+	if (_evt.shr_trkfit_gap10_dedx_max  < 0 || !_utility.isNumber(_evt.shr_trkfit_gap10_dedx_max)) _evt.shr_trkfit_gap10_dedx_max = 9999;
+	if (_evt.shr_trkfit_2cm_dedx_max < 0 || !_utility.isNumber(_evt.shr_trkfit_2cm_dedx_max)) _evt.shr_trkfit_2cm_dedx_max = 9999;
+	if (_evt.shrmoliereavg < 0 || !_utility.isNumber(_evt.shrmoliereavg) ) _evt.shrmoliereavg = 9999;
 	
-	if (_evt.shrPCA1CMed_5cm < 0) _evt.shrPCA1CMed_5cm = 9999;
-	if (_evt.CylFrac2h_1cm < 0) _evt.CylFrac2h_1cm = 9999;
-	if (_evt.DeltaRMS2h < 0) _evt.DeltaRMS2h = 9999;
-	if (_evt.shrMCSMom < 0) _evt.shrMCSMom = 9999;
+	if (_evt.shrPCA1CMed_5cm < 0 || !_utility.isNumber(_evt.shrPCA1CMed_5cm)) _evt.shrPCA1CMed_5cm = 9999;
+	if (_evt.CylFrac2h_1cm < 0 || !_utility.isNumber(_evt.CylFrac2h_1cm)) _evt.CylFrac2h_1cm = 9999;
+	if (_evt.DeltaRMS2h < 0 || !_utility.isNumber(_evt.DeltaRMS2h)) _evt.DeltaRMS2h = 9999;
+	if (_evt.shrMCSMom < 0 || !_utility.isNumber(_evt.shrMCSMom)) _evt.shrMCSMom = 9999;
 
-	if (_evt.shr_energy_second_cali <= 0) {
+	if (_evt.shr_energy_second_cali <= 0 || !_utility.isNumber(_evt.shr_energy_second_cali)) {
 		_evt.shr_energy_second_cali = 9999;
 		_evt.shr2_distance = 9999;
 		_evt.shr12_p1_dstart = 9999;
 		_evt.shr2_trackEndProximity = 9999;
 		_evt.shr2_pfpgeneration = 9999;
 	}
-	if (_evt.shr2_pfpgeneration == 0) _evt.shr2_pfpgeneration = 9999;
+	if (_evt.shr2_pfpgeneration == 0 || !_utility.isNumber(_evt.shr2_pfpgeneration)) _evt.shr2_pfpgeneration = 9999;
 
-	if (_evt.secondshower_Y_nhit < 0) _evt.secondshower_Y_nhit = 9999;
-	if (_evt.secondshower_Y_vtxdist < 0) _evt.secondshower_Y_vtxdist = 9999;
-	if (_evt.secondshower_Y_dot < 0) _evt.secondshower_Y_dot = 9999;
-	if (_evt.secondshower_Y_anglediff < 0) _evt.secondshower_Y_anglediff = 9999;
-	if (_evt.secondshower_U_nhit < 0) _evt.secondshower_U_nhit = 9999;
-	if (_evt.secondshower_U_vtxdist < 0) _evt.secondshower_U_vtxdist = 9999;
-	if (_evt.secondshower_U_dot < 0) _evt.secondshower_U_dot = 9999;
-	if (_evt.secondshower_U_anglediff < 0) _evt.secondshower_U_anglediff = 9999;
-	if (_evt.secondshower_V_nhit < 0) _evt.secondshower_V_nhit = 9999;
-	if (_evt.secondshower_V_vtxdist < 0) _evt.secondshower_V_vtxdist = 9999;
-	if (_evt.secondshower_V_dot < 0) _evt.secondshower_V_dot = 9999;
-	if (_evt.secondshower_V_anglediff < 0) _evt.secondshower_V_anglediff = 9999;
+	if (_evt.secondshower_Y_nhit < 0 || !_utility.isNumber(_evt.secondshower_Y_nhit)) _evt.secondshower_Y_nhit = 9999;
+	if (_evt.secondshower_Y_vtxdist < 0 || !_utility.isNumber(_evt.secondshower_Y_vtxdist)) _evt.secondshower_Y_vtxdist = 9999;
+	if (_evt.secondshower_Y_dot < 0 || !_utility.isNumber(_evt.secondshower_Y_dot)) _evt.secondshower_Y_dot = 9999;
+	if (_evt.secondshower_Y_anglediff < 0 || !_utility.isNumber(_evt.secondshower_Y_anglediff)) _evt.secondshower_Y_anglediff = 9999;
+	if (_evt.secondshower_U_nhit < 0 || !_utility.isNumber(_evt.secondshower_U_nhit)) _evt.secondshower_U_nhit = 9999;
+	if (_evt.secondshower_U_vtxdist < 0 || !_utility.isNumber(_evt.secondshower_U_vtxdist)) _evt.secondshower_U_vtxdist = 9999;
+	if (_evt.secondshower_U_dot < 0 || !_utility.isNumber(_evt.secondshower_U_dot)) _evt.secondshower_U_dot = 9999;
+	if (_evt.secondshower_U_anglediff < 0 || !_utility.isNumber(_evt.secondshower_U_anglediff)) _evt.secondshower_U_anglediff = 9999;
+	if (_evt.secondshower_V_nhit < 0 || !_utility.isNumber(_evt.secondshower_V_nhit)) _evt.secondshower_V_nhit = 9999;
+	if (_evt.secondshower_V_vtxdist < 0 || !_utility.isNumber(_evt.secondshower_V_vtxdist)) _evt.secondshower_V_vtxdist = 9999;
+	if (_evt.secondshower_V_dot < 0 || !_utility.isNumber(_evt.secondshower_V_dot)) _evt.secondshower_V_dot = 9999;
+	if (_evt.secondshower_V_anglediff < 0 || !_utility.isNumber(_evt.secondshower_V_anglediff)) _evt.secondshower_V_anglediff = 9999;
+
 
     // Jul 13 model (pions training)
     //"shr_trkfit_2cm_dedx_max",
@@ -390,7 +392,7 @@ double BDTTool::evaluatePionProtonBDTScoreFHC(const EventContainer &_evt, int tr
 
 	// --- pion-proton separation BDT ---
 	int xgreturn = -1;
-	
+
 	// create DMatrix, note: order is not the same as in training -- order in .json
 
 	/*

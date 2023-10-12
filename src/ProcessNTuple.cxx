@@ -55,7 +55,7 @@ int main(int argc, char *argv[]) {
 	// initialise classes
 	Utility _utility(true);
 	Selection _selection(_utility);
-	BDTTool _BDTTool(true, true, true, true);
+	BDTTool _BDTTool(true, true, true, true, _utility);
 	EventContainer _event(eventsTree, _utility);
     
   // Create output tree
@@ -84,46 +84,48 @@ int main(int argc, char *argv[]) {
 	
 	// Event loop
 	int n_entries = eventsTree->GetEntries();
-  	std::cout << "Number events: " << n_entries << std::endl;
+	std::cout << "Number events: " << n_entries << std::endl;
 
-  	for (int e = 0; e < n_entries; e++) {
-  	//for (int e = 0; e < 10000; e++) {
-  		
-  		// get current entry
-    	eventsTree->GetEntry(e);    	
+	for (int e = 0; e < n_entries; e++) {
+	//for (int e = 0; e < 10000; e++) {
+		
+		// get current entry
+  	eventsTree->GetEntry(e);    	
 
-	    if ( (e != 0) && (n_entries >= 10) &&  (e % (n_entries/10) == 0) ) {
-	      std::cout << Form("%i0%% Completed...\n", e / (n_entries/10));
-	    }
+    if ( (e != 0) && (n_entries >= 10) &&  (e % (n_entries/10) == 0) ) {
+      std::cout << Form("%i0%% Completed...\n", e / (n_entries/10));
+    }
 
-	    // apply selection
-	    // populates necessary variables to pass to stv tree
-	    bool passSelection = _selection.ApplyBDTBasedSelection(_event, _BDTTool, type, runPeriod);
+    // apply selection
+    // populates necessary variables to pass to stv tree
+    bool passSelection = _selection.ApplyBDTBasedSelection(_event, _BDTTool, type, runPeriod);
 
-	    // keep/discard events depending on classification to account for signal/background enhanced samples 
-	    // for running with intrinsic nue
-	    if (type == 0) {	// intrinsic nue overlay
-	    	if (!((_event.nu_pdg == 12 || _event.nu_pdg == -12) && _event.classification != Utility::kOutFV)) continue;
-	    }
-	    else if (type == 2) { // standard nu overlay
-	    	if (((_event.nu_pdg == 12 || _event.nu_pdg == -12) && _event.classification != Utility::kOutFV)) continue;
-	    }
+    // keep/discard events depending on classification to account for signal/background enhanced samples 
+    // for running with intrinsic nue
+    if (type == 0) {	// intrinsic nue overlay
+    	if (!((_event.nu_pdg == 12 || _event.nu_pdg == -12) && _event.classification != Utility::kOutFV)) continue;
+    }
+    else if (type == 2) { // standard nu overlay
+    	if (((_event.nu_pdg == 12 || _event.nu_pdg == -12) && _event.classification != Utility::kOutFV)) continue;
+    }
+    else if (type == 5) { // nue detvar
+    	if (!((_event.nu_pdg == 12 || _event.nu_pdg == -12) && _event.classification != Utility::kOutFV)) continue;
+		}
+    // populate beamline variations if required
+    if (type == 0 || type == 2 || type == 4) {	// only for nue, nu or dirt overlay
+			_event.calculateBeamlineVariationWeights(runPeriod);
+    }
 
-	    // populate beamline variations if required
-	    if (type == 0 || type == 2) {	// only for nue or nu overlay
-				_event.calculateBeamlineVariationWeights(runPeriod);
-	    }
+    // set the output TTree branch addresses, creating the branches if needed
+  	// (during the first event loop iteration)
+  	if ( !created_output_branches ) {
+  		set_event_output_branch_addresses( *outTree, _event, true );
+  		created_output_branches = true;
+  	}
+  	else set_event_output_branch_addresses( *outTree, _event, false );
 
-	    // set the output TTree branch addresses, creating the branches if needed
-    	// (during the first event loop iteration)
-    	if ( !created_output_branches ) {
-    		set_event_output_branch_addresses( *outTree, _event, true );
-    		created_output_branches = true;
-    	}
-    	else set_event_output_branch_addresses( *outTree, _event, false );
-
-	    // fill output tree
-    	outTree->Fill();
+    // fill output tree
+  	outTree->Fill();
 
 	} // end of event loop
 
@@ -185,6 +187,9 @@ void set_event_output_branch_addresses(TTree& out_tree, EventContainer& ev, bool
 
 			// Set the branch address for this vector of weights
 			set_object_output_branch_address< std::vector<double> >( out_tree, weight_branch_name, ev.mc_weights_ptr_map_.at(weight_branch_name), create);
+
+			// Output list of weights present, for faking structure
+			//std::cout << "Name: " << pair.first << ", Size: " << pair.second.size() << std::endl;
     }
 	}
 
@@ -209,9 +214,23 @@ void set_event_output_branch_addresses(TTree& out_tree, EventContainer& ev, bool
 	}
 
 	// NueCC1piXp selection criteria
+	set_output_branch_address( out_tree, "sel_passLooseRejection", &ev.sel_passLooseRejection_, create, "sel_passLooseRejection/O");
+	set_output_branch_address( out_tree, "sel_passBDTPi0Rejection", &ev.sel_passBDTPi0Rejection_, create, "sel_passBDTPi0Rejection/O");
 	set_output_branch_address( out_tree, "sel_NueCC1piXp", &ev.sel_NueCC1piXp_, create, "sel_NueCC1piXp/O");
 
 	// Observables
+	// BDT Scores
+	set_output_branch_address( out_tree, "sel_BDTScoreElectronPhoton", &ev.BDTScoreElectronPhoton, create, "sel_BDTScoreElectronPhoton/D");	// Reco
+	if (ev.primaryTrackPionlikeLoose) {
+		set_output_branch_address( out_tree, "sel_BDTScorePionProton", &ev.primaryTrackBDTScorePionProton, create, "sel_BDTScorePionProton/D");	// Reco
+	}
+	else if (ev.secondaryTrackPionlikeLoose) {
+		set_output_branch_address( out_tree, "sel_BDTScorePionProton", &ev.secondaryTrackBDTScorePionProton, create, "sel_BDTScorePionProton/D");	// Reco
+	}
+	else {
+		set_output_branch_address( out_tree, "sel_BDTScorePionProton", &ev.tertiaryTrackBDTScorePionProton, create, "sel_BDTScorePionProton/D");	// Reco
+	}
+
 	// Shower energy
 	set_output_branch_address( out_tree, "sel_shr_energy_cali", &ev.shr_energy_cali, create, "sel_shr_energy_cali/F");	// Reco
 	set_output_branch_address( out_tree, "mc_shr_bkt_E", &ev.shr_bkt_E, create, "mc_shr_bkt_E/F");						// Truth

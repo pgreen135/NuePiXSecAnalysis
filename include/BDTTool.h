@@ -14,7 +14,7 @@ public:
 
 	// ----------------------------------
 	// Constructor
-	BDTTool(bool loadElectronPhotonBDTFHC, bool loadElectronPhotonBDTRHC, bool loadPionProtonBDTFHC, bool loadPionProtonBDTRHC);
+	BDTTool(bool loadElectronPhotonBDTFHC, bool loadElectronPhotonBDTRHC, bool loadPionProtonBDTFHC, bool loadPionProtonBDTRHC, const Utility &utility);
 
 	// Destructor
 	~BDTTool();
@@ -36,6 +36,8 @@ public:
 	// ----------------------------------
 
 private:
+
+	Utility _utility;
 
 	// --- BDTs ---
 	bool loadedElectronPhotonBDTFHC; 

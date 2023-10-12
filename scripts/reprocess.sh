@@ -5,7 +5,7 @@ num_expected=2
 
 if [ "$#" -ne "$num_expected" ]; then
   echo "Usage: ./reprocess.sh OUTPUT_DIRECTORY NTUPLE_LIST_FILE"
-  exit 1
+  #exit 1
 fi
 
 output_dir=$1
@@ -13,12 +13,12 @@ ntuple_list_file=$2
 
 if [ ! -f "$ntuple_list_file" ]; then
   echo "Ntuple list file \"${ntuple_list_file}\" not found"
-  exit 1
+  #exit 1
 fi
 
 if [ ! -d "${output_dir}" ]; then
   echo "Output directory \"${output_dir}\" not found"
-  exit 2
+  #exit 2
 fi
 
 # Remove any pre-existing processed STV ntuple files from the output directory

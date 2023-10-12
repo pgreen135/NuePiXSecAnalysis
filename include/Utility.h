@@ -126,7 +126,7 @@ public:
 	bool isExiting(const double x, const double y, const double z) const;
 
 	// Function to check whether number is valid
-	bool isNumber(float input);
+	bool isNumber(float input) const;
 
 	// Function to get beamline variation weights
 	void loadBeamLineVariationHistograms();

@@ -50,7 +50,7 @@ bool Utility::isExiting(const double x, const double y, const double z) const {
 // ------------------------------------------------------------------------------
 
 // Function to check whether number is valid
-bool Utility::isNumber(float input) {
+bool Utility::isNumber(float input) const {
 
 	// infinite 
 	if (std::isinf(input)) {

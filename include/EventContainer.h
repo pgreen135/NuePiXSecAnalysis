@@ -96,6 +96,8 @@ public:
     // --- Variables for STV Tree ---
     bool is_mc_;
     bool mc_is_signal_;
+    bool sel_passLooseRejection_;
+    bool sel_passBDTPi0Rejection_;
     bool sel_NueCC1piXp_;
     int  category_;
     
@@ -119,6 +121,8 @@ public:
 
   	int npi0; 					// Truth: number of neutral pions
     float pi0_e;
+
+    int neta;                   // Truth: number of etas
   	
   	int nproton; 				// Truth: number of protons
   	float proton_e;				// Truth: proton energy

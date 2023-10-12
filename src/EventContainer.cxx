@@ -31,6 +31,7 @@ EventContainer::EventContainer(TTree *tree, const Utility &utility): _utility{ u
 	tree->SetBranchAddress("pi0_e", &pi0_e);
 	tree->SetBranchAddress("nproton", &nproton);
 	tree->SetBranchAddress("proton_e", &proton_e);
+	tree->SetBranchAddress("neta", &neta);
 
 	tree->SetBranchAddress("true_nu_vtx_sce_x", &true_nu_vtx_sce_x);
 	tree->SetBranchAddress("true_nu_vtx_sce_y", &true_nu_vtx_sce_y);
@@ -1181,6 +1182,8 @@ void EventContainer::populateDerivedVariables(Utility::FileTypeEnums type){
     else is_mc_ = false;
     mc_is_signal_ = false;
     category_ = 9999;
+    sel_passLooseRejection_ = false;
+    sel_passBDTPi0Rejection_ = false;
     sel_NueCC1piXp_ = false;
 
     // clear weights
@@ -1227,9 +1230,9 @@ void EventContainer::GetdEdxMax(bool includeGap = false) {
 		temp_shr_tkfit_dedx_Y = shr_tkfit_2cm_dedx_Y;   
 	}
 	// If the dedx is undefined, set the hits to zero
-    if (temp_shr_tkfit_dedx_U <= 0) temp_shr_hits_u_tot = 0;
-    if (temp_shr_tkfit_dedx_V <= 0) temp_shr_hits_v_tot = 0;
-    if (temp_shr_tkfit_dedx_Y <= 0) temp_shr_hits_y_tot = 0;
+    if (temp_shr_tkfit_dedx_U <= 0 || !_utility.isNumber(temp_shr_tkfit_dedx_U)) temp_shr_hits_u_tot = 0;
+    if (temp_shr_tkfit_dedx_V <= 0 || !_utility.isNumber(temp_shr_tkfit_dedx_V)) temp_shr_hits_v_tot = 0;
+    if (temp_shr_tkfit_dedx_Y <= 0 || !_utility.isNumber(temp_shr_tkfit_dedx_Y)) temp_shr_hits_y_tot = 0;
 
     // Collection plane is the largest
     if (temp_shr_hits_y_tot > temp_shr_hits_u_tot && temp_shr_hits_y_tot > temp_shr_hits_v_tot ){
