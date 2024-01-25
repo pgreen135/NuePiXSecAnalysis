@@ -27,9 +27,11 @@ int main() {
 	
 	SelectionDriver _selectionDriver;
 	
-    //_selectionDriver.runBDTSelectionFull();
-    _selectionDriver.runBDTSelectionFHC();
+    _selectionDriver.runBDTSelectionFull();
+    //_selectionDriver.runBDTSelectionFHC();
 	//_selectionDriver.runBDTSelectionRHC();
+
+	//_selectionDriver.optimiseBDTSelection();
 
 	//_selectionDriver.runBDTSelectionDetVarFHC();
 	//_selectionDriver.runBDTSelectionDetVarRHC();

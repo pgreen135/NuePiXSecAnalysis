@@ -205,16 +205,12 @@ void CreateTrainingTree::addEvent(const EventContainer &_evt, Utility::Classific
 		else secondshower_V_anglediff = 9999;
 
 		// determine whether signal or background, and save
-		if (classification == Utility::kCCNue1pi0p || classification == Utility::kCCNue1piNp
-		    //|| classification == Utility::kCCNueNpi 
-			//|| classification == Utility::kCCNueNp
-			) {
+		if (classification == Utility::kCCNue1piXp) {
 			isSignal = 1;
 			trainingTree->Fill();
 			return;
 		}
 		else if (classification == Utility::kCCNuepizero || classification == Utility::kCCNumupizero || classification == Utility::kNCpizero) {
-		//else if (classification == Utility::kCCNumupizero || classification == Utility::kNCpizero) {
 			isSignal = 0;
 			trainingTree->Fill();
 			return;
@@ -361,7 +357,7 @@ void CreateTrainingTree::addEvent(const EventContainer &_evt, Utility::Classific
 		}
 
 		// determine whether signal or background, and save
-		if (classification == Utility::kCCNue1pi0p || classification == Utility::kCCNue1piNp) {
+		if (classification == Utility::kCCNue1piXp) {
 			isSignal = 1;
 			trainingTree->Fill();
 			return;

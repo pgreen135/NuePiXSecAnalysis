@@ -28,11 +28,14 @@ public:
 
 	// Functions to classify the event
 	void EventClassifier(Utility::FileTypeEnums type);
+    void InteractionClassifier(Utility::FileTypeEnums type);
 	Utility::ClassificationEnums getEventClassification(Utility::FileTypeEnums type);
 
     // Functions to calculation event weight
     void calculateCVEventWeight(Utility::FileTypeEnums type, Utility::RunPeriodEnums runPeriod);
     void calculateBeamlineVariationWeights(Utility::RunPeriodEnums runPeriod);
+    void updateNuWroCVWeights(Utility::RunPeriodEnums runPeriod);
+    void calculateFluggWeights(Utility::RunPeriodEnums runPeriod);
     float checkWeight(float weight);
 
 	// Functions to recover reconstruction failures
@@ -43,7 +46,7 @@ public:
 	void failureRecoverySecondShowerProton(); 
 
 	// Functions to populate derived event variables
-	void populateDerivedVariables(Utility::FileTypeEnums type);
+	void populateDerivedVariables(Utility::FileTypeEnums type, Utility::RunPeriodEnums runPeriod);
 	void GetSecondShowerClusterAngleDiff();
 	void GetdEdxMax(bool includeGap);
 	void isAlongWire(unsigned int trackID, bool &isAlongWire_u, bool &isAlongWire_v, bool &isAlongWire_y);
@@ -53,6 +56,7 @@ public:
     float CalculatePionEnergyRange(float R);
     float GetShowerTrackEndProximity(unsigned int shrID);
     double GetNuMIAngle(double px, double py, double pz, std::string direction);
+    void setNuMIAngularVariables();
 
  
     // ----------------------------------
@@ -62,6 +66,7 @@ public:
 
 	// --- Event classification ---
 	Utility::ClassificationEnums classification;
+    Utility::InteractionEnums interactionMode;
 
     // --- Event weight ---
     // CV weight, before POT scaling
@@ -86,6 +91,28 @@ public:
     bool secondaryTrackPionlikeLoose;
     bool tertiaryTrackPionlikeLoose;
 
+    int numberProtons;
+
+    // properties of selected pion track
+    // loose
+    float trk_bragg_mip_pion_loose;
+    int trk_daughters_pion_loose;
+    float trk_dEdx_trunk_pion_loose;
+    float trk_bragg_pion_pion_loose;
+    float trk_llr_pid_score_pion_loose;
+    float trk_score_pion_loose;
+    int trk_end_spacepoints_pion_loose;
+    // full
+    float trk_bragg_mip_pion;
+    int trk_daughters_pion;
+    float trk_dEdx_trunk_pion;
+    float trk_bragg_pion_pion;
+    float trk_llr_pid_score_pion;
+    float trk_score_pion;
+    int trk_end_spacepoints_pion;
+    // pion energy
+    float reco_energy_pion; // A. Smith Method
+
     // --- BDT Scores ---
     double BDTScoreElectronPhoton;
     double primaryTrackBDTScorePionProton;
@@ -100,6 +127,19 @@ public:
     bool sel_passBDTPi0Rejection_;
     bool sel_NueCC1piXp_;
     int  category_;
+    int hornCurrent_;    // horn current to allow sample combination, 0 = FHC, 1 = RHC
+
+    // --- NuMI angles ---
+    // Reconstructed
+    float reco_electron_effective_angle;
+    float reco_cos_electron_effective_angle;
+    float reco_pion_effective_angle;
+    float reco_cos_pion_effective_angle;
+    // Truth
+    float true_electron_effective_angle;
+    float true_cos_electron_effective_angle;
+    float true_pion_effective_angle;
+    float true_cos_pion_effective_angle;
     
 	// --- Event information ---
 	int run, sub, evt;			// run, subrun, event numbers
@@ -115,9 +155,15 @@ public:
   	
   	int nelec; 					// Truth: number of electrons
   	float elec_e;				// Truth: electron energy
+    float elec_px;              // Truth: electron Px
+    float elec_py;              // Truth: electron Py
+    float elec_pz;              // Truth: electron Pz
   	
   	int npion; 					// Truth: number of charged pions
   	float pion_e;				// Truth: pion energy
+    float pion_px;
+    float pion_py;
+    float pion_pz;
 
   	int npi0; 					// Truth: number of neutral pions
     float pi0_e;
@@ -125,6 +171,7 @@ public:
     int neta;                   // Truth: number of etas
   	
   	int nproton; 				// Truth: number of protons
+    int nprotonalternate;
   	float proton_e;				// Truth: proton energy
 
   	// truth neutrino interaction vertex
@@ -153,7 +200,8 @@ public:
     float weightTune; 
     float ppfx_cv;                  // Weight from PPFX CV
     float normalisation_weight;     // NuMI normalisation weights (beam off, dirt)
-    
+    float fake_data_weight;
+
     // systematic universes
     std::map<std::string, std::vector<double>> *mc_weights_map_ = nullptr;
     std::map<std::string, std::vector<double>*> mc_weights_ptr_map_;
@@ -492,7 +540,10 @@ public:
     float trk3_sce_end_x;
     float trk3_sce_end_y;
     float trk3_sce_end_z;
-    
+    float trk3_dir_x;
+    float trk3_dir_y;
+    float trk3_dir_z;
+
     unsigned int trk3_daughters;		// Reco - track: number of daughters
     int trk3_bkt_pdg;			// Backtracker - track: Backtrack PDG
     float trk3_calo_energy;
@@ -619,6 +670,9 @@ public:
     // --- Full MC truth vectors ---
     std::vector<int>   *mc_pdg_v  = nullptr;  // True: Vector of all MC particles
     std::vector<float> *mc_E_v    = nullptr;
+    std::vector<float> *mc_px_v   = nullptr;
+    std::vector<float> *mc_py_v   = nullptr;
+    std::vector<float> *mc_pz_v   = nullptr;
 
 };
 

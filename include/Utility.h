@@ -14,7 +14,7 @@ public:
 	
 	// ----------------------------------
 	// Constructor
-	Utility(bool loadBeamLineWeights = false);
+	Utility(bool loadBeamLineWeights = false, bool loadPPFXCVWeights = false, bool loadFluggWeights = false);
 
 	// Destructor
 	~Utility(){};
@@ -29,7 +29,9 @@ public:
 		kMC,
 		kEXT,
 		kDirt,
-		kDetVar
+		kDetVar,
+		kData,
+		kFakeData
 	};
 
 	// Run periods
@@ -53,8 +55,10 @@ public:
 
 	// Event classification enums
 	enum ClassificationEnums {
-		kCCNue1pi0p,
-		kCCNue1piNp,
+		kCCNue1piXp,
+		//kCCNue1pi0p,
+		//kCCNue1pi1p,
+		//kCCNue1piNp,
 		kCCNueNpi,
 		kCCNuepizero,
 		kCCNueNp,
@@ -64,10 +68,19 @@ public:
 		kNCpizero,
 		kNCOther,
 		kOutFV,
-		kCosmic,
-		kBeamOff,
 		kOutOfCryo,
-		kUnknown
+		kBeamOff,
+		kBeamOn
+	};
+
+	// Interaction type enums
+	enum InteractionEnums {
+		kQE,
+		kCOH,
+		kRES,
+		kDIS,
+		kMEC,
+		kOther
 	};
 
 	// PlotVariable enums
@@ -114,7 +127,11 @@ public:
 		kElectronNeutralPionBDT,
 		kPionProtonBDT,
 		kFHC,
-		kRHC		
+		kRHC,
+		kNumberProtons,
+		kNumberProtonsTrue,
+		kElectronBeta,
+		kPionBeta		
 	};
 
 	// ---------------------------------- 
@@ -128,12 +145,26 @@ public:
 	// Function to check whether number is valid
 	bool isNumber(float input) const;
 
-	// Function to get beamline variation weights
+	// Functions to get beamline variation weights
 	void loadBeamLineVariationHistograms();
 	std::vector<double> getWeightsNue(float energy, float angle, Utility::RunPeriodEnums runPeriod);
 	std::vector<double> getWeightsNuebar(float energy, float angle, Utility::RunPeriodEnums runPeriod);
 	std::vector<double> getWeightsNumu(float energy, float angle, Utility::RunPeriodEnums runPeriod);
 	std::vector<double> getWeightsNumubar(float energy, float angle, Utility::RunPeriodEnums runPeriod);
+
+	// Functions to get PPFX CV weights for fake data
+	void loadPPFXCVHistograms();
+	double getCVWeightNue(float energy, float angle, Utility::RunPeriodEnums runPeriod);
+	double getCVWeightNuebar(float energy, float angle, Utility::RunPeriodEnums runPeriod);
+	double getCVWeightNumu(float energy, float angle, Utility::RunPeriodEnums runPeriod);
+	double getCVWeightNumubar(float energy, float angle, Utility::RunPeriodEnums runPeriod);
+
+	// Functions to get Flugg weights for fake data
+	void loadFluggHistograms();
+	double getFluggWeightNue(float energy, float angle, Utility::RunPeriodEnums runPeriod);
+	double getFluggWeightNuebar(float energy, float angle, Utility::RunPeriodEnums runPeriod);
+	double getFluggWeightNumu(float energy, float angle, Utility::RunPeriodEnums runPeriod);
+	double getFluggWeightNumubar(float energy, float angle, Utility::RunPeriodEnums runPeriod);
 
 private:
 
@@ -148,6 +179,25 @@ private:
 	std::vector<TH2F> h_nuebar_rhc;
 	std::vector<TH2F> h_numu_rhc;
 	std::vector<TH2F> h_numubar_rhc;
+
+	// PPFX CV weight histograms
+	// fhc
+	TH2F ppfx_nue_fhc;
+	TH2F ppfx_nuebar_fhc;
+	TH2F ppfx_numu_fhc;
+	TH2F ppfx_numubar_fhc;
+
+	// Flugg CV histograms
+	// fhc
+	TH2F flugg_nue_fhc;
+	TH2F flugg_nuebar_fhc;
+	TH2F flugg_numu_fhc;
+	TH2F flugg_numubar_fhc;
+	// rhc
+	TH2F flugg_nue_rhc;
+	TH2F flugg_nuebar_rhc;
+	TH2F flugg_numu_rhc;
+	TH2F flugg_numubar_rhc;
 }; 
 
 #endif

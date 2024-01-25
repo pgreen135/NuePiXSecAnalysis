@@ -43,6 +43,12 @@ public:
 	bool ApplyProtonRejection(EventContainer &_evt);
 	bool ApplyLooseProtonRejection(EventContainer &_evt);
 	bool ApplyProtonRejectionBDT(EventContainer &_evt, const BDTTool &_bdt, Utility::RunPeriodEnums runPeriod);
+
+	// Count Protons
+	int CountProtons(EventContainer &_evt, const BDTTool &_bdt, Utility::RunPeriodEnums runPeriod);
+
+	// Selected Pion Information
+	void setSelectedPionInformation(EventContainer &_evt);
 	
 	// ----------------------------------
 

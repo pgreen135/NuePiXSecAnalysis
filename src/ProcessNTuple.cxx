@@ -32,16 +32,16 @@ int main(int argc, char *argv[]) {
 	if ( argc != 5 ) {
     	std::cout << "Usage: ProcessNTuple INPUT_PELEE_NTUPLE_FILE OUTPUT_FILE TYPE_ENUM RUN_ENUM" << std::endl;
     	return 1;
-  	}
+	}
 
-  	std::string input_filename( argv[1] );
-  	std::string output_filename( argv[2] );
-  	std::string type_str ( argv[3] );
-  	std::string runPeriod_str ( argv[4] );
-  	Utility::FileTypeEnums type = static_cast<Utility::FileTypeEnums>(stoi(type_str));
-  	Utility::RunPeriodEnums runPeriod = static_cast<Utility::RunPeriodEnums>(stoi(runPeriod_str));
+	std::string input_filename( argv[1] );
+	std::string output_filename( argv[2] );
+	std::string type_str ( argv[3] );
+	std::string runPeriod_str ( argv[4] );
+	Utility::FileTypeEnums type = static_cast<Utility::FileTypeEnums>(stoi(type_str));
+	Utility::RunPeriodEnums runPeriod = static_cast<Utility::RunPeriodEnums>(stoi(runPeriod_str));
 
-  	std::cout << "Processing file: " << input_filename << ", type enum: " << type << ", run period enum: " << runPeriod << std::endl;
+	std::cout << "Processing file: " << input_filename << ", type enum: " << type << ", run period enum: " << runPeriod << std::endl;
   
 	// Get the TTrees containing the event ntuples and subrun POT information
 	// read file
@@ -49,11 +49,18 @@ int main(int argc, char *argv[]) {
 	TTree *eventsTree = NULL;
 	TTree *subrunsTree = NULL;
 	inputFile = new TFile(input_filename.c_str());  
-	eventsTree = (TTree*)inputFile->Get("nuselection/NeutrinoSelectionFilter");
-	subrunsTree = (TTree*)inputFile->Get("nuselection/SubRun");
-
+	
+	if (type == 99) { // 7
+ 		eventsTree = (TTree*)inputFile->Get("NeutrinoSelectionFilter");
+ 		subrunsTree = (TTree*)inputFile->Get("SubRun");
+	}
+	else {
+		eventsTree = (TTree*)inputFile->Get("nuselection/NeutrinoSelectionFilter");
+   	subrunsTree = (TTree*)inputFile->Get("nuselection/SubRun");
+	}
+	
 	// initialise classes
-	Utility _utility(true);
+	Utility _utility(true,true,true);
 	Selection _selection(_utility);
 	BDTTool _BDTTool(true, true, true, true, _utility);
 	EventContainer _event(eventsTree, _utility);
@@ -87,8 +94,8 @@ int main(int argc, char *argv[]) {
 	std::cout << "Number events: " << n_entries << std::endl;
 
 	for (int e = 0; e < n_entries; e++) {
-	//for (int e = 0; e < 10000; e++) {
-		
+	//for (int e = 16000; e < 32000; e++) {
+		  
 		// get current entry
   	eventsTree->GetEntry(e);    	
 
@@ -102,20 +109,30 @@ int main(int argc, char *argv[]) {
 
     // keep/discard events depending on classification to account for signal/background enhanced samples 
     // for running with intrinsic nue
-    if (type == 0) {	// intrinsic nue overlay
-    	if (!((_event.nu_pdg == 12 || _event.nu_pdg == -12) && _event.classification != Utility::kOutFV)) continue;
+    if (type == 0 || type == 7) {	// intrinsic nue overlay
+    	if (!((_event.classification == Utility::kCCNue1piXp || _event.classification == Utility::kCCNueNpi || _event.classification == Utility::kCCNuepizero ||
+    				_event.classification == Utility::kCCNueNp || _event.classification == Utility::kCCNueOther))) continue;
     }
     else if (type == 2) { // standard nu overlay
-    	if (((_event.nu_pdg == 12 || _event.nu_pdg == -12) && _event.classification != Utility::kOutFV)) continue;
+    	if (((_event.classification == Utility::kCCNue1piXp || _event.classification == Utility::kCCNueNpi || _event.classification == Utility::kCCNuepizero ||
+    				_event.classification == Utility::kCCNueNp || _event.classification == Utility::kCCNueOther))) continue;
     }
     else if (type == 5) { // nue detvar
-    	if (!((_event.nu_pdg == 12 || _event.nu_pdg == -12) && _event.classification != Utility::kOutFV)) continue;
+    	if (!(_event.classification == Utility::kCCNue1piXp || _event.classification == Utility::kCCNueNpi || _event.classification == Utility::kCCNuepizero ||
+    				_event.classification == Utility::kCCNueNp || _event.classification == Utility::kCCNueOther)) continue;
 		}
     // populate beamline variations if required
     if (type == 0 || type == 2 || type == 4) {	// only for nue, nu or dirt overlay
 			_event.calculateBeamlineVariationWeights(runPeriod);
     }
 
+    // update weights for NuWro or Flugg fake data --- note: needs manually changing for other samples, need to make proper way to configure
+    if (type == 7) {
+    	_event.updateNuWroCVWeights(runPeriod);
+    }
+
+    //_event.calculateFluggWeights(runPeriod);
+     
     // set the output TTree branch addresses, creating the branches if needed
   	// (during the first event loop iteration)
   	if ( !created_output_branches ) {
@@ -148,11 +165,17 @@ void set_event_output_branch_addresses(TTree& out_tree, EventContainer& ev, bool
 	// MC event category
 	set_output_branch_address( out_tree, "category", &ev.category_, create, "category/I");
 
+	// Horn current
+	set_output_branch_address( out_tree, "hornCurrent", &ev.hornCurrent_, create, "hornCurrent/I");
+
 	// CV Event weights
 	set_output_branch_address( out_tree, "spline_weight", &ev.weightSpline, create, "spline_weight/F");
 	set_output_branch_address( out_tree, "tuned_cv_weight", &ev.weightTune, create, "tuned_cv_weight/F");
 	set_output_branch_address( out_tree, "ppfx_cv_weight", &ev.ppfx_cv, create, "ppfx_cv_weight/F");
 	set_output_branch_address( out_tree, "normalisation_weight", &ev.normalisation_weight, create, "normalisation_weight/F");
+
+	// Fake data weight (testing)
+	//set_output_branch_address( out_tree, "fake_data_weight", &ev.fake_data_weight, create, "fake_data_weight/F");	// comment out when not needed, should implement proper way to run
 
 	// If MC weights are available, store them in the output TTree
 	if ( ev.mc_weights_map_ ) {
@@ -231,10 +254,58 @@ void set_event_output_branch_addresses(TTree& out_tree, EventContainer& ev, bool
 		set_output_branch_address( out_tree, "sel_BDTScorePionProton", &ev.tertiaryTrackBDTScorePionProton, create, "sel_BDTScorePionProton/D");	// Reco
 	}
 
-	// Shower energy
+	// Shower/Electron energy
 	set_output_branch_address( out_tree, "sel_shr_energy_cali", &ev.shr_energy_cali, create, "sel_shr_energy_cali/F");	// Reco
-	set_output_branch_address( out_tree, "mc_shr_bkt_E", &ev.shr_bkt_E, create, "mc_shr_bkt_E/F");						// Truth
-  	
+	set_output_branch_address( out_tree, "mc_shr_bkt_E", &ev.shr_bkt_E, create, "mc_shr_bkt_E/F");						// Truth - shower energy
+	set_output_branch_address( out_tree, "mc_elec_e", &ev.elec_e, create, "mc_elec_e/F");										// Truth - electron energy
+
+	// Electron NuMI angle (beta)
+	set_output_branch_address( out_tree, "sel_reco_cos_electron_effective_angle", &ev.reco_cos_electron_effective_angle, create, "sel_reco_cos_electron_effective_angle/F");	// Reco
+	set_output_branch_address( out_tree, "mc_true_cos_electron_effective_angle", &ev.true_cos_electron_effective_angle, create, "mc_true_cos_electron_effective_angle/F");		// Truth
+
+	// Pion Energy
+	set_output_branch_address( out_tree, "sel_reco_energy_pion", &ev.reco_energy_pion, create, "sel_reco_energy_pion/F");	// Reco - range-based
+	set_output_branch_address( out_tree, "mc_pion_e", &ev.pion_e, create, "mc_pion_e/F");											// Truth - pion energy
+
+	// Pion NuMI angle (beta)
+	set_output_branch_address( out_tree, "sel_reco_cos_pion_effective_angle", &ev.reco_cos_pion_effective_angle, create, "sel_reco_cos_pion_effective_angle/F");	// Reco
+	set_output_branch_address( out_tree, "mc_true_cos_pion_effective_angle", &ev.true_cos_pion_effective_angle, create, "mc_true_cos_pion_effective_angle/F");		// Truth
+
+	// Number protons
+	set_output_branch_address( out_tree, "sel_numberProtons", &ev.numberProtons, create, "sel_numberProtons/I");	// Reco
+	set_output_branch_address( out_tree, "mc_nproton", &ev.nproton, create, "mc_nproton/I");											// Truth
+
+	// Track BDT properties
+	set_output_branch_address( out_tree, "sel_bragg_mip_pion_loose", &ev.trk_bragg_mip_pion_loose, create, "sel_bragg_mip_pion_loose/F");
+	set_output_branch_address( out_tree, "sel_trk_daughters_pion_loose", &ev.trk_daughters_pion_loose, create, "sel_trk_daughters_pion_loose/I");
+	set_output_branch_address( out_tree, "sel_trk_dEdx_trunk_pion_loose", &ev.trk_dEdx_trunk_pion_loose, create, "sel_trk_dEdx_trunk_pion_loose/F");
+	set_output_branch_address( out_tree, "sel_trk_bragg_pion_pion_loose", &ev.trk_bragg_pion_pion_loose, create, "sel_trk_bragg_pion_pion_loose/F");
+	set_output_branch_address( out_tree, "sel_trk_llr_pid_score_pion_loose", &ev.trk_llr_pid_score_pion_loose, create, "sel_trk_llr_pid_score_pion_loose/F");
+	set_output_branch_address( out_tree, "sel_trk_score_pion_loose", &ev.trk_score_pion_loose, create, "sel_trk_score_pion_loose/F");
+	set_output_branch_address( out_tree, "sel_trk_end_spacepoints_pion_loose", &ev.trk_end_spacepoints_pion_loose, create, "sel_trk_end_spacepoints_pion_loose/I");
+
+	set_output_branch_address( out_tree, "sel_bragg_mip_pion", &ev.trk_bragg_mip_pion, create, "sel_bragg_mip_pion/F");
+	set_output_branch_address( out_tree, "sel_trk_daughters_pion", &ev.trk_daughters_pion, create, "sel_trk_daughters_pion/I");
+	set_output_branch_address( out_tree, "sel_trk_dEdx_trunk_pion", &ev.trk_dEdx_trunk_pion, create, "sel_trk_dEdx_trunk_pion/F");
+	set_output_branch_address( out_tree, "sel_trk_bragg_pion_pion", &ev.trk_bragg_pion_pion, create, "sel_trk_bragg_pion_pion/F");
+	set_output_branch_address( out_tree, "sel_trk_llr_pid_score_pion", &ev.trk_llr_pid_score_pion, create, "sel_trk_llr_pid_score_pion/F");
+	set_output_branch_address( out_tree, "sel_trk_score_pion", &ev.trk_score_pion, create, "sel_trk_score_pion/F");
+	set_output_branch_address( out_tree, "sel_trk_end_spacepoints_pion", &ev.trk_end_spacepoints_pion, create, "sel_trk_end_spacepoints_pion/I");
+
+	// Shower BDT properties
+	set_output_branch_address(out_tree,  "sel_n_showers_contained", &ev.n_showers_contained, create, "sel_n_showers_contained/I");
+	set_output_branch_address( out_tree, "sel_shrmoliereavg", &ev.shrmoliereavg, create, "sel_shrmoliereavg/F");
+	set_output_branch_address( out_tree, "sel_shr_distance", &ev.shr_distance, create, "sel_shr_distance/F");
+	set_output_branch_address( out_tree, "sel_shr2_pfpgeneration", &ev.shr2_pfpgeneration, create, "sel_shr2_pfpgeneration/I");
+	set_output_branch_address( out_tree, "sel_shr_trkfit_2cm_dedx_best", &ev.shr_trkfit_2cm_dedx_max, create, "sel_shr_trkfit_2cm_dedx_best/F");
+	set_output_branch_address( out_tree, "sel_shr_trkfit_gap10_dedx_best", &ev.shr_trkfit_gap10_dedx_max, create, "sel_shr_trkfit_gap10_dedx_best/F");
+	set_output_branch_address( out_tree, "sel_shr_energyFraction", &ev.shr_energyFraction, create, "sel_shr_energyFraction/F");
+	set_output_branch_address( out_tree, "sel_shr2_distance", &ev.shr2_distance, create, "sel_shr2_distance/F");
+  set_output_branch_address( out_tree, "sel_shrMCSMom", &ev.shrMCSMom, create, "sel_shrMCSMom/F");
+
+  // Interaction type
+  set_output_branch_address( out_tree, "mc_ccnc", &ev.ccnc, create, "mc_ccnc/I");
+  set_output_branch_address( out_tree, "mc_interaction", &ev.interaction, create, "mc_interaction/I");
 }
 
 // Helper function that creates a branch (or just sets a new address) for a
