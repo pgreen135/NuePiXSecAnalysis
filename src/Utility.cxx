@@ -8,7 +8,7 @@
 #include <TFile.h>
 
 // Constructor
-Utility::Utility(bool loadBeamLineWeights, bool loadPPFXCVWeights, bool loadFluggWeights) {
+Utility::Utility(bool loadBeamLineWeights, bool loadPPFXCVWeights, bool loadFluggWeights, bool loadReweightRatios) {
 	
 	std::cout << "Initialising Utilities Class" << std::endl;
 
@@ -28,6 +28,12 @@ Utility::Utility(bool loadBeamLineWeights, bool loadPPFXCVWeights, bool loadFlug
 	if (loadFluggWeights) {
 		std::cout << "Loading Flugg weights for fake data" << std::endl;
 		loadFluggHistograms();
+	}
+
+	// load re-weighting angle ratio histograms
+	if (loadReweightRatios) {
+		std::cout << "Loading re-weighting ratios" << std::endl;
+		loadReweightRatioHistograms();
 	}
 }
 
@@ -78,12 +84,23 @@ bool Utility::isNumber(float input) const {
 
 // ------------------------------------------------------------------------------
 
+void Utility::scaleByBinWidth(TH1F* hist) {
+    int num_bins = hist->GetNbinsX();
+    for ( int b = 1; b <= num_bins; b++ ) {
+      double width = hist->GetBinWidth(b);
+      double value = hist->GetBinContent(b);
+      hist->SetBinContent(b, value/width);
+    }
+}
+
+// ------------------------------------------------------------------------------
+
 // Functions to get beam line variation weights
 void Utility::loadBeamLineVariationHistograms() {
 
 	// load beamline variations TH2D
 	TFile *beamlineVariationsFile = NULL;
-	beamlineVariationsFile = new TFile("/Users/patrick/Documents/MicroBooNE/CrossSections/NuePiXSec_Analysis/NuMIBeamLineWeights/NuMI_Beamline_Variations_to_CV_Ratios.root");
+	beamlineVariationsFile = new TFile("/Users/patrick/Documents/MicroBooNE/CrossSections/NuePiXSec_Analysis/NuMIBeamLineWeights/NuMI_Geometry_Weights_Histograms.root");
 	
 	// loop over beamline variations
 	std::vector<std::string> horncur {"FHC", "RHC"};
@@ -244,16 +261,40 @@ std::vector<double> Utility::getWeightsNumubar(float energy, float angle, Utilit
 // Functions to get PPFX CV weights for NuWro samples
 void Utility::loadPPFXCVHistograms() {
 
-	// load beamline variations TH2D
-	TFile *PPFXCVFile = NULL;
-	PPFXCVFile = new TFile("/Users/patrick/Documents/MicroBooNE/CrossSections/NuePiXSec_Analysis/NuMIPPFXCVWeights/ppfx_maps.root");	// FHC only, need RHC too
-	
-	ppfx_nue_fhc = *(TH2F*)PPFXCVFile->Get("nue_ratio");
-	ppfx_nuebar_fhc = *(TH2F*)PPFXCVFile->Get("nuebar_ratio");
-	ppfx_numu_fhc = *(TH2F*)PPFXCVFile->Get("numu_ratio");
-	ppfx_numubar_fhc = *(TH2F*)PPFXCVFile->Get("numubar_ratio");
+	// load ratios
+	// Old Flux
+	/*
+	TFile *PPFXCVFileFHC = new TFile("/Users/patrick/Documents/MicroBooNE/CrossSections/NuePiXSec_Analysis/NuMIPPFXCVWeights/ppfx_maps_fhc_new.root");	// FHC
+	TFile *PPFXCVFileRHC = new TFile("/Users/patrick/Documents/MicroBooNE/CrossSections/NuePiXSec_Analysis/NuMIPPFXCVWeights/ppfx_maps_rhc_new.root");	// RHC
+
+	ppfx_nue_fhc = *(TH2F*)PPFXCVFileFHC->Get("nue_ratio");
+	ppfx_nuebar_fhc = *(TH2F*)PPFXCVFileFHC->Get("nuebar_ratio");
+	ppfx_numu_fhc = *(TH2F*)PPFXCVFileFHC->Get("numu_ratio");
+	ppfx_numubar_fhc = *(TH2F*)PPFXCVFileFHC->Get("numubar_ratio");
+
+	ppfx_nue_rhc = *(TH2F*)PPFXCVFileRHC->Get("nue_ratio");
+	ppfx_nuebar_rhc = *(TH2F*)PPFXCVFileRHC->Get("nuebar_ratio");
+	ppfx_numu_rhc = *(TH2F*)PPFXCVFileRHC->Get("numu_ratio");
+	ppfx_numubar_rhc = *(TH2F*)PPFXCVFileRHC->Get("numubar_ratio");
+
+	PPFXCVFileFHC->Close();
+	PPFXCVFileRHC->Close();
+	*/
+	// New Flux (direct re-weighting)
+	TFile *PPFXCVFile = new TFile("/Users/patrick/Documents/MicroBooNE/CrossSections/NuePiXSec_Analysis/NuMIPPFXCVWeights/ratios_g4_10_4_cvonly_fornuwrofakedata.root"); // old flux without ppfx --> new flux with ppfx, E/Theta binning
+
+	ppfx_nue_fhc = *(TH2F*)PPFXCVFile->Get("ratio_cv_fhc_enu_angle_nue");
+	ppfx_nuebar_fhc = *(TH2F*)PPFXCVFile->Get("ratio_cv_fhc_enu_angle_nuebar");
+	ppfx_numu_fhc = *(TH2F*)PPFXCVFile->Get("ratio_cv_fhc_enu_angle_numu");
+	ppfx_numubar_fhc = *(TH2F*)PPFXCVFile->Get("ratio_cv_fhc_enu_angle_numubar");
+
+	ppfx_nue_rhc = *(TH2F*)PPFXCVFile->Get("ratio_cv_rhc_enu_angle_nue");
+	ppfx_nuebar_rhc = *(TH2F*)PPFXCVFile->Get("ratio_cv_rhc_enu_angle_nuebar");
+	ppfx_numu_rhc = *(TH2F*)PPFXCVFile->Get("ratio_cv_rhc_enu_angle_numu");
+	ppfx_numubar_rhc = *(TH2F*)PPFXCVFile->Get("ratio_cv_rhc_enu_angle_numubar");
 
 	PPFXCVFile->Close();
+
 }
 
 double Utility::getCVWeightNue(float energy, float angle, Utility::RunPeriodEnums runPeriod) {
@@ -268,8 +309,9 @@ double Utility::getCVWeightNue(float energy, float angle, Utility::RunPeriodEnum
 	}
 	// rhc
 	else if (runPeriod == Utility::kRun1b || runPeriod == Utility::kRun2b || runPeriod == Utility::kRun3b || runPeriod == Utility::kRun4ab) {
-		std::cout << "Error [Utility::getWeights]: RHC weights not available." << std::endl;
-		weight = 1;
+		int binx = ppfx_nue_rhc.GetXaxis()->FindBin(energy);
+		int biny = ppfx_nue_rhc.GetYaxis()->FindBin(angle);
+		weight = ppfx_nue_rhc.GetBinContent(binx,biny);
 	}
 	else {
 		std::cout << "Error [Utility::getWeights]: invalid run period." << std::endl;
@@ -290,8 +332,9 @@ double Utility::getCVWeightNuebar(float energy, float angle, Utility::RunPeriodE
 	}
 	// rhc
 	else if (runPeriod == Utility::kRun1b || runPeriod == Utility::kRun2b || runPeriod == Utility::kRun3b || runPeriod == Utility::kRun4ab) {
-		std::cout << "Error [Utility::getWeights]: RHC weights not available." << std::endl;
-		weight = 1;
+		int binx = ppfx_nuebar_rhc.GetXaxis()->FindBin(energy);
+		int biny = ppfx_nuebar_rhc.GetYaxis()->FindBin(angle);
+		weight = ppfx_nuebar_rhc.GetBinContent(binx,biny);
 	}
 	else {
 		std::cout << "Error [Utility::getWeights]: invalid run period." << std::endl;
@@ -312,8 +355,9 @@ double Utility::getCVWeightNumu(float energy, float angle, Utility::RunPeriodEnu
 	}
 	// rhc
 	else if (runPeriod == Utility::kRun1b || runPeriod == Utility::kRun2b || runPeriod == Utility::kRun3b || runPeriod == Utility::kRun4ab) {
-		std::cout << "Error [Utility::getWeights]: RHC weights not available." << std::endl;
-		weight = 1;
+		int binx = ppfx_numu_rhc.GetXaxis()->FindBin(energy);
+		int biny = ppfx_numu_rhc.GetYaxis()->FindBin(angle);
+		weight = ppfx_numu_rhc.GetBinContent(binx,biny);
 	}
 	else {
 		std::cout << "Error [Utility::getWeights]: invalid run period." << std::endl;
@@ -334,8 +378,9 @@ double Utility::getCVWeightNumubar(float energy, float angle, Utility::RunPeriod
 	}
 	// rhc
 	else if (runPeriod == Utility::kRun1b || runPeriod == Utility::kRun2b || runPeriod == Utility::kRun3b || runPeriod == Utility::kRun4ab) {
-		std::cout << "Error [Utility::getWeights]: RHC weights not available." << std::endl;
-		weight = 1;
+		int binx = ppfx_numubar_rhc.GetXaxis()->FindBin(energy);
+		int biny = ppfx_numubar_rhc.GetYaxis()->FindBin(angle);
+		weight = ppfx_numubar_rhc.GetBinContent(binx,biny);
 	}
 	else {
 		std::cout << "Error [Utility::getWeights]: invalid run period." << std::endl;
@@ -353,15 +398,15 @@ void Utility::loadFluggHistograms() {
 	TFile *FluggFile = NULL;
 	FluggFile = new TFile("/Users/patrick/Documents/MicroBooNE/CrossSections/NuePiXSec_Analysis/FluggWeights/flugg_ratios_ppfx.root");
 	
-	flugg_nue_fhc = *(TH2F*)FluggFile->Get("ratio_nue_FHC");
-	flugg_nuebar_fhc = *(TH2F*)FluggFile->Get("ratio_nuebar_FHC");
-	flugg_numu_fhc = *(TH2F*)FluggFile->Get("ratio_numu_FHC");
-	flugg_numubar_fhc = *(TH2F*)FluggFile->Get("ratio_numubar_FHC");
+	flugg_nue_fhc = *(TH1F*)FluggFile->Get("ratio_nue_FHC");
+	flugg_nuebar_fhc = *(TH1F*)FluggFile->Get("ratio_nuebar_FHC");
+	flugg_numu_fhc = *(TH1F*)FluggFile->Get("ratio_numu_FHC");
+	flugg_numubar_fhc = *(TH1F*)FluggFile->Get("ratio_numubar_FHC");
 
-	flugg_nue_rhc = *(TH2F*)FluggFile->Get("ratio_nue_RHC");
-	flugg_nuebar_rhc = *(TH2F*)FluggFile->Get("ratio_nuebar_RHC");
-	flugg_numu_rhc = *(TH2F*)FluggFile->Get("ratio_numu_RHC");
-	flugg_numubar_rhc = *(TH2F*)FluggFile->Get("ratio_numubar_RHC");
+	flugg_nue_rhc = *(TH1F*)FluggFile->Get("ratio_nue_RHC");
+	flugg_nuebar_rhc = *(TH1F*)FluggFile->Get("ratio_nuebar_RHC");
+	flugg_numu_rhc = *(TH1F*)FluggFile->Get("ratio_numu_RHC");
+	flugg_numubar_rhc = *(TH1F*)FluggFile->Get("ratio_numubar_RHC");
 
 	FluggFile->Close();
 }
@@ -373,14 +418,16 @@ double Utility::getFluggWeightNue(float energy, float angle, Utility::RunPeriodE
 	// fhc
 	if (runPeriod == Utility::kRun1a || runPeriod == Utility::kRun2a || runPeriod == Utility::kRun4cd || runPeriod == Utility::kRun5) {
 		int binx = flugg_nue_fhc.GetXaxis()->FindBin(energy);
-		int biny = flugg_nue_fhc.GetYaxis()->FindBin(angle);
-		weight = flugg_nue_fhc.GetBinContent(binx,biny);
+		//int biny = flugg_nue_fhc.GetYaxis()->FindBin(angle);
+		//weight = flugg_nue_fhc.GetBinContent(binx,biny);
+		weight = flugg_nue_fhc.GetBinContent(binx);
 	}
 	// rhc
 	else if (runPeriod == Utility::kRun1b || runPeriod == Utility::kRun2b || runPeriod == Utility::kRun3b || runPeriod == Utility::kRun4ab) {
 		int binx = flugg_nue_rhc.GetXaxis()->FindBin(energy);
-		int biny = flugg_nue_rhc.GetYaxis()->FindBin(angle);
-		weight = flugg_nue_rhc.GetBinContent(binx,biny);
+		//int biny = flugg_nue_rhc.GetYaxis()->FindBin(angle);
+		//weight = flugg_nue_rhc.GetBinContent(binx,biny);
+		weight = flugg_nue_rhc.GetBinContent(binx);
 	}
 	else {
 		std::cout << "Error [Utility::getWeights]: invalid run period." << std::endl;
@@ -396,14 +443,16 @@ double Utility::getFluggWeightNuebar(float energy, float angle, Utility::RunPeri
 	// fhc
 	if (runPeriod == Utility::kRun1a || runPeriod == Utility::kRun2a || runPeriod == Utility::kRun4cd || runPeriod == Utility::kRun5) {
 		int binx = flugg_nuebar_fhc.GetXaxis()->FindBin(energy);
-		int biny = flugg_nuebar_fhc.GetYaxis()->FindBin(angle);
-		weight = flugg_nuebar_fhc.GetBinContent(binx,biny);
+		//int biny = flugg_nuebar_fhc.GetYaxis()->FindBin(angle);
+		//weight = flugg_nuebar_fhc.GetBinContent(binx,biny);
+		weight = flugg_nuebar_fhc.GetBinContent(binx);
 	}
 	// rhc
 	else if (runPeriod == Utility::kRun1b || runPeriod == Utility::kRun2b || runPeriod == Utility::kRun3b || runPeriod == Utility::kRun4ab) {
 		int binx = flugg_nuebar_rhc.GetXaxis()->FindBin(energy);
-		int biny = flugg_nuebar_rhc.GetYaxis()->FindBin(angle);
-		weight = flugg_nuebar_rhc.GetBinContent(binx,biny);
+		//int biny = flugg_nuebar_rhc.GetYaxis()->FindBin(angle);
+		//weight = flugg_nuebar_rhc.GetBinContent(binx,biny);
+		weight = flugg_nuebar_rhc.GetBinContent(binx);
 	}
 	else {
 		std::cout << "Error [Utility::getWeights]: invalid run period." << std::endl;
@@ -419,14 +468,16 @@ double Utility::getFluggWeightNumu(float energy, float angle, Utility::RunPeriod
 	// fhc
 	if (runPeriod == Utility::kRun1a || runPeriod == Utility::kRun2a || runPeriod == Utility::kRun4cd || runPeriod == Utility::kRun5) {
 		int binx = flugg_numu_fhc.GetXaxis()->FindBin(energy);
-		int biny = flugg_numu_fhc.GetYaxis()->FindBin(angle);
-		weight = flugg_numu_fhc.GetBinContent(binx,biny);
+		//int biny = flugg_numu_fhc.GetYaxis()->FindBin(angle);
+		//weight = flugg_numu_fhc.GetBinContent(binx,biny);
+		weight = flugg_numu_fhc.GetBinContent(binx);
 	}
 	// rhc
 	else if (runPeriod == Utility::kRun1b || runPeriod == Utility::kRun2b || runPeriod == Utility::kRun3b || runPeriod == Utility::kRun4ab) {
 		int binx = flugg_numu_rhc.GetXaxis()->FindBin(energy);
-		int biny = flugg_numu_rhc.GetYaxis()->FindBin(angle);
-		weight = flugg_numu_rhc.GetBinContent(binx,biny);
+		//int biny = flugg_numu_rhc.GetYaxis()->FindBin(angle);
+		//weight = flugg_numu_rhc.GetBinContent(binx,biny);
+		weight = flugg_numu_rhc.GetBinContent(binx);
 	}
 	else {
 		std::cout << "Error [Utility::getWeights]: invalid run period." << std::endl;
@@ -442,14 +493,16 @@ double Utility::getFluggWeightNumubar(float energy, float angle, Utility::RunPer
 	// fhc
 	if (runPeriod == Utility::kRun1a || runPeriod == Utility::kRun2a || runPeriod == Utility::kRun4cd || runPeriod == Utility::kRun5) {
 		int binx = flugg_numubar_fhc.GetXaxis()->FindBin(energy);
-		int biny = flugg_numubar_fhc.GetYaxis()->FindBin(angle);
-		weight = flugg_numubar_fhc.GetBinContent(binx,biny);
+		//int biny = flugg_numubar_fhc.GetYaxis()->FindBin(angle);
+		//weight = flugg_numubar_fhc.GetBinContent(binx,biny);
+		weight = flugg_numubar_fhc.GetBinContent(binx);
 	}
 	// rhc
 	else if (runPeriod == Utility::kRun1b || runPeriod == Utility::kRun2b || runPeriod == Utility::kRun3b || runPeriod == Utility::kRun4ab) {
 		int binx = flugg_numubar_rhc.GetXaxis()->FindBin(energy);
-		int biny = flugg_numubar_rhc.GetYaxis()->FindBin(angle);
-		weight = flugg_numubar_rhc.GetBinContent(binx,biny);
+		//int biny = flugg_numubar_rhc.GetYaxis()->FindBin(angle);
+		//weight = flugg_numubar_rhc.GetBinContent(binx,biny);
+		weight = flugg_numubar_rhc.GetBinContent(binx);
 	}
 	else {
 		std::cout << "Error [Utility::getWeights]: invalid run period." << std::endl;
@@ -458,3 +511,87 @@ double Utility::getFluggWeightNumubar(float energy, float angle, Utility::RunPer
 	return weight;
 }
 
+// ------------------------------------------------------------------------------
+
+// Functions to get CV re-weight ratios
+void Utility::loadReweightRatioHistograms() {
+
+	// load beamline variations TH2D
+	TFile *ReweightFile = NULL;
+	ReweightFile = new TFile("/Users/patrick/Documents/MicroBooNE/CrossSections/NuePiXSec_Analysis/AngleWeightCheck/ratios_set1fhc_sanitycheck_angle.root");
+	
+	reweight_ratio_nue_fhc = *(TH2D*)ReweightFile->Get("ratio_cv_fhc_enu_angle_nue");
+	reweight_ratio_nuebar_fhc = *(TH2D*)ReweightFile->Get("ratio_cv_fhc_enu_angle_nuebar");
+	reweight_ratio_numu_fhc = *(TH2D*)ReweightFile->Get("ratio_cv_fhc_enu_angle_numu");
+	reweight_ratio_numubar_fhc = *(TH2D*)ReweightFile->Get("ratio_cv_fhc_enu_angle_numubar");
+
+	ReweightFile->Close();
+}
+
+double Utility::getReweightRatioNue(float energy, float angle, Utility::RunPeriodEnums runPeriod) {
+	
+	double weight;
+
+	// fhc
+	if (runPeriod == Utility::kRun1a || runPeriod == Utility::kRun2a || runPeriod == Utility::kRun4cd || runPeriod == Utility::kRun5) {
+		int binx = reweight_ratio_nue_fhc.GetXaxis()->FindBin(energy);
+		int biny = reweight_ratio_nue_fhc.GetYaxis()->FindBin(angle);
+		weight = reweight_ratio_nue_fhc.GetBinContent(binx,biny);
+	}
+	else {
+		std::cout << "Error [Utility::getWeights]: invalid run period. Reweight ratios only available for FHC." << std::endl;
+	}
+
+	return weight;
+}
+
+double Utility::getReweightRatioNuebar(float energy, float angle, Utility::RunPeriodEnums runPeriod) {
+	
+	double weight;
+
+	// fhc
+	if (runPeriod == Utility::kRun1a || runPeriod == Utility::kRun2a || runPeriod == Utility::kRun4cd || runPeriod == Utility::kRun5) {
+		int binx = reweight_ratio_nuebar_fhc.GetXaxis()->FindBin(energy);
+		int biny = reweight_ratio_nuebar_fhc.GetYaxis()->FindBin(angle);
+		weight = reweight_ratio_nuebar_fhc.GetBinContent(binx,biny);
+	}
+	else {
+		std::cout << "Error [Utility::getWeights]: invalid run period. Reweight ratios only available for FHC." << std::endl;
+	}
+
+	return weight;
+}
+
+double Utility::getReweightRatioNumu(float energy, float angle, Utility::RunPeriodEnums runPeriod) {
+	
+	double weight;
+
+	// fhc
+	if (runPeriod == Utility::kRun1a || runPeriod == Utility::kRun2a || runPeriod == Utility::kRun4cd || runPeriod == Utility::kRun5) {
+		int binx = reweight_ratio_numu_fhc.GetXaxis()->FindBin(energy);
+		int biny = reweight_ratio_numu_fhc.GetYaxis()->FindBin(angle);
+		weight = reweight_ratio_numu_fhc.GetBinContent(binx,biny);
+	}
+	else {
+		std::cout << "Error [Utility::getWeights]: invalid run period. Reweight ratios only available for FHC." << std::endl;
+	}
+
+	return weight;
+}
+
+double Utility::getReweightRatioNumubar(float energy, float angle, Utility::RunPeriodEnums runPeriod) {
+	
+	double weight;
+
+	/// fhc
+	if (runPeriod == Utility::kRun1a || runPeriod == Utility::kRun2a || runPeriod == Utility::kRun4cd || runPeriod == Utility::kRun5) {
+		int binx = reweight_ratio_numubar_fhc.GetXaxis()->FindBin(energy);
+		int biny = reweight_ratio_numubar_fhc.GetYaxis()->FindBin(angle);
+		weight = reweight_ratio_numubar_fhc.GetBinContent(binx,biny);
+	}
+	else {
+		std::cout << "Error [Utility::getReweightRatio]: invalid run period. CV reweight ratios only available for FHC." << std::endl;
+	}
+
+	return weight;
+}

@@ -595,6 +595,9 @@ std::string StackedHistTool::PlotVariableEnum2str(Utility::PlotVariableEnums plo
   case Utility::kTrackEnergy:
     returnString = "Track Energy [GeV]";
     break;
+  case Utility::kTrackMomentum:
+    returnString = "Track Momentum [GeV/c]";
+    break;
   case Utility::kSecondShowerNHit:
     returnString = "Second Shower NHits";
     break;
@@ -633,7 +636,10 @@ std::string StackedHistTool::PlotVariableEnum2str(Utility::PlotVariableEnums plo
     break;
   case Utility::kPionBeta:
     returnString = "Pion cos(#beta)";
-    break;        		  	  	
+    break;
+  case Utility::kOpeningAngle:
+    returnString = "cos(#beta_{e#pi})";
+    break;       		  	  	
   default:
     std::cout << "[ERROR: StackedHistTool] Could not find string conversion for enum " << plotvariable << std::endl;
     returnString = "Unknown";

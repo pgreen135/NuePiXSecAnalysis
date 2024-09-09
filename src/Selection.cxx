@@ -79,11 +79,14 @@ bool Selection::ApplyBDTBasedSelection(EventContainer &_evt, const BDTTool &_bdt
 	
     // determine event weight
     _evt.calculateCVEventWeight(type, runPeriod);
-    
+
+    // set true angular variables
+    _evt.setTrueNuMIAngularVariables();
+
     // trigger [impacts MC only]
 	bool passTrigger = ApplyMCTrigger(_evt, type, runPeriod);
 	if (!passTrigger) return false;
-	
+
 	// pre-selection
 	bool passPreSelection = ApplyPreSelection(_evt);
 	if (!passPreSelection) return false;
@@ -106,27 +109,63 @@ bool Selection::ApplyBDTBasedSelection(EventContainer &_evt, const BDTTool &_bdt
 
     // loose neutral pion rejection
     bool passLooseNeutralPionRejection = ApplyLooseNeutralPionRejection(_evt);
-    if (!passLooseNeutralPionRejection) return false;
-    
+    if (!passLooseNeutralPionRejection) return false;    
+
     // loose proton rejection
     bool passLooseProtonPionRejection = ApplyLooseProtonRejection(_evt);
-    if (!passLooseProtonPionRejection) return false;
-
+   	//!!!!
+    //if (!passLooseProtonPionRejection) return false;	// (commented since cut on later for sidebands)
+    
     // event passes loose background rejection
-    _evt.sel_passLooseRejection_ = true;
+    if (passLooseNeutralPionRejection && passLooseProtonPionRejection) _evt.sel_passLooseRejection_ = true;
 
-    // Evaluate BDTs
+    // Evaluate BDTs    
     bool passBDTNeutralPionRejection = ApplyNeutralPionRejectionBDT(_evt, _bdt, runPeriod);
-    bool passBDTProtonRejection = ApplyProtonRejectionBDT(_evt, _bdt, runPeriod);   
+    bool passBDTProtonRejection = ApplyProtonRejectionBDT(_evt, _bdt, runPeriod);
+  
+    // event passes BDT pi0 rejection
+    if (passLooseNeutralPionRejection && passLooseProtonPionRejection && passBDTNeutralPionRejection) _evt.sel_passBDTPi0Rejection_ = true;      
+
+    // Apply sideband selections and populate relevant variables
+    // Sideband 1 selection: pi0-rich
+    if (passLooseNeutralPionRejection && passLooseProtonPionRejection && !passBDTNeutralPionRejection && passBDTProtonRejection) {
+    	_evt.sel_passPi0Sideband_ = true;
+
+		// set angular variables for sideband
+		_evt.setRecoNuMIAngularVariables(true);
+
+		return false;
+    }
+    // sideband 2 selection: proton-rich (loose)
+    if (passLooseNeutralPionRejection && passBDTNeutralPionRejection && (!passLooseProtonPionRejection || (passLooseProtonPionRejection && !passBDTProtonRejection) )) {
+
+    	_evt.sel_passProtonSidebandLoose_ = true;
+
+    	// set angular variables for sideband
+		_evt.setRecoNuMIAngularVariables(true);
+
+    	// sideband 3 selection: proton-rich (strict)
+    	if (passLooseProtonPionRejection && !passBDTProtonRejection) {
+    		_evt.sel_passProtonSidebandStrict_ = true;
+    	}
+
+    	return false;
+    }
+
+    // Apply normal selection
+    if (!passLooseProtonPionRejection) return false;  
 
     // set selected pion information
     setSelectedPionInformation(_evt);
 
+    // count number of proton-like tracks
+    _evt.numberProtons = CountProtons(_evt, _bdt, runPeriod);
+
+    // set reco angular variables
+    _evt.setRecoNuMIAngularVariables(false);
+
     // BDT neutral pion rejection
     if (!passBDTNeutralPionRejection) return false;
-
-    // event BDT pi0 rejection
-    _evt.sel_passBDTPi0Rejection_ = true;   
     
     // BDT proton rejection 
     if (!passBDTProtonRejection) return false;
@@ -134,14 +173,44 @@ bool Selection::ApplyBDTBasedSelection(EventContainer &_evt, const BDTTool &_bdt
     // event passes
     _evt.sel_NueCC1piXp_ = true;
 
-    // count number of proton-like tracks
-    _evt.numberProtons = CountProtons(_evt, _bdt, runPeriod);
-
-    // set angular variables
-    _evt.setNuMIAngularVariables();
-
     return true;
+}
 
+// ------------------------------------------------------------------------------
+
+bool Selection::ApplyInclusiveSelection(EventContainer &_evt, Utility::FileTypeEnums type, Utility::RunPeriodEnums runPeriod) {
+
+    // trigger [impacts MC only]
+	bool passTrigger = ApplyMCTrigger(_evt, type, runPeriod);
+	if (!passTrigger) return false;
+
+	// apply selection cuts
+	if(!ApplySliceIDCut(_evt.nslice)) return false;
+	if(!ApplyVertexFVCut(_evt.reco_nu_vtx_sce_x, _evt.reco_nu_vtx_sce_y, _evt.reco_nu_vtx_sce_z)) return false;
+	
+	if(_evt.contained_fraction <= 0.85) return false;
+	
+	if(_evt.n_showers_contained < 1) return false;
+	
+	if(_evt.topological_score <= 0.4) return false;
+	if(_evt.CosmicIPAll3D <= 15) return false;
+
+	if(_evt.shr_pfpgeneration != 2) return false;
+	if(_evt.shr_score >= 0.15) return false;
+	if(_evt.hits_ratio <= 0.5) return false;
+	if(!ApplyShowerEnergyCut(_evt.shr_energy_cali)) return false;
+
+	if(_evt.shrmoliereavg >= 7) return false;
+	if(_evt.n_tracks_contained > 0) {
+		if(!ApplyNeutralPionRejectionCut(_evt.shr_trkfit_gap10_dedx_max, _evt.shr_distance)) return false;	
+	}
+	else {
+		if (_evt.shr_trkfit_gap10_dedx_max < 1.7 || (_evt.shr_trkfit_gap10_dedx_max > 2.7 && _evt.shr_trkfit_gap10_dedx_max < 5.5)) return false;
+	}
+
+	_evt.sel_passInclusiveSelection_ = true;
+
+	return true;
 }
 
 // ------------------------------------------------------------------------------
@@ -161,7 +230,6 @@ bool Selection::ApplyElectronPhotonBDTTrainingSelection(EventContainer &_evt, Ut
 	// pre-selection
 	bool passPreSelection = ApplyPreSelection(_evt);
 	if (!passPreSelection) return false;	  
-
     // good shower selection
     bool passGoodShowerIdentification = ApplyGoodShowerSelection(_evt);
     if (!passGoodShowerIdentification) return false;
@@ -255,7 +323,7 @@ bool Selection::ApplyMCTrigger(const EventContainer &_evt, Utility::FileTypeEnum
 bool Selection::ApplyPreSelection(const EventContainer &_evt) {
 	
 	if(!ApplySliceIDCut(_evt.nslice)) return false;									// slice ID
-	
+
 	if(!ApplyVertexFVCut(_evt.reco_nu_vtx_sce_x, _evt.reco_nu_vtx_sce_y, _evt.reco_nu_vtx_sce_z)) return false;	// neutrino vertex in fiducial volume
 
 	if(!ApplySignalCanidateCut(_evt.n_showers_contained, _evt.n_tracks_contained)) return false;	// electron + pion candidate
@@ -263,7 +331,7 @@ bool Selection::ApplyPreSelection(const EventContainer &_evt) {
 	if(!ApplyContainedFractionCut(_evt.contained_fraction)) return false; 			// contained fraction
 
 	if(!ApplyAssociatedHitsFractionCut(_evt.associated_hits_fraction)) return false;	// fraction of hits associated with tracks/showers
-	
+
 	return true;
 }
 
@@ -298,16 +366,18 @@ bool Selection::ApplyGoodTrackSelection(EventContainer &_evt) {
 	if (!_evt.hasSpuriousLeadingTrack &&
 		_evt.trk_pfpgeneration == 2 &&
 		ApplyHitsOnAllPlanesCut(_evt.trk_planehits_U, _evt.trk_planehits_V, _evt.trk_planehits_Y) &&
-		ApplyTrackLengthCut(_evt.trk_len) && 
+		ApplyTrackLengthCut(_evt.trk_len) &&
+		ApplyTrackShowerOpeningAngleCut(_evt.trk_shr_opening_angle) && 
 		ApplyTrackScoreCut(_evt.trk_score) &&
 		ApplyTrackContainmentCut(_evt.trk_sce_end_x, _evt.trk_sce_end_y, _evt.trk_sce_end_z) &&
-		ApplyTrackVertexDistanceCut(_evt.trk_distance)
+	    ApplyTrackVertexDistanceCut(_evt.trk_distance)
 		) primaryTrackPasses = true;  	// track length, score, distance, containment
 
 	// secondary track	
 	if (_evt.trk2_pfpgeneration == 2 &&
 	    ApplyHitsOnAllPlanesCut(_evt.trk2_planehits_U, _evt.trk2_planehits_V, _evt.trk2_planehits_Y) &&
-		ApplyTrackLengthCut(_evt.trk2_len) && 
+		ApplyTrackLengthCut(_evt.trk2_len) &&
+		ApplyTrackShowerOpeningAngleCut(_evt.trk2_shr_opening_angle) && 
 		ApplyTrackScoreCut(_evt.trk2_score) &&
 		ApplyTrackContainmentCut(_evt.trk2_sce_end_x, _evt.trk2_sce_end_y, _evt.trk2_sce_end_z) &&
 		ApplyTrackVertexDistanceCut(_evt.trk2_distance)
@@ -316,7 +386,8 @@ bool Selection::ApplyGoodTrackSelection(EventContainer &_evt) {
 	// tertiary track
 	if (_evt.trk3_pfpgeneration == 2 &&
 	    ApplyHitsOnAllPlanesCut(_evt.trk3_planehits_U, _evt.trk3_planehits_V, _evt.trk3_planehits_Y) &&
-		ApplyTrackLengthCut(_evt.trk3_len) && 
+		ApplyTrackLengthCut(_evt.trk3_len) &&
+		ApplyTrackShowerOpeningAngleCut(_evt.trk3_shr_opening_angle) && 
 		ApplyTrackScoreCut(_evt.trk3_score) &&
 		ApplyTrackContainmentCut(_evt.trk3_sce_end_x, _evt.trk3_sce_end_y, _evt.trk3_sce_end_z) &&
 		ApplyTrackVertexDistanceCut(_evt.trk3_distance)
@@ -334,7 +405,7 @@ bool Selection::ApplyGoodTrackSelection(EventContainer &_evt) {
 // ------------------------------------------------------------------------------
 bool Selection::ApplyReconstructionFailureChecks(const EventContainer &_evt) { 
 
-	if (!ApplyTrackShowerOpeningAngleCut(_evt.tksh_angle)) return false;	// primary track-shower opening angle
+	if (!ApplyPrimaryTrackShowerOpeningAngleCut(_evt.trk_shr_opening_angle)) return false;		// primary track-shower opening angle
 
 	if (!ApplyShrTrackFitCut(_evt.trkfit)) return false;				    // shower track fit hits fraction
     
@@ -630,7 +701,7 @@ bool Selection::ApplyShowerHitRatioCut(float hits_ratio){
 
 // Pandora topological score
 bool Selection::ApplyTopologicalScoreCut(float topological_score){
-	if(topological_score > 0.25) return true; // 0.4
+	if(topological_score > 0.3) return true; // 0.4
 	else return false;
 }
 
@@ -690,28 +761,29 @@ bool Selection::ApplyShowerCylFractionCut(float CylFrac2h_1cm) {
 
 // Neutral pion rejection: shower dE/dx and vertex distance
 // apply 2D cut
+// note: altered to match Krishan's
 bool Selection::ApplyNeutralPionRejectionCut(float dEdxMax, float shr_distance) {
 	
     if (dEdxMax <= 0) {
     	return false;
     }
-    else if (dEdxMax > 0 && dEdxMax < 1.5){
-        if (shr_distance > 3.0 ) return false;
+    else if (dEdxMax > 0 && dEdxMax < 1.75){
+        if (shr_distance >= 3.0 ) return false;
         else return true;
     }
-    else if (dEdxMax >= 1.5 && dEdxMax < 2.5){ 
-        if (shr_distance > 5.0 ) return false;
+    else if (dEdxMax >= 1.75 && dEdxMax < 2.5){ 
+        if (shr_distance >= 12.0 ) return false;
         else return true;
     }
     else if (dEdxMax >= 2.5 && dEdxMax < 3.5){
-        if (shr_distance > 3.0 ) return false;
+        if (shr_distance >= 3.0 ) return false;
         else return true;
     }
-    else if (dEdxMax >= 3.5 && dEdxMax < 5){
+    else if (dEdxMax >= 3.5 && dEdxMax < 4.7){
         return false;
     }
-    else if (dEdxMax >= 5){
-        if (shr_distance > 1 ) return false;
+    else if (dEdxMax >= 4.7){
+        if (shr_distance >= 3.0 ) return false;
         else return true;
     }
     else{
@@ -736,10 +808,13 @@ bool Selection::ApplySecondShowerClusterCut(int secondshower_Y_nhit, float secon
 // Neutral pion rejection BDT
 bool Selection::ApplyElectronPhotonBDTCutFHC(float bdtscore_electronPhoton) {
 	if (bdtscore_electronPhoton > 0.800) return true;
+	//if (bdtscore_electronPhoton > 0.675) return true;
 	else return false;
 }
 bool Selection::ApplyElectronPhotonBDTCutRHC(float bdtscore_electronPhoton) {
 	if (bdtscore_electronPhoton > 0.825) return true;
+	//if (bdtscore_electronPhoton > 0.700) return true; 
+	
 	else return false;
 }
 
@@ -773,9 +848,16 @@ bool Selection::ApplyTrackContainmentCut(float trk_sce_end_x, float trk_sce_end_
 	return isExiting;
 }
 
-// Track Shower Opening Angle (remove back-to-back tracks)
+// Track Shower Opening Angle
 bool Selection::ApplyTrackShowerOpeningAngleCut(float tksh_angle) {
-	if(tksh_angle > 10 && tksh_angle < 165) return true;
+	//if (tksh_angle >= 10 && tksh_angle <= 170) return true;
+	if (tksh_angle <= 170) return true;
+	else return false;
+}
+
+// Primary Track Shower Opening Angle (remove back-to-back tracks, reconstruction failure)
+bool Selection::ApplyPrimaryTrackShowerOpeningAngleCut(float tksh_angle) {
+	if (tksh_angle <= 170) return true;
 	else return false;
 }
 
@@ -787,11 +869,13 @@ bool Selection::ApplyLLRPIDScoreCut(float trk_llr_pid_score) {
 
 // Proton rejection: BDT
 bool Selection::ApplyProtonRejectionBDTCutFHC(float bdtscore_pionProton) {
-	if (bdtscore_pionProton > 0.350) return true;
+	if (bdtscore_pionProton > 0.350) return true; // Old Flux 0.350
+	//if (bdtscore_pionProton > 0.250) return true; // Old Flux 0.350
 	else return false;
 }
 bool Selection::ApplyProtonRejectionBDTCutRHC(float bdtscore_pionProton) {
-	if (bdtscore_pionProton > 0.325) return true;
+	if (bdtscore_pionProton > 0.300) return true; // Old Flux 0.325
+	//if (bdtscore_pionProton > 0.250) return true;
 	else return false;
 }
 
@@ -832,88 +916,18 @@ int Selection::CountProtons(EventContainer &_evt, const BDTTool &_bdt, Utility::
 		if ( i == _evt.trk3_id-1 && _evt.tertiaryTrackPionlike ) continue;
 
 		// look at tracks only
-		if ( _evt.trk_score_v->at(i) <= 0.5 ) continue;
+		if (_evt.trk_score_v->at(i) <= 0.5) continue;
 
-		// skip tracks where llrpid not available
-		if ( _evt.trk_llr_pid_score_v->at(i) < -10 ) continue;
+		// cut on vertex distance
+		if (_evt.trk_distance_v->at(i) > 10) continue;
 
 		// count proton candiates
-		if ( _evt.pfp_generation_v->at(i) == 2 && 
-			 _evt.trk_distance_v->at(i) < 10 && 
-			 _evt.trk_llr_pid_score_v->at(i) <= 0 //&&
-			 //ApplyTrackContainmentCut(_evt.trk_sce_end_x_v->at(i), _evt.trk_sce_end_y_v->at(i), _evt.trk_sce_end_z_v->at(i))
-			 ) {
-			numberProtons++;
-		}
-		// check for cases where passes LLR-PID test, but rejection by pion BDT
-		else if ( i == _evt.trk_id-1 && _evt.primaryTrackPionlikeLoose && !_evt.primaryTrackPionlike ) numberProtons++;
-		else if ( i == _evt.trk2_id-1 && _evt.secondaryTrackPionlikeLoose && !_evt.secondaryTrackPionlike ) numberProtons++;
-		else if ( i == _evt.trk2_id-1 && _evt.tertiaryTrackPionlikeLoose && !_evt.tertiaryTrackPionlike ) numberProtons++;
-		/*
-		// check for cases where passes LLR-PID test, but rejection by loose pion BDT
-		// primary track
-		else if ( i == _evt.trk_id-1 && 
-				  _evt.pfp_generation_v->at(i) == 2 && 
-			 	  _evt.trk_distance_v->at(i) <= 4 && 
-			      _evt.trk_llr_pid_score_v->at(i) > 0 &&  	
-			      ApplyTrackContainmentCut(_evt.trk_sce_end_x_v->at(i), _evt.trk_sce_end_y_v->at(i), _evt.trk_sce_end_z_v->at(i)) &&
-			      !_evt.primaryTrackPionlike ) {
-
-			// FHC
-			if (runPeriod == Utility::kRun1a || runPeriod == Utility::kRun2a || runPeriod == Utility::kRun4cd || runPeriod == Utility::kRun5) {
-				double TrackBDTScorePionProton = _bdt.evaluatePionProtonBDTScoreFHC(_evt, 1);
-				if(!ApplyProtonRejectionBDTCutFHC(TrackBDTScorePionProton)) numberProtons++;
-			}
-			// RHC
-			if (runPeriod == Utility::kRun1b || runPeriod == Utility::kRun2b || runPeriod == Utility::kRun3b || runPeriod == Utility::kRun4ab) {
-				double TrackBDTScorePionProton = _bdt.evaluatePionProtonBDTScoreRHC(_evt, 1);
-				if(ApplyProtonRejectionBDTCutRHC(TrackBDTScorePionProton)) numberProtons++;
-			}
-		}
-		// secondary track
-		else if ( i == _evt.trk2_id-1 && 
-				  _evt.pfp_generation_v->at(i) == 2 && 
-			 	  _evt.trk_distance_v->at(i) <= 4 && 
-			      _evt.trk_llr_pid_score_v->at(i) > 0 &&  	
-			      ApplyTrackContainmentCut(_evt.trk_sce_end_x_v->at(i), _evt.trk_sce_end_y_v->at(i), _evt.trk_sce_end_z_v->at(i)) &&
-			      !_evt.secondaryTrackPionlike ) {
-
-			// FHC
-			if (runPeriod == Utility::kRun1a || runPeriod == Utility::kRun2a || runPeriod == Utility::kRun4cd || runPeriod == Utility::kRun5) {
-				double TrackBDTScorePionProton = _bdt.evaluatePionProtonBDTScoreFHC(_evt, 2);
-				if(!ApplyProtonRejectionBDTCutFHC(TrackBDTScorePionProton)) numberProtons++;
-			}
-			// RHC
-			if (runPeriod == Utility::kRun1b || runPeriod == Utility::kRun2b || runPeriod == Utility::kRun3b || runPeriod == Utility::kRun4ab) {
-				double TrackBDTScorePionProton = _bdt.evaluatePionProtonBDTScoreRHC(_evt, 2);
-				if(ApplyProtonRejectionBDTCutRHC(TrackBDTScorePionProton)) numberProtons++;
-			}
-		}
-		// tertiary track
-		else if ( i == _evt.trk3_id-1 && 
-				  _evt.pfp_generation_v->at(i) == 2 && 
-			 	  _evt.trk_distance_v->at(i) <= 4 && 
-			      _evt.trk_llr_pid_score_v->at(i) > 0 &&  	
-			      ApplyTrackContainmentCut(_evt.trk_sce_end_x_v->at(i), _evt.trk_sce_end_y_v->at(i), _evt.trk_sce_end_z_v->at(i)) &&
-			      !_evt.tertiaryTrackPionlike ) {
-
-			// FHC
-			if (runPeriod == Utility::kRun1a || runPeriod == Utility::kRun2a || runPeriod == Utility::kRun4cd || runPeriod == Utility::kRun5) {
-				double TrackBDTScorePionProton = _bdt.evaluatePionProtonBDTScoreFHC(_evt, 3);
-				if(!ApplyProtonRejectionBDTCutFHC(TrackBDTScorePionProton)) numberProtons++;
-			}
-			// RHC
-			if (runPeriod == Utility::kRun1b || runPeriod == Utility::kRun2b || runPeriod == Utility::kRun3b || runPeriod == Utility::kRun4ab) {
-				double TrackBDTScorePionProton = _bdt.evaluatePionProtonBDTScoreRHC(_evt, 3);
-				if(ApplyProtonRejectionBDTCutRHC(TrackBDTScorePionProton)) numberProtons++;
-			}
-		}
-		*/
-
+		numberProtons++;
+		
 	}
 	
 	// fudge for plotting purposes, to put all N proton events in single bin
-	if (numberProtons > 1) numberProtons = 1;
+	if (numberProtons > 2) numberProtons = 2;
 
 	return numberProtons;
 }
@@ -958,7 +972,7 @@ void Selection::setSelectedPionInformation(EventContainer &_evt) {
     	_evt.trk_llr_pid_score_pion = _evt.trk_llr_pid_score;
     	_evt.trk_score_pion = _evt.trk_score;
     	_evt.trk_end_spacepoints_pion = _evt.trk_end_spacepoints;
-    	_evt.reco_energy_pion = _evt.trk_energy_pion + (139.57039/1000);
+    	_evt.reco_momentum_pion = _evt.trk_momentum_pion;
     }
     else if (_evt.secondaryTrackPionlike) {
     	_evt.trk_bragg_mip_pion = _evt.trk2_bragg_mip_max;
@@ -968,7 +982,7 @@ void Selection::setSelectedPionInformation(EventContainer &_evt) {
     	_evt.trk_llr_pid_score_pion = _evt.trk2_llr_pid_score;
     	_evt.trk_score_pion = _evt.trk2_score;
     	_evt.trk_end_spacepoints_pion = _evt.trk2_end_spacepoints;
-    	_evt.reco_energy_pion = _evt.trk2_energy_pion;
+    	_evt.reco_momentum_pion = _evt.trk2_momentum_pion;
 	}
 	else {
 		_evt.trk_bragg_mip_pion = _evt.trk3_bragg_mip_max;
@@ -978,7 +992,7 @@ void Selection::setSelectedPionInformation(EventContainer &_evt) {
     	_evt.trk_llr_pid_score_pion = _evt.trk3_llr_pid_score;
     	_evt.trk_score_pion = _evt.trk3_score;
     	_evt.trk_end_spacepoints_pion = _evt.trk3_end_spacepoints;
-    	_evt.reco_energy_pion = _evt.trk3_energy_pion;
+    	_evt.reco_momentum_pion = _evt.trk3_momentum_pion;
 	}
 }
 

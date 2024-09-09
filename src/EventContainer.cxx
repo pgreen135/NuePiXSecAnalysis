@@ -35,7 +35,11 @@ EventContainer::EventContainer(TTree *tree, const Utility &utility): _utility{ u
 	tree->SetBranchAddress("nproton", &nproton);
 	tree->SetBranchAddress("proton_e", &proton_e);
 	tree->SetBranchAddress("neta", &neta);
+    tree->SetBranchAddress("eta_e", &eta_e);
 
+	tree->SetBranchAddress("true_nu_vtx_x", &true_nu_vtx_x);
+	tree->SetBranchAddress("true_nu_vtx_y", &true_nu_vtx_y);
+	tree->SetBranchAddress("true_nu_vtx_z", &true_nu_vtx_z);
 	tree->SetBranchAddress("true_nu_vtx_sce_x", &true_nu_vtx_sce_x);
 	tree->SetBranchAddress("true_nu_vtx_sce_y", &true_nu_vtx_sce_y);
 	tree->SetBranchAddress("true_nu_vtx_sce_z", &true_nu_vtx_sce_z);
@@ -290,20 +294,10 @@ void EventContainer::EventClassifier(Utility::FileTypeEnums type){
 
 	// --- MC classification --
 	if (type == Utility::kMC || type == Utility::kDetVar || type == Utility::kIntrinsic || type == Utility::kCCNCPiZero || type == Utility::kFakeData) {
-		
-		/* catagory no longer in use, not useful
-		// identify cosmic / cosmic contaminated events
-		// check fraction of hits that are not matched to neutrino
-		if (nu_purity_from_pfp < 0.2) {
-			// low purity, classify as cosmic
-			classification = Utility::kCosmic;
-			category_ = static_cast<int>(classification);
-			return;
-		}
-		*/
 
 		// check whether vertex is within fiducial volume
-		bool isInFV = _utility.inFV(true_nu_vtx_sce_x, true_nu_vtx_sce_y, true_nu_vtx_sce_z);
+		//bool isInFV = _utility.inFV(true_nu_vtx_sce_x, true_nu_vtx_sce_y, true_nu_vtx_sce_z);
+		bool isInFV = _utility.inFV(true_nu_vtx_x, true_nu_vtx_y, true_nu_vtx_z);	// swapping to non-space-charged corrected variables in truth
 
 		// Outside of FV
 		if (!isInFV) {
@@ -319,7 +313,8 @@ void EventContainer::EventClassifier(Utility::FileTypeEnums type){
 				// numu
 				if (nu_pdg == 14 || nu_pdg == -14) {
 					// check for pi-zero (background)
-					if (npi0 > 0) {
+					if (npi0 > 0 || neta > 0) {
+                    //if ( (npi0 > 0 && pi0_e > 0.04 + 134.9768/1000) || (neta > 0 && eta_e > 0.04 + 547.862/1000) ) {
 						// classify as CC numu pizero
 						classification = Utility::kCCNumupizero;
 						category_ = static_cast<int>(classification);
@@ -334,8 +329,13 @@ void EventContainer::EventClassifier(Utility::FileTypeEnums type){
 				}
 				// nue
 				if (nu_pdg == 12 || nu_pdg == -12) {
+
+					// tag as inclusive signal, 30 MeV threshold
+					if (nelec > 0) mc_is_inclusive_signal_ = true;
+
 					// check for pi-zero (or eta)
-					if (npi0 > 0 || neta > 0) {
+                    if (npi0 > 0 || neta > 0) {
+					//if ( (npi0 > 0 && pi0_e > 0.04 + 134.9768/1000) || (neta > 0 && eta_e > 0.04 + 547.862/1000) ) {
 						// classify as CC nue pizero
 						classification = Utility::kCCNuepizero;
 						category_ = static_cast<int>(classification);
@@ -346,9 +346,33 @@ void EventContainer::EventClassifier(Utility::FileTypeEnums type){
 						
 						// check neutrino energy and electron energy, to match signal definition
 						// nelec only counts electrons above threshold, set to 30 KeV in ntuple maker
-						if (nelec > 0 && nu_e > 0.06) {
 
-							
+						// check pion/electron opening angle
+						TVector3 elec_dir(elec_px, elec_py, elec_pz);
+						TVector3 pion_dir(pion_px, pion_py, pion_pz);
+						elec_dir.Unit();
+						pion_dir.Unit();
+						double opening_angle = elec_dir.Angle(pion_dir) * 180 / 3.14159;
+
+						// count other mesons present
+						int nkaon = 0;
+						int nrho = 0;
+						int nomega = 0;
+						int nphi = 0;
+						
+						for (int i = 0; i < mc_pdg_v->size(); i++) {
+							//if ((mc_pdg_v->at(i) == 321 || mc_pdg_v->at(i) == -321 || mc_pdg_v->at(i) == 311) && mc_E_v->at(i) > 0.04 + 493.677/1000) nkaon++;
+							//if ((mc_pdg_v->at(i) == 213 || mc_pdg_v->at(i) == -213 || mc_pdg_v->at(i) == 113) && mc_E_v->at(i) > 0.04 + 775.11/1000) nrho++;
+							//if ((mc_pdg_v->at(i) == 223) && mc_E_v->at(i) > 0.04 + 782.66/1000) nomega++;
+							//if ((mc_pdg_v->at(i) == 333) && mc_E_v->at(i) > 0.04 + 1019.461/1000) nphi++;
+                            if ((mc_pdg_v->at(i) == 321 || mc_pdg_v->at(i) == -321 || mc_pdg_v->at(i) == 311)) nkaon++;
+                            if ((mc_pdg_v->at(i) == 213 || mc_pdg_v->at(i) == -213 || mc_pdg_v->at(i) == 113)) nrho++;
+                            if ((mc_pdg_v->at(i) == 223)) nomega++;
+                            if ((mc_pdg_v->at(i) == 333)) nphi++;   	
+						}
+						
+						if (nelec > 0 && nkaon == 0 && nrho == 0 && nomega == 0 && nphi == 0 && opening_angle <= 170) { // && opening_angle >= 10) {
+
 							// classify as CC nue 1pi Xp
 							classification = Utility::kCCNue1piXp;
 							category_ = static_cast<int>(classification);
@@ -414,6 +438,7 @@ void EventContainer::EventClassifier(Utility::FileTypeEnums type){
 			else {
 				// check for pi-zero (or eta)
 				if (npi0 > 0 || neta > 0) {
+                //if ( (npi0 > 0 && pi0_e > 0.04 + 134.9768/1000) || (neta > 0 && eta_e > 0.04 + 547.862/1000) ) {
 					// classify as NC pizero
 					classification = Utility::kNCpizero;
 					category_ = static_cast<int>(classification); 
@@ -502,7 +527,10 @@ void EventContainer::calculateCVEventWeight(Utility::FileTypeEnums type, Utility
 
 	// overlay MC events
 	if (type == Utility::kMC || type == Utility::kDetVar || type == Utility::kIntrinsic || type == Utility::kCCNCPiZero || type == Utility::kFakeData) {
-		
+			
+		// TESTING
+		//ppfx_cv = 1;
+
 		// CV weight
 		weight = ppfx_cv * weightSpline * weightTune;
 
@@ -527,20 +555,30 @@ void EventContainer::calculateCVEventWeight(Utility::FileTypeEnums type, Utility
 			//weight = weight * 0.759;	// flat normalisation scaling, from Krishan's analysis  
 		}
 		*/
-		
+
+		/*
 		if (type == Utility::kIntrinsic) {
 			if (runPeriod == Utility::kRun1a) fake_data_weight = 0.177705;
 			else if (runPeriod == Utility::kRun1b) fake_data_weight = 0.048335;
 			else if (runPeriod == Utility::kRun2a) fake_data_weight = 0.050983;
 			else if (runPeriod == Utility::kRun2b) fake_data_weight = 0.034205;	
-			else if (runPeriod == Utility::kRun3b) fake_data_weight = 0.362239;
+			else if (runPeriod == Utility::kRun3b) fake_data_weight = 0.133753;
 			else if (runPeriod == Utility::kRun4ab) fake_data_weight = 0.158684;
 			else if (runPeriod == Utility::kRun4cd) fake_data_weight = 0.163655;
 			else if (runPeriod == Utility::kRun5) fake_data_weight = 0.160654;
 			else std::cout << "Warning: run period: " << runPeriod << " not found, fake data weight not set." << std::endl;
 		}
 		
-		if (type == Utility::kMC) fake_data_weight = 1; 		
+		
+		if (type == Utility::kMC) fake_data_weight = 1;
+
+        if (type == Utility::kFakeData) {
+            if (runPeriod == Utility::kRun1a) fake_data_weight = 0.0389127;      // 6.65042e+20 / 1.70906e+22
+            else if (runPeriod == Utility::kRun3b) fake_data_weight = 0.0873354; // 7.4309e+20 / 8.50846e+21
+            else std::cout << "Warning: run period: " << runPeriod << " not found, fake data weight not set." << std::endl;
+        }
+        */
+
 	}
 	
 	// dirt events
@@ -685,7 +723,37 @@ void EventContainer::calculateFluggWeights(Utility::RunPeriodEnums runPeriod) {
 	flugg_weight = checkWeight(flugg_weight);
 
 	// set as normalisation weight
-	normalisation_weight *= flugg_weight;	
+	//normalisation_weight *= flugg_weight;
+
+	// set Flugg weight
+	fluggWeightsPresent = true;	
+	FluggCV.push_back(flugg_weight);
+}
+
+// Function to calculate CV Reweight Ratio [testing]
+void EventContainer::calculateReweightRatio(Utility::RunPeriodEnums runPeriod) {
+
+	float reweight_ratio = 1;
+
+	// true nu angle from numi beamline 
+    nu_angle = GetNuMIAngle(true_nu_px, true_nu_py, true_nu_pz, "beam");
+
+    // get PPFX CV from flux file
+    if (nu_pdg == 12) reweight_ratio = _utility.getReweightRatioNue(nu_e, nu_angle, runPeriod);
+    else if (nu_pdg == -12) reweight_ratio = _utility.getReweightRatioNuebar(nu_e, nu_angle, runPeriod);
+    else if (nu_pdg == 14) reweight_ratio = _utility.getReweightRatioNumu(nu_e, nu_angle, runPeriod);
+    else if (nu_pdg == -14) reweight_ratio = _utility.getReweightRatioNumubar(nu_e, nu_angle, runPeriod);
+    else {
+    	std::cout << "Error: cannot get weights" << std::endl;
+    	exit(1);
+    }
+
+    // check new weight is sensible
+	reweight_ratio = checkWeight(reweight_ratio);
+
+	// set weight
+	reweightRatioPresent = true;	
+	reweightRatio = reweight_ratio;
 }
 
 // Function to check event weight is sensible
@@ -1293,12 +1361,12 @@ void EventContainer::populateDerivedVariables(Utility::FileTypeEnums type, Utili
     }
 
     // Pion-hypothesis track energies (A. Smith)
-    if (trk_len > 0) trk_energy_pion = CalculatePionEnergyRange(trk_len);
-    else trk_energy_pion = 0;
-    if (trk2_len > 0) trk2_energy_pion = CalculatePionEnergyRange(trk2_len);
-    else trk2_energy_pion = 0;
-    if (trk3_len > 0) trk3_energy_pion = CalculatePionEnergyRange(trk3_len);
-    else trk3_energy_pion = 0;
+    if (trk_len > 0) trk_momentum_pion = CalculatePionMomentumRange(trk_len);
+    else trk_momentum_pion = 0;
+    if (trk2_len > 0) trk2_momentum_pion = CalculatePionMomentumRange(trk2_len);
+    else trk2_momentum_pion = 0;
+    if (trk3_len > 0) trk3_momentum_pion = CalculatePionMomentumRange(trk3_len);
+    else trk3_momentum_pion = 0;
 
     // second shower track proximity
     shr2_trackEndProximity = GetShowerTrackEndProximity(shr2_id);
@@ -1317,10 +1385,38 @@ void EventContainer::populateDerivedVariables(Utility::FileTypeEnums type, Utili
     			pion_py = mc_py_v->at(i); 
     			pion_pz = mc_pz_v->at(i); 
 
+                pion_p = std::sqrt ( std::pow(pion_px, 2) + std::pow(pion_py, 2) + std::pow(pion_pz, 2));
+
     			break; 
     		}
     	}
     }
+
+    // track - shower opening angles
+    trk_shr_opening_angle = 9999;
+    trk2_shr_opening_angle = 9999;
+    trk3_shr_opening_angle = 9999;
+
+    if (n_showers_contained >= 1) {
+	    TVector3 shr_dir(shr_dir_x, shr_dir_y, shr_dir_z); // Shower direction
+	    shr_dir.Unit();
+
+	    if (trk_id != 0) {
+		    TVector3 trk_dir(trk_dir_x, trk_dir_y, trk_dir_z);	
+		    trk_dir.Unit();
+		    trk_shr_opening_angle = trk_dir.Angle(shr_dir) * 180 / 3.14159;
+		}
+		if (trk2_id != 0) {
+			TVector3 trk2_dir(trk2_dir_x, trk2_dir_y, trk2_dir_z);	
+		    trk2_dir.Unit();
+		    trk2_shr_opening_angle = trk2_dir.Angle(shr_dir) * 180 / 3.14159;
+		}
+		if (trk3_id != 0) {
+			TVector3 trk3_dir(trk3_dir_x, trk3_dir_y, trk3_dir_z);	
+		    trk3_dir.Unit();
+		    trk3_shr_opening_angle = trk3_dir.Angle(shr_dir) * 180 / 3.14159;
+		}
+	}
 
     // re-define truth nproton with alternate threshold
     // loop through truth particles and find protons
@@ -1328,18 +1424,11 @@ void EventContainer::populateDerivedVariables(Utility::FileTypeEnums type, Utili
     for (int i = 0; i < mc_pdg_v->size(); i++) {
     	if (mc_pdg_v->at(i) == 2212) {
     		// check energy threshold
-    		if (mc_E_v->at(i) > 0.05 + (938.27208816/1000)) { // 50 MeV
+    		if (mc_E_v->at(i) > 0.04 + (938.27208816/1000)) { // 50 MeV
     			nprotonalternate++;
     		}
     	}
     }
-    // checking
-    /*
-    if (nproton != nproton_alternate) {
-    	std::cout << "Mismatch in proton counting!!!" << std::endl;
-    	std::cout << "Number protons: Old = " << nproton << ", New = " << nproton_alternate << std::endl;
-    } 
-    */
 
     // initialise reconstruction failure condition variables
     hasSplitPrimaryShower = false;
@@ -1361,9 +1450,13 @@ void EventContainer::populateDerivedVariables(Utility::FileTypeEnums type, Utili
 	secondaryTrackPionlikeLoose = false;
 	tertiaryTrackPionlikeLoose = false;
 
+	// number protons
 	numberProtons = 0;
-	if (nproton > 1) nproton = 1; // fudge to make N proton bin
-	if (nprotonalternate > 1) nprotonalternate = 1; // fudge to make N proton bin
+	if (nproton > 2) nproton = 2; // fudge to make N proton bin
+	if (nprotonalternate > 2) nprotonalternate = 2; // fudge to make N proton bin
+
+	// subtract electron mass from electron energy
+	elec_e = elec_e - (0.51099895/1000);
 
 	// initialise BDT score variables
 	BDTScoreElectronPhoton = -1;
@@ -1376,10 +1469,15 @@ void EventContainer::populateDerivedVariables(Utility::FileTypeEnums type, Utili
     if (type == Utility::kMC || type == Utility::kDetVar || type == Utility::kIntrinsic || type == Utility::kDirt || type == Utility::kFakeData) is_mc_ = true;
     else is_mc_ = false;
     mc_is_signal_ = false;
+    mc_is_inclusive_signal_ = false;
     category_ = 9999;
     sel_passLooseRejection_ = false;
     sel_passBDTPi0Rejection_ = false;
+    sel_passPi0Sideband_ = false;
+    sel_passProtonSidebandLoose_ = false;
+    sel_passProtonSidebandStrict_ = false;
     sel_NueCC1piXp_ = false;
+    sel_passInclusiveSelection_ = false;
 
     // set horn current
     // FHC
@@ -1406,6 +1504,12 @@ void EventContainer::populateDerivedVariables(Utility::FileTypeEnums type, Utili
     Beam_shift_x_1mm.clear();
     Beam_shift_y_1mm.clear();
     Target_z_7mm.clear();
+
+    fluggWeightsPresent = false;
+    FluggCV.clear();
+
+    reweightRatioPresent = false;	
+	reweightRatio = 1;
 }
 
 // get shower dE/dx on plane with the most hits
@@ -1630,12 +1734,12 @@ float EventContainer::GetTrackBraggMIPBestPlane(unsigned int trackID) {
 
 // pion energy range-based
 // from A. Smith analysis -- docid=33809
-float EventContainer::CalculatePionEnergyRange(float R) {
+float EventContainer::CalculatePionMomentumRange(float R) {
 
 	float p_range = 0.25798 + (0.0024088 * R) - (0.18828 * std::pow(R, - 0.11687));	// GeV
 	float e_range = std::sqrt(std::pow(p_range, 2) + std::pow(0.13957, 2)) - 0.13957; // GeV
 
-	if (e_range > 0) return e_range;
+	if (p_range > 0) return p_range;
 	else return 0;
 }
 
@@ -1722,7 +1826,7 @@ double EventContainer::GetNuMIAngle(double px, double py, double pz, std::string
 
 // -----------------------------------------------------------------------------
 // NuMI angular variables, from Krishan
-void EventContainer::setNuMIAngularVariables(){
+void EventContainer::setRecoNuMIAngularVariables(bool isSideband = false){
 	
 	// Effective angle - beta (see K. Mistry Thesis)
     // Electron
@@ -1737,42 +1841,72 @@ void EventContainer::setNuMIAngularVariables(){
     // Set the values
     reco_electron_effective_angle = shr_dir.Angle(v_targ_to_vtx) * 180 / 3.14159;
     reco_cos_electron_effective_angle = std::cos(shr_dir.Angle(v_targ_to_vtx));
-    
-    // Calculate the effective angle using true variables
+
+    // Pion
+    if (isSideband) {
+    	// for sidebands use primary track
+    	TVector3 piontrk_dir;	
+	    piontrk_dir.SetXYZ(trk_dir_x, trk_dir_y, trk_dir_z);
+	    piontrk_dir.Unit();
+
+	    // Set the values
+	    reco_pion_effective_angle = piontrk_dir.Angle(v_targ_to_vtx) * 180 / 3.14159;
+	    reco_cos_pion_effective_angle = std::cos(piontrk_dir.Angle(v_targ_to_vtx));	
+
+	    // opening angle
+	    reco_electron_pion_opening_angle = piontrk_dir.Angle(shr_dir) * 180 / 3.14159;
+	    reco_cos_electron_pion_opening_angle = std::cos(piontrk_dir.Angle(shr_dir));
+
+        // for the sidebands also need to set momentum of pion to primary track, otherwise undefined
+        reco_momentum_pion = trk_momentum_pion;	
+    }
+    else {
+        if (primaryTrackPionlike || secondaryTrackPionlike || tertiaryTrackPionlike) {
+	    	TVector3 piontrk_dir;
+	    	if (primaryTrackPionlike) {
+	    		piontrk_dir.SetXYZ(trk_dir_x, trk_dir_y, trk_dir_z);
+	    		
+	    	}
+	    	else if (secondaryTrackPionlike) {
+	    		piontrk_dir.SetXYZ(trk2_dir_x, trk2_dir_y, trk2_dir_z);
+	    	}
+	    	else {
+	    		piontrk_dir.SetXYZ(trk3_dir_x, trk3_dir_y, trk3_dir_z);
+	    	}
+	    	piontrk_dir.Unit();
+
+	    	// Set the values
+		    reco_pion_effective_angle = piontrk_dir.Angle(v_targ_to_vtx) * 180 / 3.14159;
+		    reco_cos_pion_effective_angle = std::cos(piontrk_dir.Angle(v_targ_to_vtx));
+
+		    // opening angle
+	    	reco_electron_pion_opening_angle = piontrk_dir.Angle(shr_dir) * 180 / 3.14159;
+	    	reco_cos_electron_pion_opening_angle = std::cos(piontrk_dir.Angle(shr_dir));
+	    }
+	}
+}
+
+void EventContainer::setTrueNuMIAngularVariables(){
+	
+	// neutrino
     TVector3 nu_dir(true_nu_px, true_nu_py, true_nu_pz); 
     nu_dir.Unit();
 
-    TVector3 v_nu_vtx_true(true_nu_vtx_sce_x, true_nu_vtx_sce_y, true_nu_vtx_sce_z);
-    TVector3 v_targ_to_vtx_true = (-1*v_targ_uboone + v_nu_vtx_true).Unit(); // -1 because the vector points from uboone to tgt, we need the other way around
-
+    // electron
     TVector3 elec_dir(elec_px, elec_py, elec_pz); 
     elec_dir.Unit();
-    true_electron_effective_angle = elec_dir.Angle(nu_dir) * 180 / 3.14159; // Use dot product of elec dir to nu dir for this as the true value
+    true_electron_effective_angle = elec_dir.Angle(nu_dir) * 180 / 3.14159; 
     true_cos_electron_effective_angle = std::cos(elec_dir.Angle(nu_dir));
 
-    // Pion
-    if (primaryTrackPionlike || secondaryTrackPionlike || tertiaryTrackPionlike) {
-    	TVector3 piontrk_dir;
-    	if (primaryTrackPionlike) {
-    		piontrk_dir.SetXYZ(trk_dir_x, trk_dir_y, trk_dir_z);
-    		
-    	}
-    	else if (secondaryTrackPionlike) {
-    		piontrk_dir.SetXYZ(trk2_dir_x, trk2_dir_y, trk2_dir_z);
-    	}
-    	else {
-    		piontrk_dir.SetXYZ(trk3_dir_x, trk3_dir_y, trk3_dir_z);
-    	}
-    	piontrk_dir.Unit();
-
-    	// Set the values
-	    reco_pion_effective_angle = piontrk_dir.Angle(v_targ_to_vtx) * 180 / 3.14159;
-	    reco_cos_pion_effective_angle = std::cos(piontrk_dir.Angle(v_targ_to_vtx));
-    }
-
-    TVector3 pion_dir(pion_px, pion_py, pion_pz); 
+    // pion
+   	TVector3 pion_dir(pion_px, pion_py, pion_pz); 
     pion_dir.Unit();
-    true_pion_effective_angle = pion_dir.Angle(nu_dir) * 180 / 3.14159; // Use dot product of pion dir to nu dir for this as the true value
-    true_cos_pion_effective_angle = std::cos(pion_dir.Angle(nu_dir));
+
+	true_pion_effective_angle = pion_dir.Angle(nu_dir) * 180 / 3.14159;
+	true_cos_pion_effective_angle = std::cos(pion_dir.Angle(nu_dir));
+
+    // opening angle
+    true_electron_pion_opening_angle = pion_dir.Angle(elec_dir) * 180 / 3.14159; 
+    true_cos_electron_pion_opening_angle = std::cos(pion_dir.Angle(elec_dir));
 }
 

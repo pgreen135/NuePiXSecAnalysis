@@ -106,6 +106,7 @@ int main(int argc, char *argv[]) {
     // apply selection
     // populates necessary variables to pass to stv tree
     bool passSelection = _selection.ApplyBDTBasedSelection(_event, _BDTTool, type, runPeriod);
+    bool passInclusiveSelection = _selection.ApplyInclusiveSelection(_event, type, runPeriod);
 
     // keep/discard events depending on classification to account for signal/background enhanced samples 
     // for running with intrinsic nue
@@ -121,17 +122,16 @@ int main(int argc, char *argv[]) {
     	if (!(_event.classification == Utility::kCCNue1piXp || _event.classification == Utility::kCCNueNpi || _event.classification == Utility::kCCNuepizero ||
     				_event.classification == Utility::kCCNueNp || _event.classification == Utility::kCCNueOther)) continue;
 		}
-    // populate beamline variations if required
+    // populate beamline variations and flugg weights if required
     if (type == 0 || type == 2 || type == 4) {	// only for nue, nu or dirt overlay
 			_event.calculateBeamlineVariationWeights(runPeriod);
+			//_event.calculateFluggWeights(runPeriod);
     }
 
-    // update weights for NuWro or Flugg fake data --- note: needs manually changing for other samples, need to make proper way to configure
+    // update weights for NuWro --- note: needs manually changing for other samples, need to make proper way to configure
     if (type == 7) {
-    	_event.updateNuWroCVWeights(runPeriod);
+     	_event.updateNuWroCVWeights(runPeriod);
     }
-
-    //_event.calculateFluggWeights(runPeriod);
      
     // set the output TTree branch addresses, creating the branches if needed
   	// (during the first event loop iteration)
@@ -161,6 +161,7 @@ void set_event_output_branch_addresses(TTree& out_tree, EventContainer& ev, bool
 	// Signal definition flags
 	set_output_branch_address(out_tree, "is_mc", &ev.is_mc_, create, "is_mc/O");
 	set_output_branch_address(out_tree, "mc_is_signal", &ev.mc_is_signal_, create, "mc_is_signal/O");
+	set_output_branch_address(out_tree, "mc_is_inclusive_signal", &ev.mc_is_inclusive_signal_, create, "mc_is_inclusive_signal/O");
 
 	// MC event category
 	set_output_branch_address( out_tree, "category", &ev.category_, create, "category/I");
@@ -175,7 +176,7 @@ void set_event_output_branch_addresses(TTree& out_tree, EventContainer& ev, bool
 	set_output_branch_address( out_tree, "normalisation_weight", &ev.normalisation_weight, create, "normalisation_weight/F");
 
 	// Fake data weight (testing)
-	//set_output_branch_address( out_tree, "fake_data_weight", &ev.fake_data_weight, create, "fake_data_weight/F");	// comment out when not needed, should implement proper way to run
+  //set_output_branch_address( out_tree, "fake_data_weight", &ev.fake_data_weight, create, "fake_data_weight/F");	// comment out when not needed, should implement proper way to run
 
 	// If MC weights are available, store them in the output TTree
 	if ( ev.mc_weights_map_ ) {
@@ -211,8 +212,13 @@ void set_event_output_branch_addresses(TTree& out_tree, EventContainer& ev, bool
 			// Set the branch address for this vector of weights
 			set_object_output_branch_address< std::vector<double> >( out_tree, weight_branch_name, ev.mc_weights_ptr_map_.at(weight_branch_name), create);
 
+			/*
 			// Output list of weights present, for faking structure
-			//std::cout << "Name: " << pair.first << ", Size: " << pair.second.size() << std::endl;
+			std::cout << "Name: " << pair.first << ", Size: " << pair.second.size() << std::endl;
+			if (pair.first == "ppfx_all") {
+				std::cout << pair.second[10] << std::endl;
+			}
+			*/
     }
 	}
 
@@ -236,10 +242,23 @@ void set_event_output_branch_addresses(TTree& out_tree, EventContainer& ev, bool
 		}
 	}
 
+	// if flugg weights are available, store them too
+	if (ev.fluggWeightsPresent) {
+		// we only need to create these once, why is address set every loop?
+		// if generalised using map would want to set in same way, i.e. don't know a priori full list 
+		if (create) {
+			out_tree.Branch( "weight_FluggCV", "std::vector<double>", &(ev.FluggCV) );	
+		}
+	}
+
 	// NueCC1piXp selection criteria
 	set_output_branch_address( out_tree, "sel_passLooseRejection", &ev.sel_passLooseRejection_, create, "sel_passLooseRejection/O");
 	set_output_branch_address( out_tree, "sel_passBDTPi0Rejection", &ev.sel_passBDTPi0Rejection_, create, "sel_passBDTPi0Rejection/O");
+	set_output_branch_address( out_tree, "sel_passPi0Sideband", &ev.sel_passPi0Sideband_, create, "sel_passPi0Sideband/O");
+	set_output_branch_address( out_tree, "sel_passProtonSidebandLoose", &ev.sel_passProtonSidebandLoose_, create, "sel_passProtonSidebandLoose/O");
+	set_output_branch_address( out_tree, "sel_passProtonSidebandStrict", &ev.sel_passProtonSidebandStrict_, create, "sel_passProtonSidebandStrict/O");
 	set_output_branch_address( out_tree, "sel_NueCC1piXp", &ev.sel_NueCC1piXp_, create, "sel_NueCC1piXp/O");
+	set_output_branch_address( out_tree, "sel_passInclusiveSelection", &ev.sel_passInclusiveSelection_, create, "sel_passInclusiveSelection/O");
 
 	// Observables
 	// BDT Scores
@@ -263,18 +282,23 @@ void set_event_output_branch_addresses(TTree& out_tree, EventContainer& ev, bool
 	set_output_branch_address( out_tree, "sel_reco_cos_electron_effective_angle", &ev.reco_cos_electron_effective_angle, create, "sel_reco_cos_electron_effective_angle/F");	// Reco
 	set_output_branch_address( out_tree, "mc_true_cos_electron_effective_angle", &ev.true_cos_electron_effective_angle, create, "mc_true_cos_electron_effective_angle/F");		// Truth
 
-	// Pion Energy
-	set_output_branch_address( out_tree, "sel_reco_energy_pion", &ev.reco_energy_pion, create, "sel_reco_energy_pion/F");	// Reco - range-based
-	set_output_branch_address( out_tree, "mc_pion_e", &ev.pion_e, create, "mc_pion_e/F");											// Truth - pion energy
+	// Pion Momentum
+	set_output_branch_address( out_tree, "sel_reco_momentum_pion", &ev.reco_momentum_pion, create, "sel_reco_momentum_pion/F");	// Reco - range-based
+	set_output_branch_address( out_tree, "mc_pion_p", &ev.pion_p, create, "mc_pion_p/F");											// Truth - pion energy
 
 	// Pion NuMI angle (beta)
 	set_output_branch_address( out_tree, "sel_reco_cos_pion_effective_angle", &ev.reco_cos_pion_effective_angle, create, "sel_reco_cos_pion_effective_angle/F");	// Reco
 	set_output_branch_address( out_tree, "mc_true_cos_pion_effective_angle", &ev.true_cos_pion_effective_angle, create, "mc_true_cos_pion_effective_angle/F");		// Truth
 
-	// Number protons
-	set_output_branch_address( out_tree, "sel_numberProtons", &ev.numberProtons, create, "sel_numberProtons/I");	// Reco
-	set_output_branch_address( out_tree, "mc_nproton", &ev.nproton, create, "mc_nproton/I");											// Truth
+	// Opening angle
+	set_output_branch_address( out_tree, "sel_reco_cos_electron_pion_opening_angle", &ev.reco_cos_electron_pion_opening_angle, create, "sel_reco_cos_electron_pion_opening_angle/F");	// Reco
+	set_output_branch_address( out_tree, "mc_true_cos_electron_pion_opening_angle", &ev.true_cos_electron_pion_opening_angle, create, "mc_true_cos_electron_pion_opening_angle/F");		// Truth
 
+	// Number protons
+	//set_output_branch_address( out_tree, "sel_numberProtons", &ev.numberProtons, create, "sel_numberProtons/I");	// Reco
+	//set_output_branch_address( out_tree, "mc_nproton", &ev.nproton, create, "mc_nproton/I");											// Truth
+
+	/*
 	// Track BDT properties
 	set_output_branch_address( out_tree, "sel_bragg_mip_pion_loose", &ev.trk_bragg_mip_pion_loose, create, "sel_bragg_mip_pion_loose/F");
 	set_output_branch_address( out_tree, "sel_trk_daughters_pion_loose", &ev.trk_daughters_pion_loose, create, "sel_trk_daughters_pion_loose/I");
@@ -302,6 +326,7 @@ void set_event_output_branch_addresses(TTree& out_tree, EventContainer& ev, bool
 	set_output_branch_address( out_tree, "sel_shr_energyFraction", &ev.shr_energyFraction, create, "sel_shr_energyFraction/F");
 	set_output_branch_address( out_tree, "sel_shr2_distance", &ev.shr2_distance, create, "sel_shr2_distance/F");
   set_output_branch_address( out_tree, "sel_shrMCSMom", &ev.shrMCSMom, create, "sel_shrMCSMom/F");
+  */
 
   // Interaction type
   set_output_branch_address( out_tree, "mc_ccnc", &ev.ccnc, create, "mc_ccnc/I");

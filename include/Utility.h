@@ -6,6 +6,7 @@
 
 #include <vector>
 
+#include <TH1F.h>
 #include <TH2F.h>
 
 class Utility {
@@ -14,7 +15,7 @@ public:
 	
 	// ----------------------------------
 	// Constructor
-	Utility(bool loadBeamLineWeights = false, bool loadPPFXCVWeights = false, bool loadFluggWeights = false);
+	Utility(bool loadBeamLineWeights = false, bool loadPPFXCVWeights = false, bool loadFluggWeights = false, bool loadReweightRatios = false);
 
 	// Destructor
 	~Utility(){};
@@ -119,6 +120,7 @@ public:
 		kTrackShowerAngle,
 		kNTrackDaughters,
 		kTrackEnergy,
+		kTrackMomentum,
 		kSecondShowerNHit,
 		kShowerLLRPID,
 		kPionETrue,
@@ -131,7 +133,8 @@ public:
 		kNumberProtons,
 		kNumberProtonsTrue,
 		kElectronBeta,
-		kPionBeta		
+		kPionBeta,
+		kOpeningAngle		
 	};
 
 	// ---------------------------------- 
@@ -144,6 +147,9 @@ public:
 
 	// Function to check whether number is valid
 	bool isNumber(float input) const;
+
+	// Function to scale histogram by bin width
+	void scaleByBinWidth(TH1F* hist);
 
 	// Functions to get beamline variation weights
 	void loadBeamLineVariationHistograms();
@@ -166,6 +172,13 @@ public:
 	double getFluggWeightNumu(float energy, float angle, Utility::RunPeriodEnums runPeriod);
 	double getFluggWeightNumubar(float energy, float angle, Utility::RunPeriodEnums runPeriod);
 
+	// Functions to get CV re-weight ratios [testing]
+	void loadReweightRatioHistograms();
+	double getReweightRatioNue(float energy, float angle, Utility::RunPeriodEnums runPeriod);
+	double getReweightRatioNuebar(float energy, float angle, Utility::RunPeriodEnums runPeriod);
+	double getReweightRatioNumu(float energy, float angle, Utility::RunPeriodEnums runPeriod);
+	double getReweightRatioNumubar(float energy, float angle, Utility::RunPeriodEnums runPeriod);
+
 private:
 
 	// beamline variation weight histograms
@@ -186,18 +199,30 @@ private:
 	TH2F ppfx_nuebar_fhc;
 	TH2F ppfx_numu_fhc;
 	TH2F ppfx_numubar_fhc;
+	// rhc
+	TH2F ppfx_nue_rhc;
+	TH2F ppfx_nuebar_rhc;
+	TH2F ppfx_numu_rhc;
+	TH2F ppfx_numubar_rhc;
 
 	// Flugg CV histograms
 	// fhc
-	TH2F flugg_nue_fhc;
-	TH2F flugg_nuebar_fhc;
-	TH2F flugg_numu_fhc;
-	TH2F flugg_numubar_fhc;
+	TH1F flugg_nue_fhc;
+	TH1F flugg_nuebar_fhc;
+	TH1F flugg_numu_fhc;
+	TH1F flugg_numubar_fhc;
 	// rhc
-	TH2F flugg_nue_rhc;
-	TH2F flugg_nuebar_rhc;
-	TH2F flugg_numu_rhc;
-	TH2F flugg_numubar_rhc;
+	TH1F flugg_nue_rhc;
+	TH1F flugg_nuebar_rhc;
+	TH1F flugg_numu_rhc;
+	TH1F flugg_numubar_rhc;
+
+	// Re-weight ratio histograms
+	// fhc
+	TH2D reweight_ratio_nue_fhc;
+	TH2D reweight_ratio_nuebar_fhc;
+	TH2D reweight_ratio_numu_fhc;
+	TH2D reweight_ratio_numubar_fhc;
 }; 
 
 #endif

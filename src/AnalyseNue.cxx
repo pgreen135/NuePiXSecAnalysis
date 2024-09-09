@@ -19,23 +19,20 @@
 #include <TStyle.h>
 #include <TEfficiency.h>
 #include <TGraphAsymmErrors.h>
-
+#include <TROOT.h>
 #include <TSystem.h>
 
 
 int main() {
+
+	//ROOT::EnableImplicitMT();
 	
 	SelectionDriver _selectionDriver;
 	
     _selectionDriver.runBDTSelectionFull();
-    //_selectionDriver.runBDTSelectionFHC();
-	//_selectionDriver.runBDTSelectionRHC();
-
+    
 	//_selectionDriver.optimiseBDTSelection();
 
-	//_selectionDriver.runBDTSelectionDetVarFHC();
-	//_selectionDriver.runBDTSelectionDetVarRHC();
-	
 	//_selectionDriver.createElectronPhotonBDTTrainingTreeFHC();
 	//_selectionDriver.createElectronPhotonBDTTrainingTreeRHC();
 

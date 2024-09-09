@@ -21,6 +21,9 @@ public:
 	bool ApplyCutBasedSelection(EventContainer &_evt, Utility::FileTypeEnums type, Utility::RunPeriodEnums runPeriod);
 	bool ApplyBDTBasedSelection(EventContainer &_evt, const BDTTool &_bdt, Utility::FileTypeEnums type, Utility::RunPeriodEnums runPeriod);
 
+	// Run inclusive selection (Krishan)
+	bool ApplyInclusiveSelection(EventContainer &_evt, Utility::FileTypeEnums type, Utility::RunPeriodEnums runPeriod);
+
 	// Run BDT Training Tree Selection
 	bool ApplyElectronPhotonBDTTrainingSelection(EventContainer &_evt, Utility::FileTypeEnums type, Utility::RunPeriodEnums runPeriod);
 	bool ApplyPionProtonBDTTrainingSelection(EventContainer &_evt, Utility::FileTypeEnums type, Utility::RunPeriodEnums runPeriod);
@@ -147,6 +150,7 @@ protected:
 
 	// Track Shower Opening Angle
 	bool ApplyTrackShowerOpeningAngleCut(float tksh_angle);
+	bool ApplyPrimaryTrackShowerOpeningAngleCut(float tksh_angle);
 
 	// LLR PID Score
 	bool ApplyLLRPIDScoreCut(float trk_llr_pid_score);

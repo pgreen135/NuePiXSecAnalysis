@@ -36,6 +36,7 @@ public:
     void calculateBeamlineVariationWeights(Utility::RunPeriodEnums runPeriod);
     void updateNuWroCVWeights(Utility::RunPeriodEnums runPeriod);
     void calculateFluggWeights(Utility::RunPeriodEnums runPeriod);
+    void calculateReweightRatio(Utility::RunPeriodEnums runPeriod);
     float checkWeight(float weight);
 
 	// Functions to recover reconstruction failures
@@ -53,10 +54,11 @@ public:
 	float GetTrackTrunkdEdxBestPlane(unsigned int trackID);
 	float GetTrackBraggPionBestPlane(unsigned int trackID);
 	float GetTrackBraggMIPBestPlane(unsigned int trackID);
-    float CalculatePionEnergyRange(float R);
+    float CalculatePionMomentumRange(float R);
     float GetShowerTrackEndProximity(unsigned int shrID);
     double GetNuMIAngle(double px, double py, double pz, std::string direction);
-    void setNuMIAngularVariables();
+    void setRecoNuMIAngularVariables(bool isSideband);
+    void setTrueNuMIAngularVariables();
 
  
     // ----------------------------------
@@ -111,7 +113,7 @@ public:
     float trk_score_pion;
     int trk_end_spacepoints_pion;
     // pion energy
-    float reco_energy_pion; // A. Smith Method
+    float reco_momentum_pion; // A. Smith Method
 
     // --- BDT Scores ---
     double BDTScoreElectronPhoton;
@@ -125,9 +127,16 @@ public:
     bool mc_is_signal_;
     bool sel_passLooseRejection_;
     bool sel_passBDTPi0Rejection_;
+    bool sel_passPi0Sideband_;
+    bool sel_passProtonSidebandLoose_;
+    bool sel_passProtonSidebandStrict_;
     bool sel_NueCC1piXp_;
     int  category_;
     int hornCurrent_;    // horn current to allow sample combination, 0 = FHC, 1 = RHC
+
+    // -- Variables Krishan Selection -- 
+    bool mc_is_inclusive_signal_;
+    bool sel_passInclusiveSelection_;
 
     // --- NuMI angles ---
     // Reconstructed
@@ -140,6 +149,16 @@ public:
     float true_cos_electron_effective_angle;
     float true_pion_effective_angle;
     float true_cos_pion_effective_angle;
+
+    // -- Opening angle --
+    float reco_electron_pion_opening_angle;
+    float reco_cos_electron_pion_opening_angle;
+    float true_electron_pion_opening_angle;
+    float true_cos_electron_pion_opening_angle;
+
+    float trk_shr_opening_angle;
+    float trk2_shr_opening_angle;
+    float trk3_shr_opening_angle;
     
 	// --- Event information ---
 	int run, sub, evt;			// run, subrun, event numbers
@@ -164,21 +183,26 @@ public:
     float pion_px;
     float pion_py;
     float pion_pz;
+    float pion_p;
 
   	int npi0; 					// Truth: number of neutral pions
     float pi0_e;
 
     int neta;                   // Truth: number of etas
+    float eta_e;
   	
   	int nproton; 				// Truth: number of protons
     int nprotonalternate;
   	float proton_e;				// Truth: proton energy
 
   	// truth neutrino interaction vertex
-  	float true_nu_vtx_sce_x;     // True Neutrino Vtx Space Charge x
-  	float true_nu_vtx_sce_y;     // True Neutrino Vtx Space Charge y
-  	float true_nu_vtx_sce_z;     // True Neutrino Vtx Space Charge z
-
+    float true_nu_vtx_x;        // True Neutrino Vtx x
+    float true_nu_vtx_y;        // True Neutrino Vtx y
+    float true_nu_vtx_z;        // True Neutrino Vtx z
+  	float true_nu_vtx_sce_x;    // True Neutrino Vtx Space Charge x
+  	float true_nu_vtx_sce_y;    // True Neutrino Vtx Space Charge y
+  	float true_nu_vtx_sce_z;    // True Neutrino Vtx Space Charge z
+    
     // truth neutrino momentum
     float true_nu_px;            // True Neutrino Px
     float true_nu_py;            // True Neutrino Py
@@ -223,6 +247,14 @@ public:
     std::vector<double> Beam_shift_x_1mm;
     std::vector<double> Beam_shift_y_1mm;
     std::vector<double> Target_z_7mm;
+
+    // flugg weight
+    bool fluggWeightsPresent;
+    std::vector<double> FluggCV;
+
+    // CV reweight ratio
+    bool reweightRatioPresent;
+    float reweightRatio;
 
   	// --- Slice information ---
   	// number
@@ -462,7 +494,7 @@ public:
     float trk_calo_energy;
     float trk_energy_proton;
     float trk_energy_muon;
-    float trk_energy_pion;
+    float trk_momentum_pion;
    
     int trk_bkt_pdg;      // Backtracker - track: Backtrack PDG
 
@@ -504,7 +536,7 @@ public:
     float trk2_calo_energy;
     float trk2_energy_proton;
     float trk2_energy_muon;
-    float trk2_energy_pion;
+    float trk2_momentum_pion;
     
     int trk2_bkt_pdg;			// Backtracker - track: Backtrack PDG
     
@@ -549,7 +581,7 @@ public:
     float trk3_calo_energy;
     float trk3_energy_proton;
     float trk3_energy_muon;
-    float trk3_energy_pion;
+    float trk3_momentum_pion;
     
     float trk3_bragg_p;			// Reco - track: Track Bragg Likelihood Proton
     float trk3_bragg_mu;		// Reco - track: Track Bragg Likelihood Muon

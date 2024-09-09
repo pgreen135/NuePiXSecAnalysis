@@ -21,9 +21,6 @@ if [ ! -d "${output_dir}" ]; then
   #exit 2
 fi
 
-# Remove any pre-existing processed STV ntuple files from the output directory
-#rm -f ${output_dir}/stv-*.root
-
 # Loop over each line of the ntuple list file
 while read line; do
   # Select lines that do not begin with a '#' character and contain at least
