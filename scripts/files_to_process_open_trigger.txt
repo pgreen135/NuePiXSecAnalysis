@@ -1,0 +1,4 @@
+#
+# Beam-on data
+/Users/patrick/Data/MicroBooNE/CrossSections/customPeLeeNTuples/beam_on/numi_pion_pelee_ntuple_beam_on_run1A_ana.root 6 0
+#

@@ -99,6 +99,7 @@ void SelectionDriver::runBDTSelectionFull() {
 															 Utility::kRun4cd, Utility::kRun4ab, Utility::kRun4cd, Utility::kRun4ab, Utility::kRun4cd, Utility::kRun4ab, Utility::kRun4cd, Utility::kRun4ab,
 															 Utility::kRun5, Utility::kRun5, Utility::kRun5, Utility::kRun5
 															};
+	
 	*/
 	/*
 	// Intrinsic Nue only
@@ -127,6 +128,33 @@ void SelectionDriver::runBDTSelectionFull() {
 															 Utility::kRun5
 															};
 	*/
+
+	// Nu Only
+	std::vector<std::string> filename_list = {filename_intrinsic_test_run1_fhc, filename_intrinsic_test_run1_rhc, filename_mc_run1_fhc, filename_mc_run1_rhc,
+                                              filename_intrinsic_test_run2a_fhc, filename_intrinsic_test_run2b_rhc, filename_mc_run2a_fhc, filename_mc_run2b_rhc,
+                                              filename_intrinsic_test_run3b_rhc, filename_mc_run3b_rhc,
+                                              filename_intrinsic_test_run4_fhc, filename_intrinsic_test_run4_rhc, filename_mc_run4_fhc, filename_mc_run4_rhc,
+                                              filename_intrinsic_test_run5_fhc, filename_mc_run5_fhc
+											 };
+	std::vector<double> pot_weight_list = {pot_weight_intrinsic_test_run1_fhc, pot_weight_intrinsic_test_run1_rhc, pot_weight_mc_run1_fhc, pot_weight_mc_run1_rhc,
+										   pot_weight_intrinsic_test_run2a_fhc, pot_weight_intrinsic_test_run2b_rhc, pot_weight_mc_run2a_fhc, pot_weight_mc_run2b_rhc,
+										   pot_weight_intrinsic_test_run3b_rhc, pot_weight_mc_run3b_rhc,
+										   pot_weight_intrinsic_test_run4_fhc, pot_weight_intrinsic_test_run4_rhc, pot_weight_mc_run4_fhc, pot_weight_mc_run4_rhc,
+										   pot_weight_intrinsic_test_run5_fhc, pot_weight_mc_run5_fhc 
+										  };
+	std::vector<Utility::FileTypeEnums> file_types_list = {Utility::kIntrinsic, Utility::kIntrinsic, Utility::kMC, Utility::kMC,
+                                       					   Utility::kIntrinsic, Utility::kIntrinsic, Utility::kMC, Utility::kMC,
+                                       					   Utility::kIntrinsic, Utility::kMC,
+                                       					   Utility::kIntrinsic, Utility::kIntrinsic, Utility::kMC, Utility::kMC,
+                                       					   Utility::kIntrinsic, Utility::kMC  
+                                       					  };
+	std::vector<Utility::RunPeriodEnums> run_periods_list = {Utility::kRun1a, Utility::kRun1b, Utility::kRun1a, Utility::kRun1b,
+															 Utility::kRun2a, Utility::kRun2b, Utility::kRun2a, Utility::kRun2b,
+															 Utility::kRun3b, Utility::kRun3b,
+															 Utility::kRun4cd, Utility::kRun4ab, Utility::kRun4cd, Utility::kRun4ab,
+															 Utility::kRun5, Utility::kRun5
+															};
+
 	// FHC Intrinsic Nue only
 	/*
 	std::vector<std::string> filename_list = {filename_intrinsic_test_run1_fhc,
@@ -253,10 +281,10 @@ void SelectionDriver::runBDTSelectionFull() {
 
 	// RHC
 	
-	std::vector<std::string> filename_list = {filename_beamon_run1_rhc, filename_beamon_run2b_rhc, filename_beamon_run3b_rhc, filename_beamon_run4_rhc};                                       
-	std::vector<double> pot_weight_list = {pot_weight_beamoff_run1_rhc, pot_weight_beamoff_run2b_rhc, pot_weight_beamoff_run3b_rhc, pot_weight_beamoff_run4_rhc};
-	std::vector<Utility::FileTypeEnums> file_types_list = {Utility::kData, Utility::kData, Utility::kData, Utility::kData};
-	std::vector<Utility::RunPeriodEnums> run_periods_list = {Utility::kRun1b, Utility::kRun2b, Utility::kRun3b, Utility::kRun4ab};
+	//std::vector<std::string> filename_list = {filename_beamon_run1_rhc, filename_beamon_run2b_rhc, filename_beamon_run3b_rhc, filename_beamon_run4_rhc};                                       
+	//std::vector<double> pot_weight_list = {pot_weight_beamoff_run1_rhc, pot_weight_beamoff_run2b_rhc, pot_weight_beamoff_run3b_rhc, pot_weight_beamoff_run4_rhc};
+	//std::vector<Utility::FileTypeEnums> file_types_list = {Utility::kData, Utility::kData, Utility::kData, Utility::kData};
+	//std::vector<Utility::RunPeriodEnums> run_periods_list = {Utility::kRun1b, Utility::kRun2b, Utility::kRun3b, Utility::kRun4ab};
 
 	//std::vector<std::string> filename_list = {filename_intrinsic_test_run3b_rhc};
 	//std::vector<double> pot_weight_list = {pot_weight_intrinsic_test_run3b_rhc};
@@ -431,12 +459,12 @@ void SelectionDriver::runBDTSelectionFull() {
 		    if ( _event.sel_passProtonSidebandStrict_) n_passProtonSidebandStrict += pot_weight * _event.weight_cv;
 
 		    
-		    if (!passSelection) continue;
+		    //if (!passSelection) continue;
 		    //if (!passInclusiveSelection) continue;
 
 		    //if (!_event.sel_passProtonSidebandLoose_) continue;
 		    
-		    //if (!_event.sel_passPi0Sideband_) continue;
+		    if (!_event.sel_passPi0Sideband_) continue;
 		    //if (!_event.sel_passProtonSidebandLoose_) continue;
 
 		    if (file_types_list[idx] == Utility::kData) {
@@ -516,18 +544,19 @@ void SelectionDriver::runBDTSelectionFull() {
 	  	    //std::cout << "Electron Reco: " << _event.reco_cos_electron_effective_angle << ", True: " << _event.true_cos_electron_effective_angle << std::endl;
 
 	  	    // fill vectors (signal)
-	  	    if (_event.classification == Utility::kCCNue1piXp) {
+	  	    //if (_event.classification == Utility::kCCNue1piXp) {
+	  	    if (_event.classification == Utility::kCCNuepizero || _event.classification == Utility::kCCNumupizero || _event.classification == Utility::kNCpizero) {
 	  	    	// electron energy
-	  	    	/*
+	  	    	
 	  	    	variable_true_vec.push_back(_event.elec_e);
 	  	    	variable_reco_vec.push_back(_event.shr_energy_cali);
 	  	    	weight_vec.push_back(pot_weight * _event.weight_cv);
-	  	    	*/
+	  	    	
 	  	    	// electron angle
 	  	    	/*
-	  	    	variable_true_vec.push_back(_event.true_cos_electron_effective_angle);
-	  	    	variable_reco_vec.push_back(_event.reco_cos_electron_effective_angle);
-	  	    	weight_vec.push_back(pot_weight * _event.weight_cv);
+	  	    	//variable_true_vec.push_back(_event.true_cos_electron_effective_angle);
+	  	    	//variable_reco_vec.push_back(_event.reco_cos_electron_effective_angle);
+	  	    	//weight_vec.push_back(pot_weight * _event.weight_cv);
 	  	    	*/
 	  	    	// pion angle
 	  	    	/*
@@ -536,9 +565,9 @@ void SelectionDriver::runBDTSelectionFull() {
 	  	    	weight_vec.push_back(pot_weight * _event.weight_cv);
 	  	    	*/
 	  	    	// pion momentum
-	  	    	variable_true_vec.push_back(_event.pion_p);
-	  	    	variable_reco_vec.push_back(_event.reco_momentum_pion);
-	  	    	weight_vec.push_back(pot_weight * _event.weight_cv);
+	  	    	//variable_true_vec.push_back(_event.pion_p);
+	  	    	//variable_reco_vec.push_back(_event.reco_momentum_pion);
+	  	    	//weight_vec.push_back(pot_weight * _event.weight_cv);
 
 
 	  	    	
@@ -638,8 +667,8 @@ void SelectionDriver::runBDTSelectionFull() {
 
 	
 	// Optimise bins
-	//double lower_edge = 0.03; // electron energy 30 MeV, from signal definition
-	double lower_edge = 0.105; // pion momentum 105 MeV, from signal definition
+	double lower_edge = 0.03; // electron energy 30 MeV, from signal definition
+	//double lower_edge = 0.105; // pion momentum 105 MeV, from signal definition
 	//double lower_edge = -1; // angles
 	
 	std::vector<double> edges;
@@ -648,7 +677,7 @@ void SelectionDriver::runBDTSelectionFull() {
 	double new_edge = 0.1; // first new edge to check
 	//double new_edge = -0.95; // first new edge to check
 
-	for (int bin = 0; bin < 3; bin++) {
+	for (int bin = 0; bin < 20; bin++) {
 
 		for (int b = 0; b < 100; b++ ) {
 
@@ -658,21 +687,25 @@ void SelectionDriver::runBDTSelectionFull() {
 
 			for (int i = 0; i < variable_reco_vec.size(); i++) {
 				if (new_edge == 1) {
-					if ( variable_true_vec[i] >= lower_edge && variable_true_vec[i] <= new_edge ) event_counter += weight_vec[i];
+					//if ( variable_true_vec[i] >= lower_edge && variable_true_vec[i] <= new_edge ) event_counter += weight_vec[i];
+					if ( variable_reco_vec[i] >= lower_edge && variable_reco_vec[i] <= new_edge ) event_counter += weight_vec[i];
 				}
 				else {
-					if ( variable_true_vec[i] >= lower_edge && variable_true_vec[i] < new_edge ) event_counter += weight_vec[i];
+					//if ( variable_true_vec[i] >= lower_edge && variable_true_vec[i] < new_edge ) event_counter += weight_vec[i];
+					if ( variable_reco_vec[i] >= lower_edge && variable_reco_vec[i] < new_edge ) event_counter += weight_vec[i];
 				}
 			}
 
 			std::cout << "Bin " << bin << ": [" << lower_edge << ", " << new_edge << "] --> Signal Events: " << event_counter << std::endl;
 
-			if ((bin == 0) && event_counter >= 10) break;
-			else if (bin == 1 && event_counter >= 10) break;
+			//if ((bin == 0) && event_counter >= 10) break;
+			//else if (bin == 1 && event_counter >= 10) break;
 			//else if (bin == 2 && event_counter > 10) break;
 			//else if (bin == 4 && event_counter >= 15) break;
 			//else if (bin != 4 && event_counter >= 10) break;
-			else if (event_counter >= 25) break;
+			//else if (event_counter >= 25) break;
+
+			if (event_counter >= 25) break;
 
 			//if (new_edge >= 5) break;
 
